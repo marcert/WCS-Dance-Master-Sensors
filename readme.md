@@ -1,7 +1,3 @@
-Here is a complete draft for your **README.md** in Markdown, formatted specifically for GitHub and written in English.
-
----
-
 ```markdown
 # WCS Ultra-Performance Dance & Movement Analysis System
 
