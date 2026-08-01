@@ -1,0 +1,15 @@
+# Build / Temporäre Dateien
+build/
+*.hex
+*.elf
+*.bin
+
+# IDE Spezifisch
+.vscode/
+.idea/
+*.swp
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+secrets.h
