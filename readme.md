@@ -9,32 +9,26 @@ The system uses **M5Stack hardware (ESP32)** communicating over an automated, lo
 
 ## 🏗️ System Architecture
 
-
-```
-
-```
-                   +-------------------------+
-                   |   Foot Sensor (Left)    |
-                   | ID: 1 | M5Stack + IMU   |
-                   +------------+------------+
-                                |
-                                | (ESP-NOW Broadcast / Channel Auto-Sync)
-                                v
-
-```
-
+```text
+                       +-------------------------+
+                       |   Foot Sensor (Left)    |
+                       | ID: 1 | M5Stack + IMU   |
+                       +------------+------------+
+                                    |
+                                    | (ESP-NOW Broadcast / Channel Auto-Sync)
+                                    v
 +------------------------+     +----+--------------------+     +-------------------------+
 |   Hand / Scale Unit    |---->|   Central Master Unit   |<----|   Foot Sensor (Right)   |
 | ID: 3 | HX711 + IMU    |     |    M5Stack Master       |     | ID: 2 | M5Stack + IMU   |
 +------------------------+     +----------+--------------+     +-------------------------+
-|
-| (Wi-Fi AP / STA + WebServer)
-v
-+-----------+--------------+
-|   Web Dashboard (HTML5)  |
-| Real-time Canvas Graphs  |
-| Live Camera Overlay      |
-+--------------------------+
+                                          |
+                                          | (Wi-Fi AP / STA + WebServer)
+                                          v
+                              +-----------+--------------+
+                              |   Web Dashboard (HTML5)  |
+                              | Real-time Canvas Graphs  |
+                              | Live Camera Overlay      |
+                              +--------------------------+
 
 ```
 
@@ -44,34 +38,48 @@ v
 
 * **Automatic ESP-NOW Channel Discovery:** Sensors dynamically scan Wi-Fi channels (1–13) at startup to locate and pair with the Master unit using a two-way handshake payload.
 * **Foot Dynamics Tracking (IDs 1 & 2):**
-  * Measures foot roll-off (Gyroscope Y-rotation).
-  * Measures foot strike impact intensity (Accelerometer Z-axis).
-  * Real-time audio-visual error alerts for poor roll-off combined with heavy impact (stomping).
+* Measures foot roll-off (Gyroscope Y-rotation).
+* Measures foot strike impact intensity (Accelerometer Z-axis).
+* Real-time audio-visual error alerts for poor roll-off combined with heavy impact (stomping).
+
+
 * **Hand & Lead Tension Tracking (ID 3):**
-  * Strain-gauge load cell integration via **HX711** measuring pull/push force (-2.5 kg to +2.5 kg).
-  * Calculates lead smoothness / jerk index by combining force variation and 3D acceleration changes.
-  * Instant acoustic feedback (1000 Hz alert tone) on harsh connection pulls or abrupt movements.
+* Strain-gauge load cell integration via **HX711** measuring pull/push force (-2.5 kg to +2.5 kg).
+* Calculates lead smoothness / jerk index by combining force variation and 3D acceleration changes.
+* Instant acoustic feedback (1000 Hz alert tone) on harsh connection pulls or abrupt movements.
+
+
 * **Power-Optimized Firmware:**
-  * CPU clock frequency reduced to **80 MHz** on transmitter nodes for extended battery life.
-  * Transmit power tuned to **11 dBm** (ideal range for 3–5 meters).
-  * Automatic screen dimming (30-second display timeout) on sensors to conserve energy.
+* CPU clock frequency reduced to **80 MHz** on transmitter nodes for extended battery life.
+* Transmit power tuned to **11 dBm** (ideal range for 3–5 meters).
+* Automatic screen dimming (30-second display timeout) on sensors to conserve energy.
+
+
 * **Interactive HTML5 Dashboard:**
-  * Synchronous dual-canvas real-time charting (Connection Force & Combined Foot/Jerk Analysis).
-  * Background camera overlay using WebRTC/getUserMedia (with rear-facing lens selector and wide-angle support).
-  * Synchronized vertical event marker lines for immediate visual correlation of errors and jerk spikes.
-  * Freeze-frame control to pause visualization for deep-dive analysis.
+* Synchronous dual-canvas real-time charting (Connection Force & Combined Foot/Jerk Analysis).
+* Background camera overlay using WebRTC/getUserMedia (with rear-facing lens selector and wide-angle support).
+* Synchronized vertical event marker lines for immediate visual correlation of errors and jerk spikes.
+* Freeze-frame control to pause visualization for deep-dive analysis.
+
+
 
 ---
 
 ## 🛠️ Hardware Requirements
 
 * **Master Unit:**
-  * M5Stack Main Unit (e.g., M5StickC PLUS, M5StickC PLUS2, or M5Stack Core series).
+* M5Stack Main Unit (e.g., M5StickC PLUS, M5StickC PLUS2, or M5Stack Core series).
+
+
 * **Foot Sensors (2 Units):**
-  * 2x M5Stack devices with internal IMU (6-axis motion sensor).
+* 2x M5Stack devices with internal IMU (6-axis motion sensor).
+
+
 * **Hand Sensor Unit (1 Unit):**
-  * 1x M5Stack device with internal IMU.
-  * 1x Load Cell (Strain Gauge) + **HX711** amplifier module connected to GPIO Pins `33` (DOUT) and `32` (SCK).
+* 1x M5Stack device with internal IMU.
+* 1x Load Cell (Strain Gauge) + **HX711** amplifier module connected to GPIO Pins `33` (DOUT) and `32` (SCK).
+
+
 
 ---
 
@@ -83,24 +91,26 @@ Ensure the following libraries are installed in your Arduino IDE or PlatformIO e
 * `WiFi.h` & `esp_wifi.h` – Built-in ESP32 Wi-Fi stack.
 * `esp_now.h` – ESP-NOW wireless protocol.
 * `WebServer.h` – Embedded web server.
-* `HX711.h` – Load cell driver library by Rob Tillaart or Bogde.
+* `HX711.h` – Load cell driver library.
 
 ---
 
 ## ⚙️ Configuration & Setup
 
 ### 1. Master Unit Setup
+
 1. Create a `secrets.h` file in the master sketch directory containing your Wi-Fi credentials:
-   ```cpp
-   #ifndef SECRETS_H
-   #define SECRETS_H
+```cpp
+#ifndef SECRETS_H
+#define SECRETS_H
 
-   const char* STAMMI_SSID = "Your_WiFi_SSID";
-   const char* STAMMI_PASS = "Your_WiFi_Password";
+const char* STAMMI_SSID = "Your_WiFi_SSID";
+const char* STAMMI_PASS = "Your_WiFi_Password";
 
-   #endif
+#endif
 
 ```
+
 
 2. Upload the **Master Code** to the central M5Stack unit.
 3. Upon booting:
