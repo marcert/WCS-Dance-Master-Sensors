@@ -10,7 +10,7 @@ Improving connection, timing, and footwork in West Coast Swing often relies on s
 
 ### What it measures in real-time:
 * **Footwork & Roll-off Quality (Left & Right Foot):** Measures foot roll-off dynamics via gyroscope angular rate and detects hard impacts / stomping (Z-axis g-force spikes).
-* **Connection & Lead/Follow Smoothness (Hand Unit):** Measures pull and push tension in grams via a strain-gauge load cell (-2.5 kg to +2.5 kg) and detects abrupt, harsh movements (jerk index).
+* **Connection & Lead/Follow Smoothness (Hand Unit):** Measures pull and push tension in grams via a strain-gauge load cell (-3.5 kg to +3.5 kg) and detects abrupt, harsh movements (jerk index).
 * **Live Acoustic & Visual Feedback:** Triggers immediate audio alert tones (e.g., 1000 Hz beep on connection jerk or poor roll-off with heavy impact) and displays synchronized overlay lines directly on a live video feed.
 
 ---
