@@ -14,6 +14,7 @@ Improving connection, timing, and footwork in West Coast Swing often relies on s
 * **Live Acoustic & Visual Feedback:** Triggers immediate audio alert tones (e.g., 1000 Hz beep on connection jerk or poor roll-off with heavy impact) and displays synchronized overlay lines directly on a live video feed.
 
 If you want to build that by your own check the required parts [here](partslist.md).
+
 ---
 
 ## 🚀 Quick Start / How to Use
