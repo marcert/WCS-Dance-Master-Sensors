@@ -6,18 +6,20 @@ A real-time wireless sensor network and video feedback system built specifically
 
 ## 🎯 Purpose & Goal
 
-Improving connection, timing, and footwork in West Coast Swing often relies on subjective feeling or delayed video review. This system solves that problem by giving **instant physical telemetry and visual feedback** while you dance.
+Improving connection, timing, and footwork in West Coast Swing often relies on subjective feeling or delayed video review. This system tries to solve that problem by giving **instant physical telemetry and visual feedback** while you dance.
 
 ### What it measures in real-time:
 * **Footwork & Roll-off Quality (Left & Right Foot):** Measures foot roll-off dynamics via gyroscope angular rate and detects hard impacts / stomping (Z-axis g-force spikes).
 * **Connection & Lead/Follow Smoothness (Hand Unit):** Measures pull and push tension in grams via a strain-gauge load cell (-3.5 kg to +3.5 kg) and detects abrupt, harsh movements (jerk index).
 * **Live Acoustic & Visual Feedback:** Triggers immediate audio alert tones (e.g., 1000 Hz beep on connection jerk or poor roll-off with heavy impact) and displays synchronized overlay lines directly on a live video feed.
 
+If you want to build that by your own check the required parts [here](parts.md).
+
 ---
 
 ## 🚀 Quick Start / How to Use
 
-1. **Power On:** Turn on the **Master Unit** first so it establishes its Wi-Fi channel.
+1. **Power On:** Turn on the **Master Unit** first so it establishes its Wi-Fi channel (either the WiFi around- has to be maintained in secrets.h or spans its own WiFi).
 2. **Connect Sensors:** Power on the Foot and Hand sensors. They automatically scan channels (1–13), pair with the Master, and lock onto the channel.
 3. **Open Dashboard:** Connect your tablet, phone, or laptop to the Master's Wi-Fi network and open the IP address in any web browser.
 4. **Train & Review:**
