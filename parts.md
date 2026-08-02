@@ -16,8 +16,8 @@ This document outlines all required hardware components, 3D/mechanical parts, an
 | **S-Type Load Cell (Tension / Compression)** | 1 | Measures push (+ force) and pull (- force) lead connection up to 10 kg | [S-Type M8 Load Cell](https://www.amazon.de/dp/B0G4C7QRQK) |
 | **T-Bar Handles (M8 Thread)** | 2 | Ergonomic connection handles for Leader & Follower hands during tension tests | [M8 T-Handles (Amazon)](https://www.amazon.de/dp/B0C5JB4N8M) |
 | **M8 Threaded Rod / Adapters** | 2 | Connects the T-handles to the top and bottom eyelets of the S-Type Load Cell | Hardware store / Standard M8 |
-| **M5Stack Mounts for shoes** | 2 | Securely fastens the Foot IMU units to the top of the dance shoes | [3D print shoe mount](M5-shoe-mount.stl) |
-| **Housing for the scale** | 1 | housing for the load cell and mounting for the M5 | [3D print scale](Scale-box.stl) |
+| **M5Stack Mounts for shoes** | 2 | Securely fastens the Foot IMU units to the top of the dance shoes ![shoemount](/Attachments/Sensor-002.jpg) | [3D print shoe mount](Attachments/M5-shoe-mount.stl) |
+| **Housing for the scale** | 1 | housing for the load cell and mounting for the M5 ![Scale](/Attachments/Sensor-001.jpg) | [3D print scale](Attachments/Scale-box.stl) |
 
 ---
 
