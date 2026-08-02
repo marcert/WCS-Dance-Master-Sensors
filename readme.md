@@ -48,7 +48,7 @@ Install the following libraries in Arduino IDE / PlatformIO:
 ### Firmware Flashing
 1. **Master Unit:**
    * Create a `secrets.h` file containing your Wi-Fi credentials (`STAMMI_SSID` & `STAMMI_PASS`).
-   * Flash the Master code. (If Wi-Fi fails, it falls back to standalone Access Point mode at `192.168.4.1`).
+   * Flash the Master code. (If Wi-Fi fails, it falls back to standalone Access Point mode with password `12345678` at `192.168.4.1`).
 2. **Foot Sensors:**
    * Flash Unit 1 with `#define FOOT_ID 1` (Left Foot).
    * Flash Unit 2 with `#define FOOT_ID 2` (Right Foot).
