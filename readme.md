@@ -6,7 +6,8 @@ A real-time wireless sensor network and video feedback system built specifically
 
 ## 🎯 Purpose & Goal
 
-Improving connection, timing, and footwork in West Coast Swing often relies on subjective feeling or delayed video review. This system tries to solve that problem by giving **instant physical telemetry and visual feedback** while you dance.
+Improving connection, timing, and footwork in West Coast Swing often relies on subjective feeling or delayed video review. This system tries to solve that problem by giving **instant physical telemetry and visual feedback** while you dance even with the sensor graphs as an overlay to the camera of the mobile phone:
+![Screenshot](/Attachments/screenshot.png)
 
 ### What it measures in real-time:
 * **Footwork & Roll-off Quality (Left & Right Foot):** Measures foot roll-off dynamics via gyroscope angular rate and detects hard impacts / stomping (Z-axis g-force spikes).
@@ -47,7 +48,7 @@ Install the following libraries in Arduino IDE / PlatformIO:
 ### Firmware Flashing
 1. **Master Unit:**
    * Create a `secrets.h` file containing your Wi-Fi credentials (`STAMMI_SSID` & `STAMMI_PASS`).
-   * Flash the Master code. (If Wi-Fi fails, it falls back to standalone Access Point mode at `192.168.4.1`).
+   * Flash the Master code. (If Wi-Fi fails, it falls back to standalone Access Point mode with password `12345678` at `192.168.4.1`).
 2. **Foot Sensors:**
    * Flash Unit 1 with `#define FOOT_ID 1` (Left Foot).
    * Flash Unit 2 with `#define FOOT_ID 2` (Right Foot).
@@ -78,3 +79,11 @@ Install the following libraries in Arduino IDE / PlatformIO:
                               | Real-time Canvas Graphs  |
                               | Live Camera Overlay      |
                               +--------------------------+
+
+```
+## Open Items / To-Dos
+* Improve the physical handles/grips on the hand scale unit.
+
+* Fine-tune the telemetry metrics and threshold values for better movement detection.
+
+If you have suggestions or ideas for improvement, feel free to share them!
