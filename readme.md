@@ -6,7 +6,8 @@ A real-time wireless sensor network and video feedback system built specifically
 
 ## 🎯 Purpose & Goal
 
-Improving connection, timing, and footwork in West Coast Swing often relies on subjective feeling or delayed video review. This system tries to solve that problem by giving **instant physical telemetry and visual feedback** while you dance.
+Improving connection, timing, and footwork in West Coast Swing often relies on subjective feeling or delayed video review. This system tries to solve that problem by giving **instant physical telemetry and visual feedback** while you dance even with the sensor graphs as an overlay to the camera of the mobile phone:
+![Screenshot](/Attachments/screenshot.png)
 
 ### What it measures in real-time:
 * **Footwork & Roll-off Quality (Left & Right Foot):** Measures foot roll-off dynamics via gyroscope angular rate and detects hard impacts / stomping (Z-axis g-force spikes).
