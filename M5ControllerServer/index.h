@@ -207,14 +207,16 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
             const canvasStream = recordCanvas.captureStream(30);
 
-            // Mikrofon-Audio hinzufügen (für Musik / Raumklang)
             try {
-                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                if (audioStream.getAudioTracks().length > 0) {
-                    canvasStream.addTrack(audioStream.getAudioTracks()[0]);
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    if (audioStream && audioStream.getAudioTracks().length > 0) {
+                        canvasStream.addTrack(audioStream.getAudioTracks()[0]);
+                    }
                 }
             } catch (audioErr) {
-                console.log("Mikrofon-Zugriff nicht möglich, nehme nur Video auf:", audioErr);
+                console.warn("Mikrofon-Zugriff nicht möglich, nehme nur Video auf:", audioErr);
+                audioStream = null;
             }
 
             let options = { mimeType: 'video/webm; codecs=vp9,opus' };
@@ -232,7 +234,6 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             };
 
             mediaRecorder.onstop = function() {
-                // Mikrofon-Tracks stoppen, damit das Aufnahmesymbol im Handy erlischt
                 if (audioStream) {
                     audioStream.getTracks().forEach(track => track.stop());
                 }
@@ -280,9 +281,14 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 recCtx.drawImage(canvasKraft, 0, 500, 1000, 250);
                 recCtx.drawImage(canvasKombi, 0, 750, 1000, 250);
 
-                recCtx.fillStyle = targetW >= 0 ? "#00ff00" : "#ff0000";
                 recCtx.font = "bold 90px Arial";
-                recCtx.fillText(Math.round(targetW) + " g", 40, 120);
+                if (targetHOk) {
+                    recCtx.fillStyle = targetW >= 0 ? "#00ff00" : "#ff0000";
+                    recCtx.fillText(Math.round(targetW) + " g", 40, 120);
+                } else {
+                    recCtx.fillStyle = "#888888";
+                    recCtx.fillText("- g", 40, 120);
+                }
 
             }, 1000 / 30);
 
@@ -305,13 +311,15 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     const maxPoints = (1000 / intervalMs) * totalDurationSec;
     const xStep = canvasKraft.width / maxPoints;
 
-    let kraftPoints   = new Array(maxPoints).fill(125);
-    let leftFootPoints  = new Array(maxPoints).fill().map(() => ({ y: 125, isError: false }));
-    let rightFootPoints = new Array(maxPoints).fill().map(() => ({ y: 125, isError: false }));
-    let jerkPoints      = new Array(maxPoints).fill().map(() => ({ y: 245, isJerkPeak: false }));
+    // Arrays mit null initialisieren (keine gefälschten Linien beim Start)
+    let kraftPoints     = new Array(maxPoints).fill(null);
+    let leftFootPoints  = new Array(maxPoints).fill().map(() => ({ y: null, isError: false }));
+    let rightFootPoints = new Array(maxPoints).fill().map(() => ({ y: null, isError: false }));
+    let jerkPoints      = new Array(maxPoints).fill().map(() => ({ y: null, isJerkPeak: false }));
 
     let targetW = 0, targetLG = 0, targetLA = 1, targetRG = 0, targetRA = 1;
     let targetAx = 0, targetAy = 0, targetAz = 1;
+    let targetHOk = false, targetLOk = false, targetROk = false;
     let serverError = 0;
     let serverJerk = false;
 
@@ -335,85 +343,120 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     }
 
     function fetchSensorData() {
-        if (!isFrozen) {
-            fetch('/data')
-                .then(response => response.json())
-                .then(data => {
-                    targetW  = data.hW;
-                    targetLG = data.lG;
-                    targetLA = data.lA;
-                    targetRG = data.rG;
-                    targetRA = data.rA;
-                    targetAx = data.hAx;
-                    targetAy = data.hAy;
-                    targetAz = data.hAz;
-                    serverError = data.err;
-                    serverJerk  = data.jerk; 
-                })
-                .catch(err => console.log(err));
+        if (isFrozen) {
+            setTimeout(fetchSensorData, 100);
+            return;
         }
+
+        fetch('/data')
+            .then(response => {
+                if (!response.ok) throw new Error("HTTP-Fehler " + response.status);
+                return response.json();
+            })
+            .then(data => {
+                targetW   = data.hW;
+                targetLG  = data.lG;
+                targetLA  = data.lA;
+                targetRG  = data.rG;
+                targetRA  = data.rA;
+                targetAx  = data.hAx;
+                targetAy  = data.hAy;
+                targetAz  = data.hAz;
+                targetHOk = data.hOk;
+                targetLOk = data.lOk;
+                targetROk = data.rOk;
+                serverError = data.err;
+                serverJerk  = data.jerk;
+
+                setTimeout(fetchSensorData, intervalMs);
+            })
+            .catch(err => {
+                console.warn("Sensor-Data fetch failed:", err);
+                targetHOk = false;
+                targetLOk = false;
+                targetROk = false;
+                setTimeout(fetchSensorData, 100);
+            });
     }
 
-    setInterval(fetchSensorData, intervalMs);
+    fetchSensorData();
 
+    // Interpolation & Glättungs-Schleife
     setInterval(function() {
         if (isFrozen) return;
 
-        currentW  += (targetW - currentW) * 0.4;
-        currentLG += (targetLG - currentLG) * 0.4;
-        currentLA += (targetLA - currentLA) * 0.4;
-        currentRG += (targetRG - currentRG) * 0.4;
-        currentRA += (targetRA - currentRA) * 0.4;
+        // Anzeige Oben Links
+        if (targetHOk) {
+            wertAnzeige.innerText = Math.round(targetW) + " g";
+            wertAnzeige.style.color = targetW >= 0 ? "#00ff00" : "#ff0000";
+        } else {
+            wertAnzeige.innerText = "- g";
+            wertAnzeige.style.color = "#888888";
+        }
 
-        currentAx += (targetAx - currentAx) * 0.4;
-        currentAy += (targetAy - currentAy) * 0.4;
-        currentAz += (targetAz - currentAz) * 0.4;
+        // --- HAND / WAAGE (KraftGraph) ---
+        if (targetHOk) {
+            currentW  += (targetW - currentW) * 0.4;
+            currentAx += (targetAx - currentAx) * 0.4;
+            currentAy += (targetAy - currentAy) * 0.4;
+            currentAz += (targetAz - currentAz) * 0.4;
 
-        wertAnzeige.innerText = Math.round(targetW) + " g";
-        wertAnzeige.style.color = targetW >= 0 ? "#00ff00" : "#ff0000";
+            let y_kraft = 125 - (currentW / 3500) * 125;
+            y_kraft = Math.max(0, Math.min(250, y_kraft));
+            kraftPoints.shift(); kraftPoints.push(y_kraft);
 
-        let y_kraft = 125 - (currentW / 3500) * 125;
-        y_kraft = Math.max(0, Math.min(250, y_kraft));
-        kraftPoints.shift(); kraftPoints.push(y_kraft);
+            // Jerk
+            let dWeight = Math.abs(currentW - prevWeight);
+            prevWeight = currentW;
+            let dAx = currentAx - prevAx;
+            let dAy = currentAy - prevAy;
+            let dAz = currentAz - prevAz;
+            prevAx = currentAx; prevAy = currentAy; prevAz = currentAz;
 
-        let leftImpactDev = Math.abs(Math.abs(currentLA) - 1.0);
-        let rightImpactDev = Math.abs(Math.abs(currentRA) - 1.0);
+            let accelJerk = Math.sqrt(dAx*dAx + dAy*dAy + dAz*dAz);
+            let fuehrungshaerteRaw = (dWeight / 50.0) + (accelJerk * 15.0);
 
-        let leftQuality  = Math.abs(currentLG) / (1.0 + leftImpactDev * 2.0);
-        let rightQuality = Math.abs(currentRG) / (1.0 + rightImpactDev * 2.0);
+            let y_jerk = 245 - (fuehrungshaerteRaw * 8.0); 
+            y_jerk = Math.max(5, Math.min(245, y_jerk));
+            let isJerkPeak = serverJerk || (fuehrungshaerteRaw > 12.0); 
 
-        let y_lg = 125 - (leftQuality / 300) * 125;
-        let y_rg = 125 - (rightQuality / 300) * 125;
+            jerkPoints.shift(); jerkPoints.push({ y: y_jerk, isJerkPeak: isJerkPeak });
+        } else {
+            kraftPoints.shift(); kraftPoints.push(null);
+            jerkPoints.shift();  jerkPoints.push({ y: null, isJerkPeak: false });
+        }
 
-        y_lg = Math.max(0, Math.min(250, y_lg));
-        y_rg = Math.max(0, Math.min(250, y_rg));
+        // --- LINKER FUSS ---
+        if (targetLOk) {
+            currentLG += (targetLG - currentLG) * 0.4;
+            currentLA += (targetLA - currentLA) * 0.4;
 
-        let isLeftErr  = (serverError === 1) || (Math.abs(currentLA) > 1.5 && Math.abs(currentLG) < 80.0);
-        let isRightErr = (serverError === 2) || (Math.abs(currentRA) > 1.5 && Math.abs(currentRG) < 80.0);
+            let leftImpactDev = Math.abs(Math.abs(currentLA) - 1.0);
+            let leftQuality  = Math.abs(currentLG) / (1.0 + leftImpactDev * 2.0);
+            let y_lg = 125 - (leftQuality / 300) * 125;
+            y_lg = Math.max(0, Math.min(250, y_lg));
+            let isLeftErr = (serverError === 1) || (Math.abs(currentLA) > 1.5 && Math.abs(currentLG) < 80.0);
 
-        leftFootPoints.shift();  leftFootPoints.push({ y: y_lg, isError: isLeftErr });
-        rightFootPoints.shift(); rightFootPoints.push({ y: y_rg, isError: isRightErr });
+            leftFootPoints.shift(); leftFootPoints.push({ y: y_lg, isError: isLeftErr });
+        } else {
+            leftFootPoints.shift(); leftFootPoints.push({ y: null, isError: false });
+        }
 
-        let dWeight = Math.abs(currentW - prevWeight);
-        prevWeight = currentW;
+        // --- RECHTER FUSS ---
+        if (targetROk) {
+            currentRG += (targetRG - currentRG) * 0.4;
+            currentRA += (targetRA - currentRA) * 0.4;
 
-        let dAx = currentAx - prevAx;
-        let dAy = currentAy - prevAy;
-        let dAz = currentAz - prevAz;
-        
-        prevAx = currentAx;
-        prevAy = currentAy;
-        prevAz = currentAz;
+            let rightImpactDev = Math.abs(Math.abs(currentRA) - 1.0);
+            let rightQuality = Math.abs(currentRG) / (1.0 + rightImpactDev * 2.0);
+            let y_rg = 125 - (rightQuality / 300) * 125;
+            y_rg = Math.max(0, Math.min(250, y_rg));
+            let isRightErr = (serverError === 2) || (Math.abs(currentRA) > 1.5 && Math.abs(currentRG) < 80.0);
 
-        let accelJerk = Math.sqrt(dAx*dAx + dAy*dAy + dAz*dAz);
-        let fuehrungshaerteRaw = (dWeight / 50.0) + (accelJerk * 15.0);
-
-        let y_jerk = 245 - (fuehrungshaerteRaw * 8.0); 
-        y_jerk = Math.max(5, Math.min(245, y_jerk));
-        
-        let isJerkPeak = serverJerk || (fuehrungshaerteRaw > 12.0); 
-        jerkPoints.shift(); 
-        jerkPoints.push({ y: y_jerk, isJerkPeak: isJerkPeak });
+            rightFootPoints.shift(); rightFootPoints.push({ y: y_rg, isError: isRightErr });
+        } else {
+            rightFootPoints.shift(); rightFootPoints.push({ y: null, isError: false });
+        }
 
     }, intervalMs); 
 
@@ -428,39 +471,61 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
     function drawKraftGraph() {
         ctxKraft.clearRect(0, 0, canvasKraft.width, canvasKraft.height);
+        
+        // Nulllinie
         ctxKraft.strokeStyle = 'rgba(255, 255, 255, 0.2)'; 
         ctxKraft.lineWidth = 2;
         ctxKraft.beginPath(); ctxKraft.moveTo(0, 125); ctxKraft.lineTo(canvasKraft.width, 125); ctxKraft.stroke();
 
         ctxKraft.lineWidth = 6;
-        let isGreen = (kraftPoints[0] < 125);
-        ctxKraft.beginPath();
-        ctxKraft.strokeStyle = isGreen ? '#00ff00' : '#ff0000';
-        ctxKraft.moveTo(0, kraftPoints[0]);
+        let drawing = false;
+        let isGreen = true;
 
-        for(let i = 1; i < kraftPoints.length; i++) {
+        for (let i = 0; i < kraftPoints.length; i++) {
+            let val = kraftPoints[i];
             let x = i * xStep;
-            let nextIsGreen = (kraftPoints[i] < 125);
-            ctxKraft.lineTo(x, kraftPoints[i]);
-            
-            if (nextIsGreen !== isGreen) {
-                ctxKraft.stroke();
+
+            if (val === null) {
+                if (drawing) {
+                    ctxKraft.stroke();
+                    drawing = false;
+                }
+                continue;
+            }
+
+            let nextIsGreen = (val < 125);
+
+            if (!drawing) {
                 ctxKraft.beginPath();
                 ctxKraft.strokeStyle = nextIsGreen ? '#00ff00' : '#ff0000';
-                ctxKraft.moveTo(x, kraftPoints[i]);
+                ctxKraft.moveTo(x, val);
                 isGreen = nextIsGreen;
+                drawing = true;
+            } else {
+                if (nextIsGreen !== isGreen) {
+                    ctxKraft.lineTo(x, val);
+                    ctxKraft.stroke();
+                    ctxKraft.beginPath();
+                    ctxKraft.strokeStyle = nextIsGreen ? '#00ff00' : '#ff0000';
+                    ctxKraft.moveTo(x, val);
+                    isGreen = nextIsGreen;
+                } else {
+                    ctxKraft.lineTo(x, val);
+                }
             }
         }
-        ctxKraft.stroke();
+        if (drawing) ctxKraft.stroke();
     }
 
     function drawKombiGraph() {
         ctxKombi.clearRect(0, 0, canvasKombi.width, canvasKombi.height);
         
+        // Nulllinie
         ctxKombi.strokeStyle = 'rgba(255, 255, 255, 0.2)';
         ctxKombi.lineWidth = 2;
         ctxKombi.beginPath(); ctxKombi.moveTo(0, 125); ctxKombi.lineTo(canvasKombi.width, 125); ctxKombi.stroke();
 
+        // Fehler-Markierungen (vertikal)
         for (let i = 0; i < maxPoints; i++) {
             let x = i * xStep;
             let leftErr  = leftFootPoints[i].isError;
@@ -493,26 +558,39 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             }
         }
 
-        ctxKombi.lineWidth = 4;
-        ctxKombi.strokeStyle = '#00ffff';
-        ctxKombi.beginPath();
-        ctxKombi.moveTo(0, leftFootPoints[0].y);
-        for(let i = 1; i < leftFootPoints.length; i++) { ctxKombi.lineTo(i * xStep, leftFootPoints[i].y); }
-        ctxKombi.stroke();
+        // Linien zeichnen mit Unterbrechung bei offline (null)
+        drawSeries(ctxKombi, leftFootPoints, '#00ffff', 4);  // Links (Cyan)
+        drawSeries(ctxKombi, rightFootPoints, '#ff00ff', 4); // Rechts (Magenta)
+        drawSeries(ctxKombi, jerkPoints, '#ffff00', 3);      // Jerk (Gelb)
+    }
 
-        ctxKombi.lineWidth = 4;
-        ctxKombi.strokeStyle = '#ff00ff';
-        ctxKombi.beginPath();
-        ctxKombi.moveTo(0, rightFootPoints[0].y);
-        for(let i = 1; i < rightFootPoints.length; i++) { ctxKombi.lineTo(i * xStep, rightFootPoints[i].y); }
-        ctxKombi.stroke();
+    // Hilfsfunktion zum Zeichnen von Punktfolgen mit Unterbrechungen
+    function drawSeries(ctx, points, color, width) {
+        ctx.lineWidth = width;
+        ctx.strokeStyle = color;
+        let drawing = false;
 
-        ctxKombi.lineWidth = 3;
-        ctxKombi.strokeStyle = '#ffff00';
-        ctxKombi.beginPath();
-        ctxKombi.moveTo(0, jerkPoints[0].y);
-        for(let i = 1; i < jerkPoints.length; i++) { ctxKombi.lineTo(i * xStep, jerkPoints[i].y); }
-        ctxKombi.stroke();
+        for (let i = 0; i < points.length; i++) {
+            let pt = points[i];
+            let x = i * xStep;
+
+            if (pt.y === null) {
+                if (drawing) {
+                    ctx.stroke();
+                    drawing = false;
+                }
+                continue;
+            }
+
+            if (!drawing) {
+                ctx.beginPath();
+                ctx.moveTo(x, pt.y);
+                drawing = true;
+            } else {
+                ctx.lineTo(x, pt.y);
+            }
+        }
+        if (drawing) ctx.stroke();
     }
 </script>
 </body>

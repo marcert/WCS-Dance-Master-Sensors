@@ -39,6 +39,12 @@ float leftGyro = 0, leftAccel = 0;
 float rightGyro = 0, rightAccel = 0;
 float handWeight = 0, handAx = 0, handAy = 0, handAz = 0;
 
+// --- TIMEOUT TRACKING FOR CONNECTED SENSORS ---
+uint32_t lastSeenLeft  = 0;
+uint32_t lastSeenRight = 0;
+uint32_t lastSeenHand  = 0;
+const uint32_t SENSOR_TIMEOUT_MS = 1500; // Timeout nach 1.5s ohne Signal
+
 // Helper variables for Jerk calculation on M5
 float prevHandWeight = 0;
 float prevHandAx = 0, prevHandAy = 0, prevHandAz = 1.0;
@@ -52,25 +58,41 @@ volatile uint32_t errorStartTime = 0;
 // Web server on port 80
 WebServer server(80);
 
-
 // Web server Endpoint: Send JSON data
 void handleData() {
+  bool leftOk  = (millis() - lastSeenLeft  < SENSOR_TIMEOUT_MS);
+  bool rightOk = (millis() - lastSeenRight < SENSOR_TIMEOUT_MS);
+  bool handOk  = (millis() - lastSeenHand  < SENSOR_TIMEOUT_MS);
+
+  // Send zero/defaults if sensor is offline to prevent frozen "phantom" values on dashboard
+  float sendLG  = leftOk  ? leftGyro   : 0.0f;
+  float sendLA  = leftOk  ? leftAccel  : 0.0f;
+  float sendRG  = rightOk ? rightGyro  : 0.0f;
+  float sendRA  = rightOk ? rightAccel : 0.0f;
+  float sendHW  = handOk  ? handWeight : 0.0f;
+  float sendAx  = handOk  ? handAx     : 0.0f;
+  float sendAy  = handOk  ? handAy     : 0.0f;
+  float sendAz  = handOk  ? handAz     : 1.0f;
+
   String json = "{";
-  json += "\"lG\":" + String(leftGyro) + ",";
-  json += "\"lA\":" + String(leftAccel) + ",";
-  json += "\"rG\":" + String(rightGyro) + ",";
-  json += "\"rA\":" + String(rightAccel) + ",";
-  json += "\"hW\":" + String(handWeight) + ",";
-  json += "\"hAx\":" + String(handAx) + ",";
-  json += "\"hAy\":" + String(handAy) + ",";
-  json += "\"hAz\":" + String(handAz) + ",";
-  json += "\"err\":" + String((int)currentError) + ",";
+  json += "\"lG\":"   + String(sendLG)  + ",";
+  json += "\"lA\":"   + String(sendLA)  + ",";
+  json += "\"rG\":"   + String(sendRG)  + ",";
+  json += "\"rA\":"   + String(sendRA)  + ",";
+  json += "\"hW\":"   + String(sendHW)  + ",";
+  json += "\"hAx\":"  + String(sendAx)  + ",";
+  json += "\"hAy\":"  + String(sendAy)  + ",";
+  json += "\"hAz\":"  + String(sendAz)  + ",";
+  json += "\"lOk\":"  + String(leftOk  ? "true" : "false") + ",";
+  json += "\"rOk\":"  + String(rightOk ? "true" : "false") + ",";
+  json += "\"hOk\":"  + String(handOk  ? "true" : "false") + ",";
+  json += "\"err\":"  + String((int)currentError) + ",";
   json += "\"jerk\":" + String(isJerkAlert ? "true" : "false");
   json += "}";
   server.send(200, "application/json", json);
 }
 
-// ESP-NOW Receive Callback with automatic acknowledgement (response to transmitter)
+// ESP-NOW Receive Callback with automatic acknowledgement
 #if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
 void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *data, int len) {
   const uint8_t *src_mac = recv_info->src_addr;
@@ -89,11 +111,13 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     float accelVal = abs(footData.accel_z);
 
     if (isLeft) {
-      leftGyro  = footData.gyro_x;
-      leftAccel = footData.accel_z;
+      leftGyro     = footData.gyro_x;
+      leftAccel    = footData.accel_z;
+      lastSeenLeft = millis();
     } else {
-      rightGyro  = footData.gyro_x;
-      rightAccel = footData.accel_z;
+      rightGyro     = footData.gyro_x;
+      rightAccel    = footData.accel_z;
+      lastSeenRight = millis();
     }
 
     // WCS ERROR CONDITION (Stomping without roll-off)
@@ -108,10 +132,11 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     struct_hand_data handData;
     memcpy(&handData, data, sizeof(handData));
 
-    handWeight = handData.weight;
-    handAx     = handData.accel_x;
-    handAy     = handData.accel_y;
-    handAz     = handData.accel_z;
+    handWeight   = handData.weight;
+    handAx       = handData.accel_x;
+    handAy       = handData.accel_y;
+    handAz       = handData.accel_z;
+    lastSeenHand = millis();
 
     // --- CALCULATE LEAD SMOOTHNESS / JERK FOR THE HAND ---
     float dWeight = abs(handWeight - prevHandWeight);
@@ -128,7 +153,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     float accelJerk = sqrt(dAx*dAx + dAy*dAy + dAz*dAz);
     float fuehrungshaerteRaw = (dWeight / 50.0) + (accelJerk * 15.0);
 
-    // Third tone on Jerk (> 12.0) – Lower tone at 1000 Hz
+    // Tone on Jerk (> 12.0)
     if (fuehrungshaerteRaw > 12.0) {
       isJerkAlert = true;
       if (currentError == NONE) {
@@ -155,7 +180,6 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
   esp_now_send(src_mac, (uint8_t *)&ackPacket, sizeof(ackPacket));
 }
 
-
 void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
@@ -169,7 +193,6 @@ void setup() {
 
   // --- WIFI SETUP (AP + STA) ---
   WiFi.mode(WIFI_AP_STA);
-  
   WiFi.begin(STAMMI_SSID, STAMMI_PASS);
   
   M5.Display.setCursor(10, 10);
@@ -187,7 +210,6 @@ void setup() {
   M5.Display.fillScreen(BLACK);
   if (WiFi.status() == WL_CONNECTED) {
     currentChannel = WiFi.channel();
-    
     M5.Display.setTextColor(GREEN, BLACK);
     M5.Display.drawString("HOME-WIFI OK", 10, 10);
     M5.Display.setTextColor(WHITE, BLACK);
@@ -198,7 +220,6 @@ void setup() {
   } else {
     WiFi.disconnect();
     currentChannel = 1;
-    
     M5.Display.setTextColor(ORANGE, BLACK);
     M5.Display.drawString("AP MODE ONLY", 10, 10);
     M5.Display.setTextColor(WHITE, BLACK);
@@ -255,25 +276,45 @@ void loop() {
   uint16_t leftFg  = (currentError == ERR_LEFT)  ? WHITE : BLUE;
   uint16_t rightFg = (currentError == ERR_RIGHT) ? WHITE : RED;
 
-  int batLevel = M5.Power.getBatteryLevel();
+  uint32_t now = millis();
+  bool leftOnline  = (now - lastSeenLeft  < SENSOR_TIMEOUT_MS);
+  bool rightOnline = (now - lastSeenRight < SENSOR_TIMEOUT_MS);
+  bool handOnline  = (now - lastSeenHand  < SENSOR_TIMEOUT_MS);
 
   M5.Display.setTextSize(2);
 
+  // --- DISPLAY LEFT FOOT ---
   M5.Display.setCursor(5, 5);
   M5.Display.setTextColor(leftFg, leftBg);
-  M5.Display.printf("L: G:%4.0f A:%3.1f ", leftGyro, leftAccel);
+  if (leftOnline) {
+    M5.Display.printf("L: G:%4.0f A:%3.1f  ", leftGyro, leftAccel);
+  } else {
+    M5.Display.printf("L: -- OFFLINE -- ");
+  }
 
+  // --- DISPLAY RIGHT FOOT ---
   M5.Display.setCursor(5, 30);
   M5.Display.setTextColor(rightFg, rightBg);
-  M5.Display.printf("R: G:%4.0f A:%3.1f ", rightGyro, rightAccel);
+  if (rightOnline) {
+    M5.Display.printf("R: G:%4.0f A:%3.1f  ", rightGyro, rightAccel);
+  } else {
+    M5.Display.printf("R: -- OFFLINE -- ");
+  }
 
+  // --- DISPLAY HAND / SCALE ---
   M5.Display.setCursor(5, 55);
   M5.Display.setTextColor(GREEN, BLACK);
-  M5.Display.printf("H: %4.0f g        ", handWeight);
+  if (handOnline) {
+    M5.Display.printf("H: %4.0f g        ", handWeight);
+  } else {
+    M5.Display.printf("H: -- OFFLINE -- ");
+  }
 
+  // --- BATTERY DISPLAY ---
+  int batLevel = M5.Power.getBatteryLevel();
   M5.Display.setCursor(5, 80);
   M5.Display.setTextColor(YELLOW, BLACK);
-  M5.Display.printf("BAT: %3d%%       ", batLevel);
+  M5.Display.printf("BAT: %3d%%        ", batLevel);
 
   delay(20);
 }
