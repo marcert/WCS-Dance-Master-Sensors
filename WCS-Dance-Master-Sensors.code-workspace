@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "ConnectionForceMeasurement"
+		},
+		{
+			"path": "M5ControllerServer"
+		},
+		{
+			"path": "M5Left"
+		},
+		{
+			"path": "M5Right"
+		}
+	],
+	"settings": {}
+}
