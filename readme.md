@@ -1,4 +1,4 @@
-# 🕺 WCS Ultra-Performance Dance & Movement Analysis System
+# 🕺 WCS Movement and Connection Analysis System
 
 A real-time wireless sensor network and video feedback system built specifically for **West Coast Swing (WCS)** dancers and coaches.
 
