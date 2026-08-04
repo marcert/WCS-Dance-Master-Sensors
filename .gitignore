@@ -1,4 +1,6 @@
-# Build / Temporäre Dateien
+# PlatformIO & Build-Dateien
+.pio/
+**/.pio/
 build/
 *.hex
 *.elf
@@ -12,4 +14,7 @@ build/
 # Betriebssystem
 .DS_Store
 Thumbs.db
+
+# Sensitive Daten (Passwörter/WLAN)
 secrets.h
+**/secrets.h
