@@ -40,7 +40,7 @@ In West Coast Swing, proper foot mechanics require a smooth weight transfer and 
 Jerk represents the rate of change of acceleration (or abrupt spikes in force application), which directly correlates with harsh, unannounced redirection or pulling in partner dance connections.
 
 *   **Calculations:**
-    1.  **Weight Delta ($\Delta W$):** $\Delta W = \left| \text{weight}_{current} - \text{weight}_{previous} \right|$
+    1.  **Weight Delta ($\Delta W$):** $\Delta W = \left| \text{weight}\_{\text{current}} - \text{weight}\_{\text{previous}} \right|$
     2.  **Spatial Acceleration Jerk Vector:**
         *   $\Delta a_x = a_{x,current} - a_{x,previous}$
         *   $\Delta a_y = a_{y,current} - a_{y,previous}$
