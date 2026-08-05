@@ -29,11 +29,35 @@ esp_now_peer_info_t peerInfo;
 // Status variables for handshake & display
 volatile bool masterAckReceived = false;
 volatile uint8_t masterConfirmedChannel = 0;
+volatile uint32_t lastMasterAckTime = 0; // Zeitstempel der letzten Master-Antwort
+const uint32_t MASTER_TIMEOUT_MS = 3000;   // Nach 3s ohne ACK gilt der Master als offline
+
+volatile bool pendingUIUpdate = false; // Flag für entkoppeltes UI Update
+
+uint8_t currentChannel = 1;
+bool masterConnected = false;
+unsigned long lastRescanTime = 0;
+const unsigned long RESCAN_INTERVAL_MS = 60000; // 60 Sekunden Re-Scan bei fehlender Verbindung
 
 unsigned long lastBatteryUpdate = 0;
 unsigned long displayTurnOnTime = 0;
 bool isDisplayOn = true;
 int bgColour = BLACK;
+
+void updateChannelDisplay() {
+  M5.Display.setTextSize(2);
+  M5.Display.setTextColor(WHITE, bgColour);
+  
+  M5.Display.fillRect(0, 45, M5.Display.width(), 30, bgColour);
+
+  if (masterConnected) {
+    char chBuf[32];
+    snprintf(chBuf, sizeof(chBuf), "Ch: %d", currentChannel);
+    M5.Display.drawString(chBuf, M5.Display.width() / 2, 60);
+  } else {
+    M5.Display.drawString("No Master", M5.Display.width() / 2, 60);
+  }
+}
 
 void updateBatteryDisplay() {
   int level = M5.Power.getBatteryLevel();
@@ -44,6 +68,52 @@ void updateBatteryDisplay() {
   char battBuf[16];
   snprintf(battBuf, sizeof(battBuf), "BATT: %d%% ", level);
   M5.Display.drawString(battBuf, M5.Display.width() / 2, 95);
+}
+
+uint8_t scanForMaster() {
+  sensorData.foot_id = FOOT_ID;
+  sensorData.gyro_x = 0;
+  sensorData.accel_z = 1.0;
+
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.encrypt = false;
+
+  uint8_t foundCh = 0;
+
+  for (uint8_t ch = 1; ch <= 13; ch++) {
+    esp_wifi_set_promiscuous(true);
+    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+    esp_wifi_set_promiscuous(false);
+    
+    peerInfo.channel = ch;
+
+    if (esp_now_is_peer_exist(broadcastAddress)) {
+      esp_now_del_peer(broadcastAddress);
+    }
+    esp_now_add_peer(&peerInfo);
+
+    delay(15); // Einschwingzeit für Funkchip
+
+    for (int attempt = 0; attempt < 5; attempt++) {
+      masterAckReceived = false;
+      esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
+
+      uint32_t startWait = millis();
+      while (millis() - startWait < 50) { // 50ms Warten
+        if (masterAckReceived) {
+          foundCh = (masterConfirmedChannel > 0) ? masterConfirmedChannel : ch;
+          break;
+        }
+        delay(1);
+      }
+      if (foundCh > 0) break;
+      delay(5);
+    }
+
+    if (foundCh > 0) break;
+  }
+
+  return foundCh;
 }
 
 // --- ESP-NOW RECEIVE CALLBACK FOR FINGERPRINT / ACK FROM MASTER ---
@@ -58,6 +128,14 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     if (ack.confirmed == 1) {
       masterConfirmedChannel = ack.master_channel;
       masterAckReceived = true;
+      lastMasterAckTime = millis(); // Zeitstempel aktualisieren
+
+      // Wenn wir noch nicht connected waren, setzen wir nur das Flag und behandeln das UI in loop()!
+      if (!masterConnected) {
+        masterConnected = true;
+        currentChannel = (ack.master_channel > 0) ? ack.master_channel : currentChannel;
+        pendingUIUpdate = true;
+      }
     }
   }
 }
@@ -93,101 +171,62 @@ void setup() {
   // 2. Reduce transmit power to 11 dBm (sufficient for 3-5m, saves power)
   WiFi.setTxPower(WIFI_POWER_11dBm);
 
-  if (esp_now_init() != ESP_OK) {
+    if (esp_now_init() != ESP_OK) {
     M5.Display.setTextSize(1);
     M5.Display.drawString("ESP-NOW Error!", M5.Display.width() / 2, 55);
     return;
   }
 
-  // Register receive callback to evaluate master responses during scan loop
+  // WICHTIG: Callback VOR dem Scan registrieren, damit Handshake ACK verarbeitet werden kann!
   esp_now_register_recv_cb(OnDataRecv);
 
   // --- CHANNEL SCAN (SCAN CHANNEL 1 TO 13) ---
-  M5.Display.setTextSize(1);
-  M5.Display.drawString("Searching Master...", M5.Display.width() / 2, 55);
+  M5.Display.setTextSize(2);
+  M5.Display.drawString("Search Master...", M5.Display.width() / 2, 55);
 
-  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-  peerInfo.encrypt = false;
-
-  sensorData.foot_id = FOOT_ID;
-  sensorData.gyro_x = 0;
-  sensorData.accel_z = 1.0;
-
-  uint8_t foundChannel = 0;
-
-  for (uint8_t ch = 1; ch <= 13; ch++) {
-    esp_wifi_set_promiscuous(true);
-    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
-    esp_wifi_set_promiscuous(false);
-    
-    peerInfo.channel = ch;
-
-    if (esp_now_is_peer_exist(broadcastAddress)) {
-      esp_now_del_peer(broadcastAddress);
-    }
-    esp_now_add_peer(&peerInfo);
-
-    delay(10); // Settling time for RF module
-
-    // Start 3 attempts on each channel and wait for genuine Master ACK
-    for (int attempt = 0; attempt < 3; attempt++) {
-      masterAckReceived = false;
-      esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
-
-      uint32_t startWait = millis();
-      while (millis() - startWait < 30) { // Wait 30 ms for response packet from Master
-        if (masterAckReceived) {
-          foundChannel = (masterConfirmedChannel > 0) ? masterConfirmedChannel : ch;
-          break;
-        }
-        delay(1);
-      }
-      if (foundChannel > 0) break;
-      delay(5);
-    }
-
-    if (foundChannel > 0) break;
-  }
+  uint8_t foundChannel = scanForMaster();
 
   // --- LOCK CHANNEL RESULT ---
   M5.Display.fillScreen(bgColour);
   M5.Display.setTextSize(2);
   M5.Display.drawString((FOOT_ID == 1) ? "FOOT: LEFT" : "FOOT: RIGHT", M5.Display.width() / 2, 25);
 
-  M5.Display.setTextSize(1);
-  if (foundChannel > 0) {
-    esp_wifi_set_promiscuous(true);
-    esp_wifi_set_channel(foundChannel, WIFI_SECOND_CHAN_NONE);
-    esp_wifi_set_promiscuous(false);
-
-    peerInfo.channel = foundChannel;
-    if (esp_now_is_peer_exist(broadcastAddress)) {
-      esp_now_del_peer(broadcastAddress);
-    }
-    esp_now_add_peer(&peerInfo);
-
-    String chInfo = "Master on Ch " + String(foundChannel);
-    M5.Display.drawString(chInfo, M5.Display.width() / 2, 55);
+    if (foundChannel > 0) {
+    masterConnected = true;
+    currentChannel = foundChannel;
+    lastMasterAckTime = millis();
   } else {
-    // Fallback to Channel 1 if Master was not powered on yet
-    esp_wifi_set_promiscuous(true);
-    esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);
-    esp_wifi_set_promiscuous(false);
-
-    peerInfo.channel = 1;
-    if (esp_now_is_peer_exist(broadcastAddress)) {
-      esp_now_del_peer(broadcastAddress);
-    }
-    esp_now_add_peer(&peerInfo);
-    
-    M5.Display.drawString("Fallback: Channel 1", M5.Display.width() / 2, 55);
+    masterConnected = false;
+    currentChannel = 1; // Default Fallback
   }
 
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_channel(currentChannel, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_promiscuous(false);
+
+  peerInfo.channel = currentChannel;
+  if (esp_now_is_peer_exist(broadcastAddress)) {
+    esp_now_del_peer(broadcastAddress);
+  }
+  esp_now_add_peer(&peerInfo);
+
+  updateChannelDisplay();
+  updateBatteryDisplay();
+
+  lastRescanTime = millis();
   displayTurnOnTime = millis();
 }
 
 void loop() {
   M5.update();
+
+  // --- ENT KOPPELTES UI UPDATE NACH VERBINDUNGSAUFBAU ---
+  if (pendingUIUpdate) {
+    pendingUIUpdate = false;
+    if (isDisplayOn) {
+      updateChannelDisplay();
+    }
+  }
 
   // --- BUTTON A (FRONT BUTTON): TURN ON DISPLAY FOR 30 SECONDS ---
   if (M5.BtnA.wasPressed()) {
@@ -214,11 +253,64 @@ void loop() {
     M5.Display.setBrightness(0);
   }
 
-  // --- UPDATE BATTERY DISPLAY (ONLY WHEN DISPLAY IS ACTIVE) ---
-  if (isDisplayOn && (millis() - lastBatteryUpdate > 2000)) {
-    lastBatteryUpdate = millis();
-    updateBatteryDisplay();
+    // --- UPDATE BATTERY DISPLAY (ONLY WHEN DISPLAY IS ACTIVE) ---
+    if (isDisplayOn && (millis() - lastBatteryUpdate > 2000)) {
+      lastBatteryUpdate = millis();
+      updateBatteryDisplay();
+    }
+
+      // --- CONNECTION TIMEOUT CHECK (PRÜFEN OB MASTER VERLOREN GEGANGEN IST) ---
+  if (masterConnected && (millis() - lastMasterAckTime > MASTER_TIMEOUT_MS)) {
+    masterConnected = false;
+    lastRescanTime = millis(); // Rescan-Timer jetzt starten (erst in 60s scannen)
+    if (isDisplayOn) {
+      updateChannelDisplay();
+    }
   }
+
+    // --- AUTOMATIC RE-SCAN EVERY 60s IF NO MASTER CONNECTED ---
+    if (!masterConnected && (millis() - lastRescanTime > RESCAN_INTERVAL_MS)) {
+      lastRescanTime = millis();
+    
+      if (isDisplayOn) {
+        M5.Display.setTextSize(2);
+        M5.Display.setTextColor(WHITE, bgColour);
+        M5.Display.fillRect(0, 45, M5.Display.width(), 30, bgColour);
+        M5.Display.drawString("Scanning...", M5.Display.width() / 2, 60);
+      }
+
+      uint8_t foundCh = scanForMaster();
+
+            if (foundCh > 0) {
+        masterConnected = true;
+        currentChannel = foundCh;
+      
+        esp_wifi_set_promiscuous(true);
+        esp_wifi_set_channel(currentChannel, WIFI_SECOND_CHAN_NONE);
+        esp_wifi_set_promiscuous(false);
+
+        peerInfo.channel = currentChannel;
+        if (esp_now_is_peer_exist(broadcastAddress)) {
+          esp_now_del_peer(broadcastAddress);
+        }
+        esp_now_add_peer(&peerInfo);
+      } else {
+        // Fallback: Wieder auf früheren Kanal zurückschalten, falls der Scan erfolglos war
+        esp_wifi_set_promiscuous(true);
+        esp_wifi_set_channel(currentChannel, WIFI_SECOND_CHAN_NONE);
+        esp_wifi_set_promiscuous(false);
+
+        peerInfo.channel = currentChannel;
+        if (esp_now_is_peer_exist(broadcastAddress)) {
+          esp_now_del_peer(broadcastAddress);
+        }
+        esp_now_add_peer(&peerInfo);
+      }
+
+      if (isDisplayOn) {
+        updateChannelDisplay();
+      }
+    }
 
   // --- ACQUIRE IMU DATA AND SEND TO MASTER (RUNS CONTINUOUSLY) ---
   float gx, gy, gz;
