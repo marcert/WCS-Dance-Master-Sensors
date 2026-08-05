@@ -50,7 +50,7 @@ float handWeight = 0, handAx = 0, handAy = 0, handAz = 0;
 uint32_t lastSeenLeft  = 0;
 uint32_t lastSeenRight = 0;
 uint32_t lastSeenHand  = 0;
-const uint32_t SENSOR_TIMEOUT_MS = 1500; // Timeout nach 1.5s ohne Signal
+const uint32_t SENSOR_TIMEOUT_MS = 3500; // Erhöht auf 3.5s, um kurze Tarierpausen der Waage zu überbrücken
 
 // Helper variables for Jerk calculation on M5
 float prevHandWeight = 0;
