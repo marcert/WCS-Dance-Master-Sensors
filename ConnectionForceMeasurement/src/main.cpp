@@ -75,8 +75,9 @@ void setup() {
   cfg.internal_imu = true; // IMU aktivieren
   M5.begin(cfg);
 
-  // --- DISPLAY SETUP ---
+    // --- DISPLAY SETUP ---
   M5.Display.setRotation(3);
+  M5.Display.setBrightness(64); // Display gedimmt auf ~25% (Spart Akku, bleibt gut lesbar)
   M5.Display.fillScreen(BLACK);
   M5.Display.setTextSize(2);
   M5.Display.setTextColor(WHITE, BLACK);
