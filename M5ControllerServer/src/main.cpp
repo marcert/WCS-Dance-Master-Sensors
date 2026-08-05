@@ -3,7 +3,14 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <WebServer.h>
-#include "secrets.h"
+
+#if __has_include("secrets.h")
+  #include "secrets.h"
+#else
+  #define STAMMI_SSID "DanceNet"
+  #define STAMMI_PASS "12345678"
+#endif
+
 #include "index.h"
 
 // --- DATA STRUCTURE FOR FEET (ID 1 & 2) ---
@@ -55,6 +62,10 @@ enum ErrorState { NONE = 0, ERR_LEFT = 1, ERR_RIGHT = 2, ERR_BOTH = 3 };
 volatile ErrorState currentError = NONE;
 volatile uint32_t errorStartTime = 0;
 
+// Pending Audio Tone Trigger (entschärft Interrupt / Callback Context)
+volatile uint16_t pendingToneFreq = 0;
+volatile uint32_t pendingToneDuration = 0;
+
 // Web server on port 80
 WebServer server(80);
 
@@ -64,7 +75,7 @@ void handleData() {
   bool rightOk = (millis() - lastSeenRight < SENSOR_TIMEOUT_MS);
   bool handOk  = (millis() - lastSeenHand  < SENSOR_TIMEOUT_MS);
 
-  // Send zero/defaults if sensor is offline to prevent frozen "phantom" values on dashboard
+    // Send zero/defaults if sensor is offline to prevent frozen "phantom" values on dashboard
   float sendLG  = leftOk  ? leftGyro   : 0.0f;
   float sendLA  = leftOk  ? leftAccel  : 0.0f;
   float sendRG  = rightOk ? rightGyro  : 0.0f;
@@ -74,22 +85,14 @@ void handleData() {
   float sendAy  = handOk  ? handAy     : 0.0f;
   float sendAz  = handOk  ? handAz     : 1.0f;
 
-  String json = "{";
-  json += "\"lG\":"   + String(sendLG)  + ",";
-  json += "\"lA\":"   + String(sendLA)  + ",";
-  json += "\"rG\":"   + String(sendRG)  + ",";
-  json += "\"rA\":"   + String(sendRA)  + ",";
-  json += "\"hW\":"   + String(sendHW)  + ",";
-  json += "\"hAx\":"  + String(sendAx)  + ",";
-  json += "\"hAy\":"  + String(sendAy)  + ",";
-  json += "\"hAz\":"  + String(sendAz)  + ",";
-  json += "\"lOk\":"  + String(leftOk  ? "true" : "false") + ",";
-  json += "\"rOk\":"  + String(rightOk ? "true" : "false") + ",";
-  json += "\"hOk\":"  + String(handOk  ? "true" : "false") + ",";
-  json += "\"err\":"  + String((int)currentError) + ",";
-  json += "\"jerk\":" + String(isJerkAlert ? "true" : "false");
-  json += "}";
-  server.send(200, "application/json", json);
+  char buf[256];
+  snprintf(buf, sizeof(buf),
+    "{\"lG\":%.1f,\"lA\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
+    sendLG, sendLA, sendRG, sendRA, sendHW, sendAx, sendAy, sendAz,
+    leftOk ? "true" : "false", rightOk ? "true" : "false", handOk ? "true" : "false",
+    (int)currentError, isJerkAlert ? "true" : "false"
+  );
+  server.send(200, "application/json", buf);
 }
 
 // ESP-NOW Receive Callback with automatic acknowledgement
@@ -120,12 +123,12 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       lastSeenRight = millis();
     }
 
-    // WCS ERROR CONDITION (Stomping without roll-off)
+        // WCS ERROR CONDITION (Stomping without roll-off)
     if (accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
       currentError = isLeft ? ERR_LEFT : ERR_RIGHT;
       errorStartTime = millis();
-      uint16_t freq = isLeft ? 1800 : 2500;
-      M5.Speaker.tone(freq, 100); 
+      pendingToneFreq = isLeft ? 1800 : 2500;
+      pendingToneDuration = 100;
     }
   } 
   else if (len == sizeof(struct_hand_data)) {
@@ -156,8 +159,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     // Tone on Jerk (> 12.0)
     if (fuehrungshaerteRaw > 12.0) {
       isJerkAlert = true;
-      if (currentError == NONE) {
-        M5.Speaker.tone(1000, 100); 
+      if (currentError == NONE && pendingToneFreq == 0) {
+        pendingToneFreq = 1000;
+        pendingToneDuration = 100;
       }
     } else {
       isJerkAlert = false;
@@ -207,25 +211,36 @@ void setup() {
 
   uint8_t currentChannel = 1;
 
-  M5.Display.fillScreen(BLACK);
+    M5.Display.fillScreen(BLACK);
   if (WiFi.status() == WL_CONNECTED) {
     currentChannel = WiFi.channel();
+    
+    M5.Display.setCursor(10, 10);
     M5.Display.setTextColor(GREEN, BLACK);
-    M5.Display.drawString("HOME-WIFI OK", 10, 10);
-    M5.Display.setTextColor(WHITE, BLACK);
-    M5.Display.drawString("IP:", 10, 35);
-    M5.Display.drawString(WiFi.localIP().toString(), 10, 60);
+    M5.Display.println("HOME-WIFI OK");
+
+    M5.Display.setCursor(10, 35);
     M5.Display.setTextColor(YELLOW, BLACK);
     M5.Display.printf("Channel: %d", currentChannel);
+
+    M5.Display.setCursor(10, 60);
+    M5.Display.setTextColor(WHITE, BLACK);
+    M5.Display.printf("IP: %s", WiFi.localIP().toString().c_str());
   } else {
     WiFi.disconnect();
     currentChannel = 1;
+
+    M5.Display.setCursor(10, 10);
     M5.Display.setTextColor(ORANGE, BLACK);
-    M5.Display.drawString("AP MODE ONLY", 10, 10);
-    M5.Display.setTextColor(WHITE, BLACK);
-    M5.Display.drawString("IP: 192.168.4.1", 10, 35);
+    M5.Display.println("AP MODE ONLY");
+
+    M5.Display.setCursor(10, 35);
     M5.Display.setTextColor(YELLOW, BLACK);
-    M5.Display.drawString("Channel: 1", 10, 60);
+    M5.Display.drawString("Channel: 1", 10, 35);
+
+    M5.Display.setCursor(10, 60);
+    M5.Display.setTextColor(WHITE, BLACK);
+    M5.Display.drawString("IP: 192.168.4.1", 10, 60);
   }
 
   WiFi.softAP("M5-Dance-Master", "12345678", currentChannel);
@@ -256,6 +271,11 @@ void setup() {
 void loop() {
   M5.update();
   server.handleClient();
+
+  if (pendingToneFreq > 0) {
+    M5.Speaker.tone(pendingToneFreq, pendingToneDuration);
+    pendingToneFreq = 0;
+  }
 
   if (M5.BtnB.wasHold()) {
     M5.Display.fillScreen(BLACK);
@@ -310,7 +330,7 @@ void loop() {
     M5.Display.printf("H: -- OFFLINE -- ");
   }
 
-  // --- BATTERY DISPLAY ---
+    // --- BATTERY DISPLAY ---
   int batLevel = M5.Power.getBatteryLevel();
   M5.Display.setCursor(5, 80);
   M5.Display.setTextColor(YELLOW, BLACK);

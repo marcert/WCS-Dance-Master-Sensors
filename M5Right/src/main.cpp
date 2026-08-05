@@ -73,7 +73,7 @@ void setup() {
   // --- DISPLAY INITIALIZATION ---
   M5.Display.setRotation(1);               // Landscape mode
   M5.Display.setTextDatum(middle_center);  // Centered text
-  M5.Display.setBrightness(128);           // Moderate initial brightness
+  M5.Display.setBrightness(64);            // Gedimmt auf ca. 25% (Spart Akku, gut lesbar)
   
   bgColour = (FOOT_ID == 1) ? BLUE : RED;
   
