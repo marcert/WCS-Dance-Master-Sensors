@@ -113,7 +113,7 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 2. **Roll-Smoothness Index:**
    Measures angular acceleration jerk $(d\omega / dt)$ smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
    
-   $$\text{Smoothness} = \text{Mean}_{25} \left( \left| \frac{\Delta \omega_{\text{pitch}}}{\Delta t} \right| \times 0.15 \right)$$
+   $$\text{Smoothness} = \text{Mean}_{25}\left(\left| \frac{\Delta \omega_{\text{pitch}}}{\Delta t} \right| \times 0.15\right)$$
 
    * **Target:** Lower values ($0\text{ to }15$) indicate fluid, continuous ankle articulation without micro-stutters.
 
@@ -160,4 +160,3 @@ The Solo Training Dashboard is optimized for mobile browser use (tablets/smartph
   * `⛶ FULL`: Triggers Native Fullscreen API to maximize screen real estate.
   * `📐 ZERO`: Recalibrates static instep pitch angles for both feet.
   * `🔊 Audio`: Toggles Web Audio API synthesized biofeedback tones ON/OFF.
-

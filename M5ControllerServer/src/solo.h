@@ -3,7 +3,7 @@
 
 const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -140,9 +140,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             </div>
         </header>
 
-    <!-- LIVE PITCH GRAPH -->
+        <!-- LIVE PITCH GRAPH -->
     <div class="card">
-        <div class="card-title">Live Abrolldynamik – Pitch-Winkelgeschwindigkeit (ω_pitch)</div>
+        <div class="card-title">Live Roll-off Dynamics – Pitch Angular Velocity (&omega;_pitch)</div>
         <canvas id="chartPitch" width="800" height="200"></canvas>
     </div>
 
@@ -169,9 +169,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     </div>
                 </div>
 
-                <!-- BILATERALE UBERLAPPUNG (DOUBLE STANCE) -->
+                                <!-- BILATERAL OVERLAP (DOUBLE STANCE) -->
                 <div class="card">
-                    <div class="card-title">Double Stance Overlap (Δt double_stance)</div>
+                    <div class="card-title">Double Stance Overlap (&Delta;t double_stance)</div>
                     <div style="display: flex; justify-content: space-between; align-items: baseline;">
                         <div>
                             <span class="metric-value" id="doubleStanceVal">0 ms</span>
@@ -186,7 +186,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     </div>
                 </div>
 
-                <!-- ASI (SYMMETRIE) & SMOOTHNESS -->
+                                <!-- ASI (SYMMETRY) & SMOOTHNESS -->
                 <div class="card">
                     <div class="card-title">Roll-off Symmetry (ASI) & Smoothness</div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -294,8 +294,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 let lastStepTimeRight = 0;
                 let lastActiveFoot = "";
 
-        // Montage-Nullpunkt-Offsets (Rist-Neigungskompensation)
-        let leftMountOffset = 28.0;  // Standard-Sohlenneigung ca. 28 Grad
+                // Instep pitch offsets
+        let leftMountOffset = 28.0;  // Standard shoe incline ~28 deg
         let rightMountOffset = 28.0;
 
                 let doubleStanceMs = 0;
@@ -304,9 +304,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let stepDurationMs = 500; // Standard 500ms ~= 120 BPM
 
                 function tareFootAngles() {
-            // Rist-Neigung aus den aktuellen statischen Beschleunigungswerten a_y & a_z berechnen
-            leftMountOffset = pitchLeftAngleRaw;
-            rightMountOffset = pitchRightAngleRaw;
+                    // Calculate instep slope from current static acceleration values a_y & a_z
+                    leftMountOffset = pitchLeftAngleRaw;
+                    rightMountOffset = pitchRightAngleRaw;
         
             let btn = document.getElementById('tareBtn');
             btn.innerText = "📐 ZEROED! ✓";
@@ -334,11 +334,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let aZR = data.rA || 1.0;
                                         let aYR = data.rAy || 0.0;
 
-                                        // 1. Live-Pitch Kurven-Puffer
+                                                            // 1. Live Pitch Curve Buffer
                     pitchLeftHistory.shift(); pitchLeftHistory.push(gPitchL);
                     pitchRightHistory.shift(); pitchRightHistory.push(gPitchR);
 
-                    // Integrale für Winkelberechnung kontinuierlich aufbauen
+                    // Continuously build integrals for angle calculation
                     pitchLeftAngleRaw += gPitchL * dt;
                     pitchRightAngleRaw += gPitchR * dt;
 
@@ -408,7 +408,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                         // Wenn ein Schritt gelandet ist -> UI & Richtungsbewertung sofort aktualisieren
                     if (triggerImpact) {
-                        // Schrittdauer t_step seit letztem Schritt ermitteln
+                                                // Determine step duration t_step since last step
                         let currentStepDuration = Math.max(200, Math.min(1500, now - lastStepTimestamp));
                         lastStepTimestamp = now;
 
