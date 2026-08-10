@@ -2,7 +2,10 @@
 
 This document provides an in-depth breakdown of the biomechanical metrics, sensor fusion algorithms, threshold configurations, state machine lockout logic, and acoustic biofeedback mechanisms implemented in the **WCS Solo-Training Dashboard** (`/solo`).
 
----
+<p align="center">
+<img src="https://raw.githubusercontent.com/marcert/WCS-Dance-Master-Sensors/refs/heads/main/Attachments/Solo-Dashboard.jpg" width="300">
+</p>
+ ---
 
 ## 1. System Architecture & High-Speed Acquisition
 
