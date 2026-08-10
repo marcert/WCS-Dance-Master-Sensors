@@ -175,9 +175,9 @@ void setup() {
   // Receive-Callback registrieren für den Master-Scan
   esp_now_register_recv_cb(OnDataRecv);
 
-    // --- AUTOMATISCHER KANAL-SUCHLAUF (KANAL 1 BIS 13) ---
+      // --- AUTOMATISCHER KANAL-SUCHLAUF (KANAL 1 BIS 13) ---
   M5.Display.fillScreen(BLACK);
-  M5.Display.drawString("Suche Master...", 10, 5);
+  M5.Display.drawString("Search Master...", 10, 5);
 
   uint8_t foundChannel = scanForMaster();
 
@@ -251,29 +251,29 @@ void loop() {
   }
 
     // --- BUTTON A: TARIEREN / NULLPUNKT SETZEN ---
-  if (M5.BtnA.wasClicked()) {
-    M5.Display.fillRect(0, 0, 240, 25, BLACK);
-    M5.Display.drawString("LOSLASSEN...", 10, 5);
+    if (M5.BtnA.wasClicked()) {
+      M5.Display.fillRect(0, 0, 240, 25, BLACK);
+      M5.Display.drawString("RELEASE...", 10, 5);
 
-    delay(1500); 
+      delay(1500); 
 
-    M5.Display.fillRect(0, 0, 240, 25, BLACK);
-    M5.Display.drawString("TARIERE...", 10, 5);
+      M5.Display.fillRect(0, 0, 240, 25, BLACK);
+      M5.Display.drawString("TARE...", 10, 5);
 
-    if (scale.is_ready()) scale.read();
-    if (scale.is_ready()) scale.read();
+      if (scale.is_ready()) scale.read();
+      if (scale.is_ready()) scale.read();
 
-    long zero_offset = scale.read_average(5);
-    scale.set_offset(zero_offset);
+      long zero_offset = scale.read_average(5);
+      scale.set_offset(zero_offset);
 
-    lastSentWeight = -9999.0f; 
-    lastMasterAckTime = millis(); // Timeout während des Tarierens verhindern!
+      lastSentWeight = -9999.0f; 
+      lastMasterAckTime = millis(); // Timeout während des Tarierens verhindern!
 
-    M5.Display.fillRect(0, 0, 240, 25, BLACK);
-    M5.Display.drawString("TARA OK!", 10, 5);
-    delay(500);
-    M5.Display.fillRect(0, 0, 240, 25, BLACK);
-  }
+      M5.Display.fillRect(0, 0, 240, 25, BLACK);
+      M5.Display.drawString("TARE OK!", 10, 5);
+      delay(500);
+      M5.Display.fillRect(0, 0, 240, 25, BLACK);
+    }
 
     // --- AKKUSTAND ANZEIGEN (alle 5 Sekunden) ---
   if (millis() - lastBatCheck > 5000 || lastBatCheck == 0) {
