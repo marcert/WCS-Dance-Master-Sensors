@@ -105,11 +105,13 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 1. **Asymmetry Index (ASI):**
    Compares total angular work integrated across Left and Right foot roll-off cycles:
+   
    $$\text{ASI} = \left| 1.0 - \frac{\int |\omega_{\text{left}}| \, dt}{\int |\omega_{\text{right}}| \, dt} \right| \times 100\%$$
+   
    * **Target:** $< 15\%$ (Indicates equal roll-off articulation on both legs).
 
 2. **Roll-Smoothness Index:**
-   Measures angular acceleration jerk $\left(\frac{d\omega}{dt}\right)$ smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
+   Measures angular acceleration jerk $(d\omega / dt)$ smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
    
    $$\text{Smoothness} = \text{Mean}_{25} \left( \left| \frac{\Delta \omega_{\text{pitch}}}{\Delta t} \right| \times 0.15 \right)$$
 
