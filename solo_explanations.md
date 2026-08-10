@@ -74,26 +74,29 @@ ____/_____ (Floor)                      _______/___ (Floor)
     *   **Forward Step:** 
         *   $10^\circ \le \theta \le 25^\circ \longrightarrow$ `OPTIMAL HEEL` (Clean heel articulation)
         *   $5^\circ \le \theta < 10^\circ \longrightarrow$ `FLAT` (Borderline flat landing)
-        *   $\theta < 5^\circ \longrightarrow$ `FLAT-FOOT!` (Harsh flat-foot placement; triggers $1200\,\text{Hz}$ audio warning)
-    *   **Backward Step:**
-        *   $-20^\circ \le \theta \le 5^\circ \longrightarrow$ `OPTIMAL TOE` (Clean toe-ball roll-off)
-        *   $5^\circ < \theta \le 10^\circ \longrightarrow$ `FLAT` (Borderline flat landing)
-        *   $\theta > 10^\circ \longrightarrow$ `HEEL LANDING!` (Biomechanical error: heel landing while moving backward; triggers $1200\,\text{Hz}$ audio warning)
+        *   **Harsh Flat Foot:** $\theta < 5^\circ \longrightarrow$ `FLAT-FOOT!` (Harsh flat-foot placement; triggers 1200 Hz audio warning)
+            *   **Backward Step:**
+                *   $-20^\circ \le \theta \le 5^\circ \longrightarrow$ `OPTIMAL TOE` (Clean toe-ball roll-off)
+                *   $5^\circ < \theta \le 10^\circ \longrightarrow$ `FLAT` (Borderline flat landing)
+                *   $\theta > 10^\circ \longrightarrow$ `HEEL LANDING!` (Biomechanical error: heel landing while moving backward; triggers 1200 Hz audio warning)
 
----
+        ---
 
-### C. Impact Jerk ($J_{\text{impact}}$) & Shock Absorption
-Impact Jerk quantifies the rate of change of vertical impact acceleration ($aZ$ in $g$) upon step landing. It measures how effectively the knee and ankle joints cushion foot placement:
-$$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\Delta t} \right| \quad [\text{g/s}]$$
-*   **Soft Cushioning ($1\text{--}15\,\text{g/s}$):** Excellent joint absorption (`SOFT`).
-*   **Moderate Shock ($15\text{--}20\,\text{g/s}$):** Acceptable impact.
-*   **Harsh Stomping ($> 20\,\text{g/s}$):** Excessive shock transmitted to joints; triggers a $500\,\text{Hz}$ low-frequency impact click.
+        ### C. Impact Jerk ($J_{\text{impact}}$) & Shock Absorption
+        Impact Jerk quantifies the rate of change of vertical impact acceleration ($aZ$ in $g$) upon step landing. It measures how effectively the knee and ankle joints cushion foot placement:
 
----
+        $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\Delta t} \right| \quad [\text{g/s}]$$
 
-### D. Double Stance Overlap ($\Delta t_{\text{double\_stance}}$) & Grounding Ratio
-West Coast Swing emphasizes a continuous "rolling" weight transfer rather than abrupt hopping. Ground contact is registered when vertical acceleration exceeds static gravity baseline ($|aZ| > 0.65\,g$).
-$$\text{Stance Ratio (\%)} = \left( \frac{\Delta t_{\text{double\_stance}}}{t_{\text{step}}} \right) \times 100$$
+        *   **Soft Cushioning ($1\text{ to }15\text{ g/s}$):** Excellent joint absorption (`SOFT`).
+        *   **Moderate Shock ($15\text{ to }20\text{ g/s}$):** Acceptable impact.
+        *   **Harsh Stomping ($> 20\text{ g/s}$):** Excessive shock transmitted to joints; triggers a 500 Hz low-frequency impact click.
+
+        ---
+
+        ### D. Double Stance Overlap ($\Delta t_{\text{double-stance}}$) & Grounding Ratio
+        West Coast Swing emphasizes a continuous "rolling" weight transfer rather than abrupt hopping. Ground contact is registered when vertical acceleration exceeds static gravity baseline ($|aZ| > 0.65g$).
+
+        $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{step}}} \right) \times 100\%$$
 
 | Ratio Range (%) | Badge Rating | Biomechanical Meaning |
 | :---: | :---: | :--- |
@@ -107,13 +110,13 @@ $$\text{Stance Ratio (\%)} = \left( \frac{\Delta t_{\text{double\_stance}}}{t_{\
 
 1.  **Asymmetry Index (ASI):**
     Compares total angular work integrated across Left and Right foot roll-off cycles:
-    $$\text{ASI (\%)} = \left| 1.0 - \frac{\int |\omega_{\text{left}}| \, dt}{\int |\omega_{\text{right}}| \, dt} \right| \times 100$$
+    $$\text{ASI} = \left| 1.0 - \frac{\int |\omega_{\text{left}}| \, dt}{\int |\omega_{\text{right}}| \, dt} \right| \times 100\%$$
     *   **Target:** $< 15\%$ (Indicates equal roll-off articulation on both legs).
 
 2.  **Roll-Smoothness Index:**
-    Measures angular acceleration jerk ($\frac{d\omega}{dt}$) smoothed over a 25-frame ($0.5\,\text{s}$) sliding window:
+    Measures angular acceleration jerk ($\frac{d\omega}{dt}$) smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
     $$\text{Smoothness} = \text{Mean}_{25} \left( \left| \frac{\Delta \omega_{\text{pitch}}}{\Delta t} \right| \times 0.15 \right)$$
-    *   **Target:** Lower values ($0\text{--}15$) indicate fluid, continuous ankle articulation without micro-stutters.
+    *   **Target:** Lower values ($0\text{ to }15$) indicate fluid, continuous ankle articulation without micro-stutters.
 
 ---
 
@@ -122,14 +125,14 @@ $$\text{Stance Ratio (\%)} = \left( \frac{\Delta t_{\text{double\_stance}}}{t_{\
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
 | **Forward Heel Angle** | $10^\circ \text{ to } 25^\circ$ | `OPTIMAL HEEL` (Green) | None |
-| **Forward Flat Foot** | $< 5^\circ$ | `FLAT-FOOT!` (Red) | $1200\,\text{Hz}$ Sine Click ($80\,\text{ms}$) |
+| **Forward Flat Foot** | $< 5^\circ$ | `FLAT-FOOT!` (Red) | 1200 Hz Sine Click (80 ms) |
 | **Backward Toe Angle** | $-20^\circ \text{ to } +5^\circ$ | `OPTIMAL TOE` (Green) | None |
-| **Backward Heel Error** | $> 10^\circ$ | `HEEL LANDING!` (Red) | $1200\,\text{Hz}$ Warning Beep ($80\,\text{ms}$) |
-| **Impact Jerk ($J_{\text{impact}}$)** | $> 20\,\text{g/s}$ | Flash Card Boundary | $500\,\text{Hz}$ Low Impact Click ($80\,\text{ms}$) |
-| **Double Stance Ratio** | $18\% \text{ to } 38\%$ | `OPTIMAL ROLL` (Green) | None |
+| **Backward Heel Error** | $> 10^\circ$ | `HEEL LANDING!` (Red) | 1200 Hz Warning Beep (80 ms) |
+| **Impact Jerk ($J_{\text{impact}}$)** | $> 20\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
+| **Double Stance Ratio** | 18% to 38% | `OPTIMAL ROLL` (Green) | None |
 | **Double Stance Hectic** | $< 18\%$ | `HECTIC` (Yellow) | None |
 | **Double Stance Sluggish**| $> 38\%$ | `SLUGGISH` (Yellow) | None |
-| **Per-Foot Lockout Window**| $800\,\text{ms}$ | Suppresses same-foot re-trigger | None |
+| **Per-Foot Lockout Window**| $800\text{ ms}$ | Suppresses same-foot re-trigger | None |
 
 ---
 
@@ -166,7 +169,7 @@ if (detectedFoot === "L") {
 }
 ```
 
-*   **Key Advantage:** Consecutive triggers on the *same foot* within $800\,\text{ms}$ are discarded (`detectedFoot = null`). However, rapid alternating step patterns (`Left -> Right -> Left`, e.g., Triple Steps with $220\text{--}250\,\text{ms}$ intervals) execute without latency because `lastStepTimeRight` and `lastStepTimeLeft` operate independently.
+*   **Key Advantage:** Consecutive triggers on the *same foot* within $800\text{ ms}$ are discarded (`detectedFoot = null`). However, rapid alternating step patterns (`Left -> Right -> Left`, e.g., Triple Steps with $220\text{ to }250\text{ ms}$ intervals) execute without latency because `lastStepTimeRight` and `lastStepTimeLeft` operate independently.
 
 ---
 
@@ -174,7 +177,7 @@ if (detectedFoot === "L") {
 
 The Solo Training Dashboard is optimized for mobile browser use (tablets/smartphones mounted on a tripod facing the dancer):
 
-*   **Transparent WebRTC Camera HUD:** The HTML video element is fixed in the background (`z-index: -1`). Dashboard cards utilize **35% background opacity** (`rgba(10, 14, 22, 0.35)`) and **$2\,\text{px}$ backdrop blur** (`backdrop-filter: blur(2px)`), allowing the dancer to view their body alignment directly behind the live telemetry curves.
+*   **Transparent WebRTC Camera HUD:** The HTML video element is fixed in the background (`z-index: -1`). Dashboard cards utilize **35% background opacity** (`rgba(10, 14, 22, 0.35)`) and **2px backdrop blur** (`backdrop-filter: blur(2px)`), allowing the dancer to view their body alignment directly behind the live telemetry curves.
 *   **Controls Header:** 
     *   `📷 CAM`: Activates WebRTC user media video stream.
     *   `🔄 FLIP`: Toggles between front (`user`) and rear (`environment`) cameras.
