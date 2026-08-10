@@ -12,12 +12,14 @@
 #endif
 
 #include "index.h"
+#include "solo.h"
 
 // --- DATA STRUCTURE FOR FEET (ID 1 & 2) ---
 typedef struct struct_imu_data {
   uint8_t foot_id; // 1 = Left, 2 = Right
   float gyro_x;    // Y-rotation from transmitter (roll-off)
   float accel_z;   // Z-acceleration (impact)
+  float accel_y;   // Längsbeschleunigung (Vorwärts/Rückwärts Vektor)
 } struct_imu_data;
 
 // --- DATA STRUCTURE FOR HAND/SCALE (ID 3) ---
@@ -42,8 +44,8 @@ float GYRO_MIN  = 80.0;   // Degrees/second (minimum roll-off)
 float ACCEL_MAX = 1.5;    // g-force (maximum impact)
 
 // Live measurement values
-float leftGyro = 0, leftAccel = 0;
-float rightGyro = 0, rightAccel = 0;
+float leftGyro = 0, leftAccel = 0, leftAccelY = 0;
+float rightGyro = 0, rightAccel = 0, rightAccelY = 0;
 float handWeight = 0, handAx = 0, handAy = 0, handAz = 0;
 
 // --- TIMEOUT TRACKING FOR CONNECTED SENSORS ---
@@ -76,23 +78,25 @@ void handleData() {
   bool handOk  = (millis() - lastSeenHand  < SENSOR_TIMEOUT_MS);
 
     // Send zero/defaults if sensor is offline to prevent frozen "phantom" values on dashboard
-  float sendLG  = leftOk  ? leftGyro   : 0.0f;
-  float sendLA  = leftOk  ? leftAccel  : 0.0f;
-  float sendRG  = rightOk ? rightGyro  : 0.0f;
-  float sendRA  = rightOk ? rightAccel : 0.0f;
-  float sendHW  = handOk  ? handWeight : 0.0f;
-  float sendAx  = handOk  ? handAx     : 0.0f;
-  float sendAy  = handOk  ? handAy     : 0.0f;
-  float sendAz  = handOk  ? handAz     : 1.0f;
+    float sendLG  = leftOk  ? leftGyro   : 0.0f;
+    float sendLA  = leftOk  ? leftAccel  : 0.0f;
+    float sendLAy = leftOk  ? leftAccelY : 0.0f;
+    float sendRG  = rightOk ? rightGyro  : 0.0f;
+    float sendRA  = rightOk ? rightAccel : 0.0f;
+    float sendRAy = rightOk ? rightAccelY: 0.0f;
+    float sendHW  = handOk  ? handWeight : 0.0f;
+    float sendAx  = handOk  ? handAx     : 0.0f;
+    float sendAy  = handOk  ? handAy     : 0.0f;
+    float sendAz  = handOk  ? handAz     : 1.0f;
 
-  char buf[256];
-  snprintf(buf, sizeof(buf),
-    "{\"lG\":%.1f,\"lA\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
-    sendLG, sendLA, sendRG, sendRA, sendHW, sendAx, sendAy, sendAz,
-    leftOk ? "true" : "false", rightOk ? "true" : "false", handOk ? "true" : "false",
-    (int)currentError, isJerkAlert ? "true" : "false"
-  );
-  server.send(200, "application/json", buf);
+    char buf[320];
+    snprintf(buf, sizeof(buf),
+      "{\"lG\":%.1f,\"lA\":%.2f,\"lAy\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"rAy\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
+      sendLG, sendLA, sendLAy, sendRG, sendRA, sendRAy, sendHW, sendAx, sendAy, sendAz,
+      leftOk ? "true" : "false", rightOk ? "true" : "false", handOk ? "true" : "false",
+      (int)currentError, isJerkAlert ? "true" : "false"
+    );
+    server.send(200, "application/json", buf);
 }
 
 // ESP-NOW Receive Callback with automatic acknowledgement
@@ -104,32 +108,33 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
   const uint8_t *src_mac = mac_addr;
 #endif
 
-  // --- DATA PROCESSING ---
-  if (len == sizeof(struct_imu_data)) {
+      // --- DATA PROCESSING ---
+  if (len >= 12) { // Accept both 12-byte and 16-byte IMU packets
     struct_imu_data footData;
-    memcpy(&footData, data, sizeof(footData));
+    memset(&footData, 0, sizeof(footData));
+    memcpy(&footData, data, std::min((size_t)len, sizeof(footData)));
 
     bool isLeft = (footData.foot_id == 1);
     float gyroVal  = abs(footData.gyro_x);
     float accelVal = abs(footData.accel_z);
 
-    if (isLeft) {
+        if (isLeft) {
       leftGyro     = footData.gyro_x;
       leftAccel    = footData.accel_z;
+      leftAccelY   = footData.accel_y;
       lastSeenLeft = millis();
     } else {
       rightGyro     = footData.gyro_x;
       rightAccel    = footData.accel_z;
+      rightAccelY   = footData.accel_y;
       lastSeenRight = millis();
     }
 
         // WCS ERROR CONDITION (Stomping without roll-off)
-    if (accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
-      currentError = isLeft ? ERR_LEFT : ERR_RIGHT;
-      errorStartTime = millis();
-      pendingToneFreq = isLeft ? 1800 : 2500;
-      pendingToneDuration = 100;
-    }
+        if (accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
+          currentError = isLeft ? ERR_LEFT : ERR_RIGHT;
+          errorStartTime = millis();
+        }
   } 
   else if (len == sizeof(struct_hand_data)) {
     struct_hand_data handData;
@@ -156,13 +161,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     float accelJerk = sqrt(dAx*dAx + dAy*dAy + dAz*dAz);
     float fuehrungshaerteRaw = (dWeight / 50.0) + (accelJerk * 15.0);
 
-    // Tone on Jerk (> 12.0)
+        // Tone on Jerk (> 12.0)
     if (fuehrungshaerteRaw > 12.0) {
       isJerkAlert = true;
-      if (currentError == NONE && pendingToneFreq == 0) {
-        pendingToneFreq = 1000;
-        pendingToneDuration = 100;
-      }
     } else {
       isJerkAlert = false;
     }
@@ -261,7 +262,8 @@ void setup() {
 
   delay(3000);
 
-  server.on("/", []() { server.send(200, "text/html", HTML_PAGE); });
+    server.on("/", []() { server.send(200, "text/html", HTML_PAGE); });
+  server.on("/solo", []() { server.send(200, "text/html", HTML_SOLO_PAGE); });
   server.on("/data", handleData);
   server.begin();
   
@@ -271,11 +273,6 @@ void setup() {
 void loop() {
   M5.update();
   server.handleClient();
-
-  if (pendingToneFreq > 0) {
-    M5.Speaker.tone(pendingToneFreq, pendingToneDuration);
-    pendingToneFreq = 0;
-  }
 
   if (M5.BtnB.wasHold()) {
     M5.Display.fillScreen(BLACK);

@@ -5,7 +5,8 @@
 
 // --- CONFIGURATION ---
 #define FOOT_ID 2              // 1 = Left, 2 = Right
-#define SAMPLE_RATE_MS 10        // 100 Hz (10 ms)
+#define IS_RIGHT_FOOT true     // Sensor orientation flag (inverted mounting)
+#define SAMPLE_RATE_MS 5       // 200 Hz sampling rate (5 ms)
 #define DISPLAY_TIMEOUT_MS 30000 // 30 seconds display activity
 
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -15,6 +16,7 @@ typedef struct struct_imu_data {
   uint8_t foot_id;
   float gyro_x;  // Roll-off value (Y-rotation of sensor coordinate system)
   float accel_z; // Vertical acceleration on foot strike
+  float accel_y; // Längsbeschleunigung (Vorwärts/Rückwärts Vektor)
 } struct_imu_data;
 
 // --- DATA STRUCTURE RECEIVE PACKET (HANDSHAKE ACK FROM MASTER) ---
@@ -312,15 +314,16 @@ void loop() {
       }
     }
 
-  // --- ACQUIRE IMU DATA AND SEND TO MASTER (RUNS CONTINUOUSLY) ---
+    // --- ACQUIRE IMU DATA AND SEND TO MASTER (RUNS CONTINUOUSLY) ---
   float gx, gy, gz;
   float ax, ay, az;
 
   M5.Imu.getGyro(&gx, &gy, &gz);
   M5.Imu.getAccel(&ax, &ay, &az);
 
-  sensorData.gyro_x = gy; 
+  sensorData.gyro_x  = gy; 
   sensorData.accel_z = az;
+  sensorData.accel_y = ay;
 
   esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
 
