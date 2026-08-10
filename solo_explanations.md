@@ -40,19 +40,7 @@ The Solo Training System operates as a high-frequency biomechanical feedback loo
 
 ## 2. Mathematical & Biomechanical Definitions
 
-### A. Sensor Polarity & Direction Mapping
-Due to anatomical shoe mounting constraints, the Right Foot sensor is rotated $180^\circ$ relative to the Left Foot sensor. The system normalizes longitudinal acceleration ($aY$ in $g$) to deduce foot movement direction (`FORWARD` vs `BACKWARD`):
-
-* **Left Foot ($L$ - Standard Orientation):**
-  * $L:aY < 0.0g \longrightarrow \text{BACKWARD}$ (`⬅️ BACKWARD`)
-  * $L:aY \ge 0.0g \longrightarrow \text{FORWARD}$ (`➡️ FORWARD`)
-* **Right Foot ($R$ - $180^\circ$ Inverted Mounting):**
-  * $R:aY < 0.0g \longrightarrow \text{BACKWARD}$ (`⬅️ BACKWARD`)
-  * $R:aY \ge 0.0g \longrightarrow \text{FORWARD}$ (`➡️ FORWARD`)
-
----
-
-### B. Foot Strike Angle ($\theta$) & Landing Articulation
+### A. Foot Strike Angle ($\theta$) & Landing Articulation
 Proper West Coast Swing foot mechanics require a heel-strike when moving forward and a toe/ball-strike when moving backward or anchoring.
 
 ```text
@@ -60,15 +48,17 @@ Forward Step (Heel-Strike):           Backward Step (Toe-Landing):
       /  (Positive Pitch Angle θ)            \  (Negative/Flat Pitch Angle θ)
      /                                        \
 ____/_____ (Floor)                      _______/___ (Floor)
-   Ferse                                  Zehe/Ballen
+   Heel                                   Toe / Ball
 ```
 
 1. **Pitch Angle Integration ($\theta_{\text{raw}}$):**
    Continuously integrated from gyro pitch angular velocity ($\omega_{\text{pitch}}$ in $\text{deg/s}$):
+   
    $$\theta_{\text{raw}}(t) = \theta_{\text{raw}}(t - \Delta t) + (\omega_{\text{pitch}} \times \Delta t)$$
 
 2. **Zero-Tare Compensation ($\theta_{\text{calibrated}}$):**
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
+   
    $$\theta = \theta_{\text{raw}} - \text{mountOffset}$$
 
 3. **Strike Angle Evaluation Rules:**
@@ -83,7 +73,7 @@ ____/_____ (Floor)                      _______/___ (Floor)
 
 ---
 
-### C. Impact Jerk ($J_{\text{impact}}$) & Shock Absorption
+### B. Impact Jerk ($J_{\text{impact}}$) & Shock Absorption
 Impact Jerk quantifies the rate of change of vertical impact acceleration ($aZ$ in $g$) upon step landing. It measures how effectively the knee and ankle joints cushion foot placement:
 
 $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\Delta t} \right| \quad [\text{g/s}]$$
@@ -94,10 +84,14 @@ $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\
 
 ---
 
-### D. Double Stance Overlap ($\Delta t_{\text{double-stance}}$) & Grounding Ratio
-West Coast Swing emphasizes a continuous "rolling" weight transfer rather than abrupt hopping. Ground contact is registered when vertical acceleration exceeds static gravity baseline ($|aZ| > 0.65g$).
+### C. Double Stance Overlap ($\Delta t_{\text{double-stance}}$) & Grounding Ratio
+West Coast Swing emphasizes a continuous, grounded "rolling" weight transfer rather than abrupt hopping or lifting off the floor prematurely. 
 
 $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{step}}} \right) \times 100\%$$
+
+#### Why Overlap Matter in WCS Mechanics:
+* **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles touch the ground ($|aZ| > 0.65g$).
+* **Elastic Extension & Timing:** A healthy overlap ratio ($18\%\text{ to }38\%$) creates the characteristic "elastic" stretch and smooth momentum transfer in WCS. Too little overlap indicates rushing or bouncing, while too much overlap results in heavy, sluggish transitions.
 
 | Ratio Range (%) | Badge Rating | Biomechanical Meaning |
 | :---: | :---: | :--- |
@@ -107,7 +101,7 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 ---
 
-### E. Roll-off Symmetry Index (ASI) & Smoothness Index
+### D. Roll-off Symmetry Index (ASI) & Smoothness Index
 
 1. **Asymmetry Index (ASI):**
    Compares total angular work integrated across Left and Right foot roll-off cycles:
@@ -115,7 +109,7 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
    * **Target:** $< 15\%$ (Indicates equal roll-off articulation on both legs).
 
 2. **Roll-Smoothness Index:**
-   Measures angular acceleration jerk ($\frac{d\omega}{dt}$) smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
+   Measures angular acceleration jerk $\left(\frac{d\omega}{dt}\right)$ smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
    
    $$\text{Smoothness} = \text{Mean}_{25} \left( \left| \frac{\Delta \omega_{\text{pitch}}}{\Delta t} \right| \times 0.15 \right)$$
 
@@ -139,40 +133,17 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 ---
 
-## 4. State Machine & Signal Filtering
+## 4. Signal Filtering & Lockout Concept
 
-### Independent Per-Foot 800 ms Lockout Guard Clause
-To prevent false secondary step triggers caused by micro-taps, foot unweighting, or floor vibrations, the DSP pipeline executes an independent **Per-Foot Lockout State Machine**:
+To prevent false secondary step triggers caused by micro-taps, foot unweighting, or floor vibrations, the DSP pipeline executes a **Dual-Stage Filtering & Lockout Concept**:
 
-```javascript
-// 1. Raw Transient Step Impact Sensing
-let leftSignal  = (Math.abs(aZL) > 1.08 || Math.abs(gPitchL) > 80);
-let rightSignal = (Math.abs(aZR) > 1.08 || Math.abs(gPitchR) > 80);
+1. **Transient Signal Candidate Sensing:**
+   The system continuously monitors vertical impact acceleration ($|aZ| > 1.08g$) and angular pitch velocity ($|\omega_{\text{pitch}}| > 80\text{ deg/s}$). When both foot sensors report threshold breaches in the same sampling frame, the algorithm dynamically selects the dominant foot based on peak angular momentum.
 
-let detectedFoot = null;
-
-if (leftSignal && rightSignal) {
-    // Resolve simultaneous frame triggers by picking strongest rotational motion
-    detectedFoot = (Math.abs(gPitchL) >= Math.abs(gPitchR)) ? "L" : "R";
-} else if (leftSignal) {
-    detectedFoot = "L";
-} else if (rightSignal) {
-    detectedFoot = "R";
-}
-
-// 2. Strict Per-Foot 800 ms Lockout Guard Clause
-if (detectedFoot === "L") {
-    if (now - lastStepTimeLeft < 800) {
-        detectedFoot = null; // Suppress double trigger on Left Foot (< 800 ms)
-    }
-} else if (detectedFoot === "R") {
-    if (now - lastStepTimeRight < 800) {
-        detectedFoot = null; // Suppress double trigger on Right Foot (< 800 ms)
-    }
-}
-```
-
-* **Key Advantage:** Consecutive triggers on the *same foot* within $800\text{ ms}$ are discarded (`detectedFoot = null`). However, rapid alternating step patterns (`Left -> Right -> Left`, e.g., Triple Steps with $220\text{ to }250\text{ ms}$ intervals) execute without latency because `lastStepTimeRight` and `lastStepTimeLeft` operate independently.
+2. **Independent Per-Foot Lockout State Machine ($800\text{ ms}$):**
+   * **The Problem:** During a single foot contact or roll-off, secondary micro-impacts (e.g. heel strike followed by ball contact) can cause multiple false step events on the *same* leg.
+   * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than $800\text{ ms}$.
+   * **Behavior:** If the elapsed time is $< 800\text{ ms}$ on the same leg, the event is suppressed as a secondary vibration. If the dancer switches feet (`Left -> Right`), the opposite leg's timer is checked, allowing rapid alternating steps (such as Triple Steps at $220\text{ to }250\text{ ms}$ intervals) to pass without latency.
 
 ---
 
