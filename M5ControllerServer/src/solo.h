@@ -129,13 +129,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
         <video id="camera-feed" autoplay playsinline></video>
 
-        <header>
+                <header>
             <h1>🕺 WCS Solo-Training Dashboard</h1>
             <div style="display: flex; gap: 8px;">
-                <button id="camBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.6);" onclick="startCamera()">📷 START CAM</button>
+                <button id="camBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.6);" onclick="startCamera()">📷 CAM</button>
                 <button id="flipBtn" class="audio-toggle" style="background: rgba(255, 149, 0, 0.6); display: none;" onclick="flipCamera()">🔄 FLIP</button>
-                <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO FEET</button>
-                <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔊 Audio Feedback: OFF</button>
+                <button id="fullBtn" class="audio-toggle" style="background: rgba(80, 80, 80, 0.6);" onclick="toggleFullscreen()">⛶ FULL</button>
+                <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
+                <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔊 Audio: OFF</button>
             </div>
         </header>
 
@@ -148,13 +149,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     <!-- METRICS GRID -->
     <div class="dashboard-grid">
         
-                <!-- HEEL STRIKE & IMPACT JERK -->
+                                <!-- HEEL STRIKE & IMPACT JERK -->
                 <div class="card" id="stepCard">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div class="card-title" style="margin: 0;">Last Step (Heel/Toe-Strike & Jerk)</div>
-                        <div id="debugTelemetry" style="font-family: monospace; font-size: 0.75rem; color: #58a6ff; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px;">
-                            L: aY:0.0 | R: aY:0.0
-                        </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: baseline;">
                         <div>
@@ -206,6 +204,20 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     </div>
 
 <script>
+    // --- FULLSCREEN LOGIC ---
+    const fullBtn = document.getElementById('fullBtn');
+    function toggleFullscreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
+            if (fullBtn) fullBtn.innerText = "EXIT";
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            if (fullBtn) fullBtn.innerText = "⛶ FULL";
+        }
+    }
+
     // --- CAMERA LOGIC (WITH FLIP) ---
     const videoElement = document.getElementById('camera-feed');
     const camBtn = document.getElementById('camBtn');
@@ -320,10 +332,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         let aYL = data.lAy || 0.0;
                     let gPitchR = data.rG || 0;
                     let aZR = data.rA || 1.0;
-                    let aYR = data.rAy || 0.0;
-
-                    // Live Telemetrie-Debug im Header der Kachel
-                    document.getElementById('debugTelemetry').innerText = `L:aY:${aYL.toFixed(2)} | R:aY:${aYR.toFixed(2)}`;
+                                        let aYR = data.rAy || 0.0;
 
                                         // 1. Live-Pitch Kurven-Puffer
                     pitchLeftHistory.shift(); pitchLeftHistory.push(gPitchL);
@@ -369,9 +378,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     }
                                                                                 }
 
-                                                                                // 3. Process Verified Step Trigger & Polarity Logic
+                                                                                                                                                                // 3. Process Verified Step Trigger & Polarity Logic
                                                                                 if (detectedFoot === "L") {
-                                                                                    // LEFT FOOT (Standard Mounting)
+                                                                                    // LEFT FOOT (Standard Mounting): L:aY < 0.0g --> BACKWARD
                                                                                     lastStepTimeLeft = now;
                                                                                     lastActiveFoot = "L";
                                                                                     triggerImpact = true;
@@ -379,13 +388,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     activeTheta = Math.round(calibratedAngleL);
                                                                                     activeJerk = Math.abs((aZL - prevAccelZLeft) / dt);
 
-                                                                                    let is_backward = (aYL < 0.0);   // L:aY < 0.0g  --> ⬅️ BACKWARD
-                                                                                    let is_forward  = (aYL >= 0.0);  // L:aY >= 0.0g --> ➡️ FORWARD
+                                                                                    let is_backward = (aYL < 0.0);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     pitchLeftAngleRaw = leftMountOffset;
                                                                                 }
                                                                                 else if (detectedFoot === "R") {
-                                                                                    // RIGHT FOOT (180° Inverted Hardware Mounting)
+                                                                                    // RIGHT FOOT (180° Inverted Mounting): R:aY < 0.0g --> BACKWARD
                                                                                     lastStepTimeRight = now;
                                                                                     lastActiveFoot = "R";
                                                                                     triggerImpact = true;
@@ -393,8 +401,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     activeTheta = Math.round(calibratedAngleR);
                                                                                     activeJerk = Math.abs((aZR - prevAccelZRight) / dt);
 
-                                                                                    let is_backward = (aYR >= 0.0);  // R:aY >= 0.0g --> ⬅️ BACKWARD (Inverted Mounting)
-                                                                                    let is_forward  = (aYR < 0.0);   // R:aY < 0.0g  --> ➡️ FORWARD  (Inverted Mounting)
+                                                                                    let is_backward = (aYR < 0.0);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     pitchRightAngleRaw = rightMountOffset;
                                                                                 }
