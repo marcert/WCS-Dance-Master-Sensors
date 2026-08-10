@@ -14,7 +14,10 @@ Improving connection, timing, and footwork in West Coast Swing often relies on s
 * **Connection & Lead/Follow Smoothness (Hand Unit):** Measures pull and push tension in grams via a strain-gauge load cell (-3.5 kg to +3.5 kg) and detects abrupt, harsh movements (jerk index).
 * **Live Acoustic & Visual Feedback:** Triggers immediate audio alert tones (e.g., 1000 Hz beep on connection jerk or poor roll-off with heavy impact) and displays synchronized overlay lines directly on a live video feed.
 
+**Now with an extra dashboard for solo training to work on better foot articulation. Find more [here](solo_explanations.md).**
+
 If you want to build that by your own check the required parts [here](parts.md).
+
 For those of you who want to get a better understanding of what is measured, calculated and displayed check [here](explanations.md).
 
 ---
