@@ -334,7 +334,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     function toggleFreeze() {
         isFrozen = !isFrozen;
         if (isFrozen) {
-            freezeBtn.innerText = "RUNNING";
+            freezeBtn.innerText = "FROZEN";
             freezeBtn.classList.add('frozen');
         } else {
             freezeBtn.innerText = "FREEZE";
@@ -440,7 +440,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             let leftQuality  = Math.abs(currentLG) / (1.0 + leftImpactDev * 2.0);
             let y_lg = 125 - (leftQuality / 300) * 125;
             y_lg = Math.max(0, Math.min(250, y_lg));
-            let isLeftErr = (serverError === 1) || (Math.abs(currentLA) > 1.5 && Math.abs(currentLG) < 80.0);
+            let isLeftErr = (serverError === 1 || serverError === 3) || (Math.abs(currentLA) > 1.5 && Math.abs(currentLG) < 80.0);
 
             leftFootPoints.shift(); leftFootPoints.push({ y: y_lg, isError: isLeftErr });
         } else {
@@ -456,7 +456,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             let rightQuality = Math.abs(currentRG) / (1.0 + rightImpactDev * 2.0);
             let y_rg = 125 - (rightQuality / 300) * 125;
             y_rg = Math.max(0, Math.min(250, y_rg));
-            let isRightErr = (serverError === 2) || (Math.abs(currentRA) > 1.5 && Math.abs(currentRG) < 80.0);
+            let isRightErr = (serverError === 2 || serverError === 3) || (Math.abs(currentRA) > 1.5 && Math.abs(currentRG) < 80.0);
 
             rightFootPoints.shift(); rightFootPoints.push({ y: y_rg, isError: isRightErr });
         } else {

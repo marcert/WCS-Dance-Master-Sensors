@@ -136,7 +136,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="flipBtn" class="audio-toggle" style="background: rgba(255, 149, 0, 0.6); display: none;" onclick="flipCamera()">🔄 FLIP</button>
                 <button id="fullBtn" class="audio-toggle" style="background: rgba(80, 80, 80, 0.6);" onclick="toggleFullscreen()">⛶ FULL</button>
                 <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
-                <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔊 Audio: OFF</button>
+                <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
             </div>
         </header>
 
@@ -315,13 +315,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             btn.innerText = "📐 ZEROED! ✓";
             btn.style.background = "rgba(46, 160, 67, 0.8)";
             setTimeout(() => {
-                btn.innerText = "📐 ZERO FEET";
+                btn.innerText = "📐 ZERO";
                 btn.style.background = "rgba(0, 122, 255, 0.4)";
             }, 1500);
         }
 
                 let smoothnessBuffer = [];
         let smoothnessAvg = 0;
+        let stanceBuffer = new Array(100).fill(0); // rolling 2-second window: 0=none,1=left,2=right,3=both
 
         function fetchStream() {
             fetch('/data')
@@ -330,12 +331,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let dt = 0.02; // 20ms
                     let now = Date.now();
 
-                                        let gPitchL = data.lG || 0;
-                    let aZL = data.lA || 1.0;
-                                        let aYL = data.lAy || 0.0;
-                    let gPitchR = data.rG || 0;
-                    let aZR = data.rA || 1.0;
-                                        let aYR = data.rAy || 0.0;
+                                        let gPitchL = data.lG ?? 0;
+                    let aZL = data.lA ?? 1.0;
+                    let aYL = data.lAy ?? 0.0;
+                    let gPitchR = data.rG ?? 0;
+                    let aZR = data.rA ?? 1.0;
+                    let aYR = data.rAy ?? 0.0;
+                    let leftOk  = data.lOk === true;
+                    let rightOk = data.rOk === true;
 
                                         // 1. Live Pitch Curve Buffer — low-pass filtered (α=0.25) to suppress vibration noise
                     const LP_ALPHA = 0.25;
@@ -349,8 +352,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     const CF_ALPHA = 0.98;
                     let accelAngleL = Math.atan2(aYL,  aZL) * (180 / Math.PI);
                     let accelAngleR = Math.atan2(aYR, -aZR) * (180 / Math.PI); // -aZR: right sensor mounted 180° inverted
-                    pitchLeftAngleRaw  = CF_ALPHA * (pitchLeftAngleRaw  + gPitchL * dt) + (1 - CF_ALPHA) * accelAngleL;
-                    pitchRightAngleRaw = CF_ALPHA * (pitchRightAngleRaw + gPitchR * dt) + (1 - CF_ALPHA) * accelAngleR;
+                    if (leftOk) {
+                        pitchLeftAngleRaw  = CF_ALPHA * (pitchLeftAngleRaw  + gPitchL * dt) + (1 - CF_ALPHA) * accelAngleL;
+                    }
+                    if (rightOk) {
+                        pitchRightAngleRaw = CF_ALPHA * (pitchRightAngleRaw + gPitchR * dt) + (1 - CF_ALPHA) * accelAngleR;
+                    }
 
                     let calibratedAngleL = pitchLeftAngleRaw - leftMountOffset;
                     let calibratedAngleR = pitchRightAngleRaw - rightMountOffset;
@@ -362,9 +369,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         let activeJerk = 0;
                                         let activeDirection = "FORWARD";
 
-                                                                                // 1. Raw Transient Step Impact Sensing
-                                                                                let leftSignal = (Math.abs(aZL) > 1.08 || Math.abs(gPitchL) > 80);
-                                                                                let rightSignal = (Math.abs(aZR) > 1.08 || Math.abs(gPitchR) > 80);
+                                                                                // 1. Raw Transient Step Impact Sensing — offline sensors never trigger
+                                                                                let leftSignal  = leftOk  && (Math.abs(aZL) > 1.08 || Math.abs(gPitchL) > 80);
+                                                                                let rightSignal = rightOk && (Math.abs(aZR) > 1.08 || Math.abs(gPitchR) > 80);
 
                                                                                 let detectedFoot = null;
 
@@ -426,7 +433,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         let badge = document.getElementById('strikeBadge');
                         
                         document.getElementById('strikeAngleVal').innerText = Math.abs(activeTheta) + "° (" + activeFoot + ")";
-                        document.getElementById('jerkVal').innerText = Math.round(activeJerk);
+                        document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
 
                                                 if (activeDirection === "FORWARD") {
                             dirBadge.innerText = "➡️ FORWARD";
@@ -486,16 +493,39 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         currentStepOverlap = 0; // Reset für neuen Schritt
                     }
 
-                                        // 3. Stance-Phasen & Überlappung (Sensivere Bodenkontakt-Schwellenwerte)
-                    let leftOnGround = Math.abs(aZL) > 0.85;
-                    let rightOnGround = Math.abs(aZR) > 0.85;
+                                        // 3. Stance-Phasen & Überlappung — offline sensors never count as grounded
+                    let leftOnGround  = leftOk  && Math.abs(aZL) > 0.85;
+                    let rightOnGround = rightOk && Math.abs(aZR) > 0.85;
 
                     if (leftOnGround && rightOnGround) {
                         currentStepOverlap += dt * 1000;
-                        document.getElementById('stanceBarDouble').style.width = "60%";
-                    } else {
-                        document.getElementById('stanceBarDouble').style.width = "0%";
                     }
+
+                    // Rolling 2-second proportional stance timeline (left / double / right)
+                    let stanceState = 0;
+                    if      (leftOnGround && rightOnGround) stanceState = 3;
+                    else if (leftOnGround)                  stanceState = 1;
+                    else if (rightOnGround)                 stanceState = 2;
+                    stanceBuffer.shift(); stanceBuffer.push(stanceState);
+
+                    let countLeft   = stanceBuffer.filter(s => s === 1).length;
+                    let countDouble = stanceBuffer.filter(s => s === 3).length;
+                    let countRight  = stanceBuffer.filter(s => s === 2).length;
+                    let bufTotal    = stanceBuffer.length;
+
+                    let leftPct   = (countLeft   / bufTotal * 100).toFixed(1);
+                    let doublePct = (countDouble / bufTotal * 100).toFixed(1);
+                    let rightPct  = (countRight  / bufTotal * 100).toFixed(1);
+
+                    let leftBarEl   = document.getElementById('stanceBarLeft');
+                    let doubleBarEl = document.getElementById('stanceBarDouble');
+                    let rightBarEl  = document.getElementById('stanceBarRight');
+                    leftBarEl.style.left    = "0%";
+                    leftBarEl.style.width   = leftPct + "%";
+                    doubleBarEl.style.left  = leftPct + "%";
+                    doubleBarEl.style.width = doublePct + "%";
+                    rightBarEl.style.left   = (parseFloat(leftPct) + parseFloat(doublePct)).toFixed(1) + "%";
+                    rightBarEl.style.width  = rightPct + "%";
 
                     // 4. ASI (Abroll-Symmetrie) & GEGLÄTTETE Roll-Smoothness
                     let intL = pitchLeftHistory.reduce((a, b) => a + Math.abs(b), 0);

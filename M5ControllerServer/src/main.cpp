@@ -57,16 +57,13 @@ const uint32_t SENSOR_TIMEOUT_MS = 3500; // Erhöht auf 3.5s, um kurze Tarierpau
 // Helper variables for Jerk calculation on M5
 float prevHandWeight = 0;
 float prevHandAx = 0, prevHandAy = 0, prevHandAz = 1.0;
-bool isJerkAlert = false;
+volatile bool isJerkAlert = false;
 
 // Warning status for visual feedback
 enum ErrorState { NONE = 0, ERR_LEFT = 1, ERR_RIGHT = 2, ERR_BOTH = 3 };
 volatile ErrorState currentError = NONE;
 volatile uint32_t errorStartTime = 0;
 
-// Pending Audio Tone Trigger (entschärft Interrupt / Callback Context)
-volatile uint16_t pendingToneFreq = 0;
-volatile uint32_t pendingToneDuration = 0;
 
 // Web server on port 80
 WebServer server(80);
@@ -132,7 +129,11 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
 
         // WCS ERROR CONDITION (Stomping without roll-off)
         if (accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
-          currentError = isLeft ? ERR_LEFT : ERR_RIGHT;
+          if (isLeft) {
+            currentError = (currentError == ERR_RIGHT) ? ERR_BOTH : ERR_LEFT;
+          } else {
+            currentError = (currentError == ERR_LEFT) ? ERR_BOTH : ERR_RIGHT;
+          }
           errorStartTime = millis();
         }
   } 
@@ -193,7 +194,7 @@ void setup() {
   M5.begin(cfg);
 
   M5.Speaker.begin();
-  M5.Speaker.setVolume(255);
+  M5.Speaker.setVolume(128);
 
   M5.Display.setRotation(1);
   M5.Display.fillScreen(BLACK);
@@ -267,7 +268,7 @@ void setup() {
 
   esp_now_register_recv_cb(OnDataRecv);
 
-  delay(3000);
+  delay(500);
 
     server.on("/", []() { server.send(200, "text/html", HTML_PAGE); });
   server.on("/solo", []() { server.send(200, "text/html", HTML_SOLO_PAGE); });
@@ -294,10 +295,10 @@ void loop() {
     currentError = NONE;
   }
 
-  uint16_t leftBg  = (currentError == ERR_LEFT)  ? (uint16_t)RED   : (uint16_t)BLACK;
-  uint16_t rightBg = (currentError == ERR_RIGHT) ? (uint16_t)RED   : (uint16_t)BLACK;
-  uint16_t leftFg  = (currentError == ERR_LEFT)  ? (uint16_t)WHITE : (uint16_t)BLUE;
-  uint16_t rightFg = (currentError == ERR_RIGHT) ? (uint16_t)WHITE : (uint16_t)RED;
+  uint16_t leftBg  = (currentError == ERR_LEFT  || currentError == ERR_BOTH) ? (uint16_t)RED   : (uint16_t)BLACK;
+  uint16_t rightBg = (currentError == ERR_RIGHT || currentError == ERR_BOTH) ? (uint16_t)RED   : (uint16_t)BLACK;
+  uint16_t leftFg  = (currentError == ERR_LEFT  || currentError == ERR_BOTH) ? (uint16_t)WHITE : (uint16_t)BLUE;
+  uint16_t rightFg = (currentError == ERR_RIGHT || currentError == ERR_BOTH) ? (uint16_t)WHITE : (uint16_t)RED;
 
   uint32_t now = millis();
   bool leftOnline  = (now - lastSeenLeft  < SENSOR_TIMEOUT_MS);
