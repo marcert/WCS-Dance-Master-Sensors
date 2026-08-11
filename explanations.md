@@ -71,7 +71,9 @@ The frontend renders real-time data across hardware boundaries utilizing HTML5 C
     *   Dynamically shifts line coloring between **Green** (Compression / positive or balanced load) and **Red** (Tension / negative load extremes) based on zero-crossing logic.
 2.  **Combined Analysis Graph (`graph_kombi`):**
     *   **Foot Quality Curves:** Visualizes calculated left foot quality (Cyan line) and right foot quality (Magenta line) derived from impact deviation formulas:
-        $$\text{LeftQuality} = \frac{\left| \text{currentLG} \right|}{1.0 + \left| \left| \text{currentLA} \right| - 1.0 \right| \times 2.0}$$
+        $$\text{LeftQuality} = \frac{\left| \text{currentLG} \right|}{1.0 + \max(0,\; \left| \text{currentLA} \right| - 1.0) \times 2.0}$$
+        
+        > The denominator only penalises impacts above 1 g — foot-lifting (values below 1 g) no longer degrades the quality score.
     *   **Jerk Tracking Curve:** Renders the computed lead hardness/jerk profile (Yellow dashed/solid line scaled to canvas coordinates).
     *   **Synchronous Error Lines:** Vertical full-height error markers rendered automatically whenever foot errors (`isError`) or jerk peaks (`isJerkPeak`) breach configured thresholds, offering immediate visual correlation against camera feed playback.
         *   **Cyan / Blue Lines:** Triggered specifically by **Left Foot** impact/articulation errors.

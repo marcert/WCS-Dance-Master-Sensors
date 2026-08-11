@@ -54,10 +54,12 @@ ____/_____ (Floor)                      _______/___ (Floor)
    Heel                                   Toe / Ball
 ```
 
-1. **Pitch Angle Integration ($\theta_{\text{raw}}$):**
-   Continuously integrated from gyro pitch angular velocity ($\omega_{\text{pitch}}$ in $\text{deg/s}$):
+1. **Pitch Angle Estimation via Complementary Filter ($\theta_{\text{raw}}$):**
+   Combines short-term gyro integration with long-term accelerometer angle correction to prevent gyro drift:
    
-   $$\theta_{\text{raw}}(t) = \theta_{\text{raw}}(t - \Delta t) + (\omega_{\text{pitch}} \times \Delta t)$$
+   $$\theta_{\text{raw}}(t) = 0.98 \times \bigl(\theta_{\text{raw}}(t - \Delta t) + \omega_{\text{pitch}} \times \Delta t\bigr) + 0.02 \times \arctan2(a_Y, a_Z) \times \frac{180}{\pi}$$
+   
+   The 2 % accelerometer contribution corrects up to ~1°/s drift per frame without degrading dynamic response. The right sensor is mounted 180° inverted, so its accelerometer term uses $\arctan2(a_Y, -a_Z)$.
 
 2. **Zero-Tare Compensation ($\theta_{\text{calibrated}}$):**
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -81,9 +83,11 @@ Impact Jerk quantifies the rate of change of vertical impact acceleration ($aZ$ 
 
 $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\Delta t} \right| \quad [\text{g/s}]$$
 
-* **Soft Cushioning ($1\text{ to }15\text{ g/s}$):** Excellent joint absorption (`SOFT`).
-* **Moderate Shock ($15\text{ to }20\text{ g/s}$):** Acceptable impact.
-* **Harsh Stomping ($> 20\text{ g/s}$):** Excessive shock transmitted to joints; triggers a 500 Hz low-frequency impact click.
+* **Soft Cushioning ($< 40\text{ g/s}$):** Good joint absorption.
+* **Moderate Shock ($40\text{ to }80\text{ g/s}$):** Acceptable impact level.
+* **Harsh Stomping ($> 80\text{ g/s}$):** Excessive shock transmitted to joints; triggers a 500 Hz low-frequency impact click.
+
+> Thresholds use the native 200 Hz sensor time step ($\Delta t = 0.005\text{ s}$) as the denominator — this yields values 4× higher than a poll-rate-based calculation would, which is why the numbers are larger than comparable literature figures using longer time windows.
 
 ---
 
@@ -93,7 +97,7 @@ West Coast Swing emphasizes a continuous, grounded "rolling" weight transfer rat
 $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{step}}} \right) \times 100\%$$
 
 #### Why Overlap Matter in WCS Mechanics:
-* **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles touch the ground ($|aZ| > 0.65g$).
+* **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles touch the ground ($|aZ| > 0.85g$).
 * **Elastic Extension & Timing:** A healthy overlap ratio ($18\%\text{ to }38\%$) creates the characteristic "elastic" stretch and smooth momentum transfer in WCS. Too little overlap indicates rushing or bouncing, while too much overlap results in heavy, sluggish transitions.
 
 | Ratio Range (%) | Badge Rating | Biomechanical Meaning |
@@ -107,18 +111,27 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 ### D. Roll-off Symmetry Index (ASI) & Smoothness Index
 
 1. **Asymmetry Index (ASI):**
-   Compares total angular work integrated across Left and Right foot roll-off cycles:
+   Uses the standard biomechanical ASI formula — symmetric regardless of which foot is dominant:
    
-   $$\text{ASI} = \left| 1.0 - \frac{\int |\omega_{\text{left}}| \, dt}{\int |\omega_{\text{right}}| \, dt} \right| \times 100\%$$
+   $$\text{ASI} = \frac{2 \left| \int |\omega_{\text{left}}| \, dt - \int |\omega_{\text{right}}| \, dt \right|}{\int |\omega_{\text{left}}| \, dt + \int |\omega_{\text{right}}| \, dt} \times 100\%$$
    
-   * **Target:** $< 15\%$ (Indicates equal roll-off articulation on both legs).
+   | Badge | Range | Biomechanical Meaning |
+   | :---: | :---: | :--- |
+   | `SYMMETRIC` (Green) | $\le 10\%$ | Equal roll-off articulation on both legs. |
+   | `MINOR ASYM` (Yellow) | $\le 25\%$ | Mild bilateral difference; monitor for compensation patterns. |
+   | `ASYMMETRIC` (Red) | $> 25\%$ | Significant side-dominance; risk of overuse injury. |
 
-2. **Roll-Smoothness Index:**
-   Measures angular acceleration jerk $(d\omega / dt)$ smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
+2. **Roll-Smoothness Index (0 = rough, 100 = smooth):**
+   Measures bilateral angular jerk $(d\omega / dt)$ from both feet and inverts the scale so higher values mean smoother movement, averaged over a 25-frame (0.5 s) sliding window:
    
-   $$\text{Smoothness} = \text{Mean}_{25}\left(\left| \frac{\Delta \omega_{\text{pitch}}}{\Delta t} \right| \times 0.15\right)$$
-
-   * **Target:** Lower values ($0\text{ to }15$) indicate fluid, continuous ankle articulation without micro-stutters.
+   $$\text{Jerkiness} = \text{clamp}_{0\text{–}100}\!\left[\left(\left|\frac{\Delta \omega_{\text{L}}}{\Delta t}\right| + \left|\frac{\Delta \omega_{\text{R}}}{\Delta t}\right|\right) \times 0.075\right]$$
+   $$\text{Smoothness} = 100 - \text{Mean}_{25}(\text{Jerkiness})$$
+   
+   | Badge | Range | Biomechanical Meaning |
+   | :---: | :---: | :--- |
+   | `SMOOTH` (Green) | $\ge 65$ | Fluid, continuous ankle articulation without micro-stutters. |
+   | `MODERATE` (Yellow) | $\ge 40$ | Occasional abrupt changes; acceptable for learning phases. |
+   | `ROUGH` (Red) | $< 40$ | Frequent micro-stutters; indicates tension or lack of ankle mobility. |
 
 ---
 
@@ -130,11 +143,17 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 | **Forward Flat Foot** | $< 5^\circ$ | `FLAT-FOOT!` (Red) | 1200 Hz Sine Click (80 ms) |
 | **Backward Toe Angle** | $-20^\circ \text{ to } +5^\circ$ | `OPTIMAL TOE` (Green) | None |
 | **Backward Heel Error** | $> 10^\circ$ | `HEEL LANDING!` (Red) | 1200 Hz Warning Beep (80 ms) |
-| **Impact Jerk ($J_{\text{impact}}$)** | $> 20\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
+| **Impact Jerk ($J_{\text{impact}}$)** | $> 80\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
 | **Double Stance Ratio** | 18% to 38% | `OPTIMAL ROLL` (Green) | None |
 | **Double Stance Hectic** | $< 18\%$ | `HECTIC` (Yellow) | None |
 | **Double Stance Sluggish**| $> 38\%$ | `SLUGGISH` (Yellow) | None |
 | **Per-Foot Lockout Window**| $800\text{ ms}$ | Suppresses same-foot re-trigger | None |
+| **Symmetry Index (ASI)** | $\le 10\%$ | `SYMMETRIC` (Green) | None |
+| **Symmetry Index (ASI)** | $\le 25\%$ | `MINOR ASYM` (Yellow) | None |
+| **Symmetry Index (ASI)** | $> 25\%$ | `ASYMMETRIC` (Red) | None |
+| **Roll-Smoothness** | $\ge 65$ | `SMOOTH` (Green) | None |
+| **Roll-Smoothness** | $\ge 40$ | `MODERATE` (Yellow) | None |
+| **Roll-Smoothness** | $< 40$ | `ROUGH` (Red) | None |
 
 ---
 
