@@ -372,5 +372,5 @@ void loop() {
     }
   }
 
-  delay(10);
+  delay(12); // HX711 default 80 SPS = 12.5 ms/sample; polling faster wastes CPU with no gain
 }

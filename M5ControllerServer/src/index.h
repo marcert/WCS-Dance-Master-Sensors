@@ -413,12 +413,17 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             let dAz = currentAz - prevAz;
             prevAx = currentAx; prevAy = currentAy; prevAz = currentAz;
 
-            let accelJerk = Math.sqrt(dAx*dAx + dAy*dAy + dAz*dAz);
-            let fuehrungshaerteRaw = (dWeight / 50.0) + (accelJerk * 15.0);
+            // Express both terms as per-second rates so units are consistent before combining.
+            // Previously dWeight/50 mixed grams with g*15 — that was unit-incoherent.
+            let dt_s = intervalMs / 1000;
+            let forceRate  = dWeight / dt_s;                                         // g/s
+            let motionRate = Math.sqrt(dAx*dAx + dAy*dAy + dAz*dAz) / dt_s;        // g/s
+            // Normalise: 2000 g/s force rate and 10 g/s motion rate define full scale (equal weight)
+            let jerkIndex = Math.min(1.0, forceRate / 2000.0 * 0.5 + motionRate / 10.0 * 0.5);
 
-            let y_jerk = 245 - (fuehrungshaerteRaw * 8.0); 
+            let y_jerk = 245 - jerkIndex * 240;
             y_jerk = Math.max(5, Math.min(245, y_jerk));
-            let isJerkPeak = serverJerk || (fuehrungshaerteRaw > 12.0); 
+            let isJerkPeak = serverJerk; // firmware computes at native sample rate; browser duplicate was inaccurate
 
             jerkPoints.shift(); jerkPoints.push({ y: y_jerk, isJerkPeak: isJerkPeak });
         } else {
@@ -431,7 +436,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             currentLG += (targetLG - currentLG) * 0.4;
             currentLA += (targetLA - currentLA) * 0.4;
 
-            let leftImpactDev = Math.abs(Math.abs(currentLA) - 1.0);
+            let leftImpactDev = Math.max(0, Math.abs(currentLA) - 1.0); // only penalise impacts above 1g, not foot-lifting
             let leftQuality  = Math.abs(currentLG) / (1.0 + leftImpactDev * 2.0);
             let y_lg = 125 - (leftQuality / 300) * 125;
             y_lg = Math.max(0, Math.min(250, y_lg));
@@ -447,7 +452,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             currentRG += (targetRG - currentRG) * 0.4;
             currentRA += (targetRA - currentRA) * 0.4;
 
-            let rightImpactDev = Math.abs(Math.abs(currentRA) - 1.0);
+            let rightImpactDev = Math.max(0, Math.abs(currentRA) - 1.0); // only penalise impacts above 1g, not foot-lifting
             let rightQuality = Math.abs(currentRG) / (1.0 + rightImpactDev * 2.0);
             let y_rg = 125 - (rightQuality / 300) * 125;
             y_rg = Math.max(0, Math.min(250, y_rg));

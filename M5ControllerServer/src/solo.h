@@ -193,10 +193,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         <div>
                             <div style="font-size: 0.8rem; color:#8b949e;">Symmetry Index (ASI):</div>
                             <div class="metric-value" id="asiVal">0 %</div>
+                            <span id="asiBadge" class="badge badge-green">SYMMETRIC</span>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 0.8rem; color:#8b949e;">Roll-Smoothness:</div>
+                            <div style="font-size: 0.8rem; color:#8b949e;">Roll-Smoothness (100 = smooth):</div>
                             <div class="metric-value" id="smoothVal" style="font-size: 1.4rem;">0</div>
+                            <span id="smoothBadge" class="badge badge-green">SMOOTH</span>
                         </div>
                     </div>
                 </div>
@@ -287,6 +289,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let prevAccelZLeft = 1.0;
         let prevAccelZRight = 1.0;
         let prevGyroPitchLeft = 0.0;
+        let prevGyroPitchRight = 0.0;
         let pitchLeftAngleRaw = 28.0;
         let pitchRightAngleRaw = 28.0;
 
@@ -334,13 +337,20 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let aZR = data.rA || 1.0;
                                         let aYR = data.rAy || 0.0;
 
-                                                            // 1. Live Pitch Curve Buffer
-                    pitchLeftHistory.shift(); pitchLeftHistory.push(gPitchL);
-                    pitchRightHistory.shift(); pitchRightHistory.push(gPitchR);
+                                        // 1. Live Pitch Curve Buffer — low-pass filtered (α=0.25) to suppress vibration noise
+                    const LP_ALPHA = 0.25;
+                    let filtL = pitchLeftHistory[pitchLeftHistory.length  - 1] * (1 - LP_ALPHA) + gPitchL * LP_ALPHA;
+                    let filtR = pitchRightHistory[pitchRightHistory.length - 1] * (1 - LP_ALPHA) + gPitchR * LP_ALPHA;
+                    pitchLeftHistory.shift();  pitchLeftHistory.push(filtL);
+                    pitchRightHistory.shift(); pitchRightHistory.push(filtR);
 
-                    // Continuously build integrals for angle calculation
-                    pitchLeftAngleRaw += gPitchL * dt;
-                    pitchRightAngleRaw += gPitchR * dt;
+                    // Complementary filter: gyro integration for short-term dynamics,
+                    // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction)
+                    const CF_ALPHA = 0.98;
+                    let accelAngleL = Math.atan2(aYL,  aZL) * (180 / Math.PI);
+                    let accelAngleR = Math.atan2(aYR, -aZR) * (180 / Math.PI); // -aZR: right sensor mounted 180° inverted
+                    pitchLeftAngleRaw  = CF_ALPHA * (pitchLeftAngleRaw  + gPitchL * dt) + (1 - CF_ALPHA) * accelAngleL;
+                    pitchRightAngleRaw = CF_ALPHA * (pitchRightAngleRaw + gPitchR * dt) + (1 - CF_ALPHA) * accelAngleR;
 
                     let calibratedAngleL = pitchLeftAngleRaw - leftMountOffset;
                     let calibratedAngleR = pitchRightAngleRaw - rightMountOffset;
@@ -386,7 +396,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "L";
                                                                                     activeTheta = Math.round(calibratedAngleL);
-                                                                                    activeJerk = Math.abs((aZL - prevAccelZLeft) / dt);
+                                                                                    activeJerk = Math.abs((aZL - prevAccelZLeft)  / 0.005); // 0.005 s = native 200 Hz sensor step
 
                                                                                     let is_backward = (aYL < 0.0);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
@@ -399,7 +409,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "R";
                                                                                     activeTheta = Math.round(calibratedAngleR);
-                                                                                    activeJerk = Math.abs((aZR - prevAccelZRight) / dt);
+                                                                                    activeJerk = Math.abs((aZR - prevAccelZRight) / 0.005); // 0.005 s = native 200 Hz sensor step
 
                                                                                     let is_backward = (aYR < 0.0);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
@@ -453,11 +463,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         stepCard.classList.add('card-flash');
 
                         // Jerk Bar Visualisierung
-                        let jerkPercent = Math.min(100, (activeJerk / 30) * 100);
+                        let jerkPercent = Math.min(100, (activeJerk / 120) * 100); // bar scaled to native 200 Hz dt
                         document.getElementById('jerkBar').style.width = jerkPercent + "%";
                         document.getElementById('jerkBar').style.background = (activeFoot === "L") ? "var(--accent-left)" : "var(--accent-right)";
 
-                        if (activeJerk > 20) playImpactClick(500); // Harter Aufprall Ton
+                        if (activeJerk > 80) playImpactClick(500); // threshold scaled to native 200 Hz dt (×4 vs 20 ms poll)
                     
                         // Dynamic Tempo-Adaptive Doppelstand-Ratio (%)
                         let stanceRatio = Math.round((currentStepOverlap / currentStepDuration) * 100);
@@ -477,8 +487,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     }
 
                                         // 3. Stance-Phasen & Überlappung (Sensivere Bodenkontakt-Schwellenwerte)
-                    let leftOnGround = Math.abs(aZL) > 0.65;
-                    let rightOnGround = Math.abs(aZR) > 0.65;
+                    let leftOnGround = Math.abs(aZL) > 0.85;
+                    let rightOnGround = Math.abs(aZR) > 0.85;
 
                     if (leftOnGround && rightOnGround) {
                         currentStepOverlap += dt * 1000;
@@ -490,22 +500,39 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     // 4. ASI (Abroll-Symmetrie) & GEGLÄTTETE Roll-Smoothness
                     let intL = pitchLeftHistory.reduce((a, b) => a + Math.abs(b), 0);
                     let intR = pitchRightHistory.reduce((a, b) => a + Math.abs(b), 0);
-                    let asi = Math.abs(1.0 - (intL / (intR || 1.0))) * 100;
-                    document.getElementById('asiVal').innerText = Math.min(100, Math.round(asi)) + " %";
+                    let intSum = intL + intR;
+                    let asi = (intSum > 0) ? (2 * Math.abs(intL - intR) / intSum) * 100 : 0;
+                    let asiRounded = Math.min(100, Math.round(asi));
+                    document.getElementById('asiVal').innerText = asiRounded + " %";
+                    let asiBadge = document.getElementById('asiBadge');
+                    if (asiBadge) {
+                        if (asiRounded <= 10)      { asiBadge.className = "badge badge-green";  asiBadge.innerText = "SYMMETRIC"; }
+                        else if (asiRounded <= 25) { asiBadge.className = "badge badge-yellow"; asiBadge.innerText = "MINOR ASYM"; }
+                        else                       { asiBadge.className = "badge badge-red";    asiBadge.innerText = "ASYMMETRIC"; }
+                    }
 
                     // Smoothness-Glied mit gleitendem Mittelwert (Buffer über 25 Frames / 0.5s)
-                    let dOmega = (gPitchL - prevGyroPitchLeft) / dt;
-                    let rawSmoothness = Math.min(100, Math.round(Math.abs(dOmega) * 0.15));
-                    
+                    let dOmegaL = (gPitchL - prevGyroPitchLeft)  / dt;
+                    let dOmegaR = (gPitchR - prevGyroPitchRight) / dt;
+                    let rawJerkiness = Math.min(100, Math.round((Math.abs(dOmegaL) + Math.abs(dOmegaR)) * 0.075));
+                    let rawSmoothness = 100 - rawJerkiness; // invert: higher = smoother
+
                     smoothnessBuffer.push(rawSmoothness);
                     if (smoothnessBuffer.length > 25) smoothnessBuffer.shift();
-                    
+
                     smoothnessAvg = Math.round(smoothnessBuffer.reduce((a, b) => a + b, 0) / smoothnessBuffer.length);
                     document.getElementById('smoothVal').innerText = smoothnessAvg;
+                    let smoothBadge = document.getElementById('smoothBadge');
+                    if (smoothBadge) {
+                        if (smoothnessAvg >= 65)      { smoothBadge.className = "badge badge-green";  smoothBadge.innerText = "SMOOTH"; }
+                        else if (smoothnessAvg >= 40) { smoothBadge.className = "badge badge-yellow"; smoothBadge.innerText = "MODERATE"; }
+                        else                          { smoothBadge.className = "badge badge-red";    smoothBadge.innerText = "ROUGH"; }
+                    }
 
                     prevAccelZLeft = aZL;
                     prevAccelZRight = aZR;
-                    prevGyroPitchLeft = gPitchL;
+                    prevGyroPitchLeft  = gPitchL;
+                    prevGyroPitchRight = gPitchR;
 
                     drawPitchChart();
                     setTimeout(fetchStream, 20);
