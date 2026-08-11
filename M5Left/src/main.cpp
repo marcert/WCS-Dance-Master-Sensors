@@ -2,6 +2,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
+#include <esp_sleep.h>
 
 // --- CONFIGURATION ---
 #define FOOT_ID 1              // 1 = Left, 2 = Right
@@ -327,5 +328,9 @@ void loop() {
 
   esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
 
-  delay(SAMPLE_RATE_MS);
+  // Stay awake 2 ms so the master's ACK can arrive, then light-sleep the rest of the period.
+  // Light sleep cuts active draw from ~30 mA to ~0.8 mA for the idle portion of each 5 ms cycle.
+  delay(2);
+  esp_sleep_enable_timer_wakeup((SAMPLE_RATE_MS - 2) * 1000ULL);
+  esp_light_sleep_start();
 }

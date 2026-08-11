@@ -40,8 +40,8 @@ typedef struct struct_handshake_ack {
 struct_handshake_ack ackPacket;
 
 // --- THRESHOLDS FOR ERROR ALARM (FEET) ---
-float GYRO_MIN  = 80.0;   // Degrees/second (minimum roll-off)
-float ACCEL_MAX = 1.5;    // g-force (maximum impact)
+const float GYRO_MIN  = 80.0f;   // Degrees/second (minimum roll-off)
+const float ACCEL_MAX = 1.5f;    // g-force (maximum impact)
 
 // Live measurement values
 float leftGyro = 0, leftAccel = 0, leftAccelY = 0;
@@ -115,8 +115,8 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     memcpy(&footData, data, std::min((size_t)len, sizeof(footData)));
 
     bool isLeft = (footData.foot_id == 1);
-    float gyroVal  = abs(footData.gyro_x);
-    float accelVal = abs(footData.accel_z);
+    float gyroVal  = fabsf(footData.gyro_x);
+    float accelVal = fabsf(footData.accel_z);
 
         if (isLeft) {
       leftGyro     = footData.gyro_x;
@@ -147,7 +147,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     lastSeenHand = millis();
 
     // --- CALCULATE LEAD SMOOTHNESS / JERK FOR THE HAND ---
-    float dWeight = abs(handWeight - prevHandWeight);
+    float dWeight = fabsf(handWeight - prevHandWeight);
     prevHandWeight = handWeight;
 
     float dAx = handAx - prevHandAx;
@@ -158,8 +158,8 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     prevHandAy = handAy;
     prevHandAz = handAz;
 
-    float accelJerk = sqrt(dAx*dAx + dAy*dAy + dAz*dAz);
-    float fuehrungshaerteRaw = (dWeight / 50.0) + (accelJerk * 15.0);
+    float accelJerk = sqrtf(dAx*dAx + dAy*dAy + dAz*dAz);
+    float fuehrungshaerteRaw = (dWeight / 50.0f) + (accelJerk * 15.0f);
 
         // Tone on Jerk (> 12.0)
     if (fuehrungshaerteRaw > 12.0) {
@@ -186,6 +186,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
 }
 
 void setup() {
+  // Reduce CPU from 240 MHz default — 160 MHz is sufficient for WiFi AP+STA + ESP-NOW + HTTP
+  setCpuFrequencyMhz(160);
+
   auto cfg = M5.config();
   M5.begin(cfg);
 
@@ -195,6 +198,7 @@ void setup() {
   M5.Display.setRotation(1);
   M5.Display.fillScreen(BLACK);
   M5.Display.setTextSize(2);
+  M5.Display.setBrightness(64); // ~25% brightness, enough to read in a studio
 
   // --- WIFI SETUP (AP + STA) ---
   WiFi.mode(WIFI_AP_STA);
@@ -215,7 +219,8 @@ void setup() {
     M5.Display.fillScreen(BLACK);
   if (WiFi.status() == WL_CONNECTED) {
     currentChannel = WiFi.channel();
-    
+    // Home WiFi active: leave TX power at default — router may be in another room.
+
     M5.Display.setCursor(10, 10);
     M5.Display.setTextColor(GREEN, BLACK);
     M5.Display.println("HOME-WIFI OK");
@@ -230,6 +235,8 @@ void setup() {
   } else {
     WiFi.disconnect();
     currentChannel = 1;
+    // AP-only mode: sensors and phone are all within 2-3 m — 11 dBm is sufficient.
+    WiFi.setTxPower(WIFI_POWER_11dBm);
 
     M5.Display.setCursor(10, 10);
     M5.Display.setTextColor(ORANGE, BLACK);
@@ -287,11 +294,10 @@ void loop() {
     currentError = NONE;
   }
 
-  uint16_t leftBg  = (currentError == ERR_LEFT)  ? RED : BLACK;
-  uint16_t rightBg = (currentError == ERR_RIGHT) ? RED : BLACK;
-
-  uint16_t leftFg  = (currentError == ERR_LEFT)  ? WHITE : BLUE;
-  uint16_t rightFg = (currentError == ERR_RIGHT) ? WHITE : RED;
+  uint16_t leftBg  = (currentError == ERR_LEFT)  ? (uint16_t)RED   : (uint16_t)BLACK;
+  uint16_t rightBg = (currentError == ERR_RIGHT) ? (uint16_t)RED   : (uint16_t)BLACK;
+  uint16_t leftFg  = (currentError == ERR_LEFT)  ? (uint16_t)WHITE : (uint16_t)BLUE;
+  uint16_t rightFg = (currentError == ERR_RIGHT) ? (uint16_t)WHITE : (uint16_t)RED;
 
   uint32_t now = millis();
   bool leftOnline  = (now - lastSeenLeft  < SENSOR_TIMEOUT_MS);
@@ -300,38 +306,48 @@ void loop() {
 
   M5.Display.setTextSize(2);
 
-  // --- DISPLAY LEFT FOOT ---
-  M5.Display.setCursor(5, 5);
-  M5.Display.setTextColor(leftFg, leftBg);
-  if (leftOnline) {
-    M5.Display.printf("L: G:%4.0f A:%3.1f  ", leftGyro, leftAccel);
-  } else {
-    M5.Display.printf("L: -- OFFLINE -- ");
+  // Sentinel values (INT16_MIN / -999 / true) guarantee a render on the very first loop iteration.
+  static int16_t  dLG = INT16_MIN, dRG = INT16_MIN;
+  static float    dLA = -999.0f,   dRA = -999.0f,  dHW = -99999.0f;
+  static bool     dLOn = true,     dROn = true,     dHOn = true;
+  static uint16_t dLBg = 0xFFFF,   dRBg = 0xFFFF;
+  static uint32_t lastBatUpdate = 0;
+
+  // --- DISPLAY LEFT FOOT (only on change) ---
+  if ((int16_t)roundf(leftGyro) != dLG || fabsf(leftAccel - dLA) > 0.05f || leftOnline != dLOn || leftBg != dLBg) {
+    dLG = (int16_t)roundf(leftGyro); dLA = leftAccel; dLOn = leftOnline; dLBg = leftBg;
+    M5.Display.setCursor(5, 5);
+    M5.Display.setTextColor(leftFg, leftBg);
+    if (leftOnline) M5.Display.printf("L: G:%4.0f A:%3.1f  ", leftGyro, leftAccel);
+    else            M5.Display.printf("L: -- OFFLINE -- ");
   }
 
-  // --- DISPLAY RIGHT FOOT ---
-  M5.Display.setCursor(5, 30);
-  M5.Display.setTextColor(rightFg, rightBg);
-  if (rightOnline) {
-    M5.Display.printf("R: G:%4.0f A:%3.1f  ", rightGyro, rightAccel);
-  } else {
-    M5.Display.printf("R: -- OFFLINE -- ");
+  // --- DISPLAY RIGHT FOOT (only on change) ---
+  if ((int16_t)roundf(rightGyro) != dRG || fabsf(rightAccel - dRA) > 0.05f || rightOnline != dROn || rightBg != dRBg) {
+    dRG = (int16_t)roundf(rightGyro); dRA = rightAccel; dROn = rightOnline; dRBg = rightBg;
+    M5.Display.setCursor(5, 30);
+    M5.Display.setTextColor(rightFg, rightBg);
+    if (rightOnline) M5.Display.printf("R: G:%4.0f A:%3.1f  ", rightGyro, rightAccel);
+    else             M5.Display.printf("R: -- OFFLINE -- ");
   }
 
-  // --- DISPLAY HAND / SCALE ---
-  M5.Display.setCursor(5, 55);
-  M5.Display.setTextColor(GREEN, BLACK);
-  if (handOnline) {
-    M5.Display.printf("H: %4.0f g        ", handWeight);
-  } else {
-    M5.Display.printf("H: -- OFFLINE -- ");
+  // --- DISPLAY HAND (only on change) ---
+  if (fabsf(handWeight - dHW) >= 1.0f || handOnline != dHOn) {
+    dHW = handWeight; dHOn = handOnline;
+    M5.Display.setCursor(5, 55);
+    M5.Display.setTextColor(GREEN, BLACK);
+    if (handOnline) M5.Display.printf("H: %4.0f g        ", handWeight);
+    else            M5.Display.printf("H: -- OFFLINE -- ");
   }
 
-    // --- BATTERY DISPLAY ---
-  int batLevel = M5.Power.getBatteryLevel();
-  M5.Display.setCursor(5, 80);
-  M5.Display.setTextColor(YELLOW, BLACK);
-  M5.Display.printf("BAT: %3d%%        ", batLevel);
+  // --- BATTERY (every 10 s — level changes on the order of minutes) ---
+  if (millis() - lastBatUpdate > 10000) {
+    lastBatUpdate = millis();
+    int batLevel = M5.Power.getBatteryLevel();
+    M5.Display.setCursor(5, 80);
+    M5.Display.setTextColor(YELLOW, BLACK);
+    M5.Display.printf("BAT: %3d%%        ", batLevel);
+  }
 
   delay(20);
 }
