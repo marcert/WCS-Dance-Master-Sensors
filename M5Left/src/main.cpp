@@ -6,7 +6,7 @@
 
 // --- CONFIGURATION ---
 #define FOOT_ID 1              // 1 = Left, 2 = Right
-#define IS_RIGHT_FOOT false    // Sensor orientation flag
+// Axis inversion for the 180°-inverted right mounting is handled in the dashboard JS, not in firmware.
 #define SAMPLE_RATE_MS 5       // 200 Hz sampling rate (5 ms)
 #define DISPLAY_TIMEOUT_MS 30000 // 30 seconds display activity
 
@@ -75,8 +75,9 @@ void updateBatteryDisplay() {
 
 uint8_t scanForMaster() {
   sensorData.foot_id = FOOT_ID;
-  sensorData.gyro_x = 0;
+  sensorData.gyro_x  = 0;
   sensorData.accel_z = 1.0;
+  sensorData.accel_y = 0.0;
 
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.encrypt = false;

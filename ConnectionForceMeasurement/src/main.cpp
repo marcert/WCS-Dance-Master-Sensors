@@ -255,7 +255,9 @@ void loop() {
       M5.Display.fillRect(0, 0, 240, 25, BLACK);
       M5.Display.drawString("RELEASE...", 10, 5);
 
-      delay(1500); 
+      lastMasterAckTime = millis(); // reset before blocking — gives full 3s margin during tare
+
+      delay(1500);
 
       M5.Display.fillRect(0, 0, 240, 25, BLACK);
       M5.Display.drawString("TARE...", 10, 5);
@@ -349,6 +351,7 @@ void loop() {
     bool heartbeat     = (millis() - lastSendTime > 2000);
 
     if (weightChanged || accelChanged || heartbeat) {
+      sendData.hand_id = 3; // always explicit — do not rely on scanForMaster() having run
       sendData.weight  = currentWeight;
       sendData.accel_x = ax;
       sendData.accel_y = ay;
