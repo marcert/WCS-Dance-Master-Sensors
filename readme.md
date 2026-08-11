@@ -88,6 +88,4 @@ Install the following libraries in Arduino IDE / PlatformIO:
 ## Open Items / To-Dos
 * Improve the physical handles/grips on the hand scale unit.
 
-* Fine-tune the telemetry metrics and threshold values for better movement detection.
-
 If you have suggestions or ideas for improvement, feel free to share them!
