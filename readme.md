@@ -61,7 +61,7 @@ Install the following libraries in Arduino IDE / PlatformIO:
 
 ---
 
-## 🏗️ System Architecture
+## 📐 System Architecture
 
 ```text
                        +-------------------------+
@@ -85,6 +85,7 @@ Install the following libraries in Arduino IDE / PlatformIO:
                               +--------------------------+
 
 ```
+
 ## Open Items / To-Dos
 * Improve the physical handles/grips on the hand scale unit.
 

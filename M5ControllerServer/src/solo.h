@@ -576,6 +576,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     pitchRightAngleRaw = rightMountOffset;
                                                                                 }
 
+                                        // 4. TERMINAL STANCE / POWER PUSH DETECTION (Windlass Push-off from Trailing Foot)
+                                        // Strong negative angular pitch velocity (foot extending/pushing off) with positive forward acceleration
+                                        let pushOffL = (gPitchL < -120 && aYL > 0.15);
+                                        let pushOffR = (gPitchR < -120 && aYR > 0.15);
+                                        let powerPushActive = pushOffL || pushOffR;
+
                                         // Wenn ein Schritt gelandet ist -> UI & Richtungsbewertung sofort aktualisieren
                     if (triggerImpact) {
                                                 // Determine step duration t_step since last step
@@ -614,17 +620,22 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             dirBadge.innerText = "⬅️ BACKWARD";
                             dirBadge.style.background = "#a371f7";
 
-                            // Backward Rating (Toe-Ball-Heel)
-                            if (activeTheta >= 10) {
-                                badge.className = "badge badge-red"; badge.innerText = "HEEL LANDING!";
-                                playImpactClick(1200);
-                            } else if (activeTheta > 5) {
-                                badge.className = "badge badge-yellow"; badge.innerText = "HEEL DROP";
-                            } else if (activeTheta >= -20) {
-                                badge.className = "badge badge-green"; badge.innerText = "OPTIMAL TOE";
-                            } else {
-                                badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";  // extreme backward overshoot
-                            }
+                                                                            // Check for ANCHOR SETTLE (Full Weight Investment on Backward/Anchor Step)
+                                                // Heel touches or "kisses" floor (theta approx -2° to 5°) with settled weight (aZ > 0.85g)
+                                                let isAnchorSettle = (activeTheta >= -2 && activeTheta <= 5 && (activeFoot === "L" ? aZL : aZR) > 0.85);
+
+                                                if (isAnchorSettle) {
+                                                    badge.className = "badge badge-green"; badge.innerText = "ANCHOR SETTLE";
+                                                } else if (activeTheta >= 10) {
+                                                    badge.className = "badge badge-red"; badge.innerText = "HEEL LANDING!";
+                                                    playImpactClick(1200);
+                                                } else if (activeTheta > 5) {
+                                                    badge.className = "badge badge-yellow"; badge.innerText = "HEEL DROP";
+                                                } else if (activeTheta >= -20) {
+                                                    badge.className = "badge badge-green"; badge.innerText = "OPTIMAL TOE";
+                                                } else {
+                                                    badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";
+                                                }
                         } else {
                             // AMBIGUOUS: |θ| < 5° — foot landed flat, aY unreliable for direction.
                             dirBadge.innerText = "↔️ FLAT";
