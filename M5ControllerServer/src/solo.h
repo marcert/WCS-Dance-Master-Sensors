@@ -294,13 +294,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 <!-- ASI (SYMMETRY) & SMOOTHNESS -->
                 <div class="card">
                     <div class="card-title">Roll-off Symmetry (ASI) & Smoothness</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 0 0 50%;">
                             <div style="font-size: 0.8rem; color:#8b949e;">Symmetry Index (ASI):</div>
                             <div class="metric-value" id="asiVal">0 %</div>
                             <span id="asiBadge" class="badge badge-green">SYMMETRIC</span>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="flex: 0 0 50%; text-align: right;">
                             <div style="font-size: 0.8rem; color:#8b949e;">Roll-Smoothness (100 = smooth):</div>
                             <div class="metric-value" id="smoothVal" style="font-size: 1.4rem;">0</div>
                             <span id="smoothBadge" class="badge badge-green">SMOOTH</span>
@@ -410,16 +410,18 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let prevAccelZRight = 1.0;
         let prevGyroPitchLeft = 0.0;
         let prevGyroPitchRight = 0.0;
-        let pitchLeftAngleRaw  = 28.0; // Left sensor rests at ~28° shoe slope; converges quickly after tare
-        let pitchRightAngleRaw =  0.0; // Right sensor rests at ~0° with atan2(aY, aZ) formula
+        let pitchLeftAngleRaw  = -28.0; // Left sensor aY is physically inverted: rest angle = atan2(-aYL, aZL) ≈ -28°
+        let pitchRightAngleRaw =   0.0; // Right sensor rests at ~0° with atan2(aY, aZ) formula
 
                 let lastStepTimeLeft = 0;
                 let lastStepTimeRight = 0;
                 let lastActiveFoot = "";
+                let prevPitchLeftAngle  = -28.0; // T-1 CF angle saved before each frame's CF update
+                let prevPitchRightAngle =   0.0;
 
                 // Instep pitch offsets
-        let leftMountOffset  = 28.0; // Standard shoe incline ~28°
-        let rightMountOffset =  0.0; // Right sensor neutral = 0° with corrected formula
+        let leftMountOffset  = -28.0; // Left sensor: aY inverted, rest angle ≈ -28° with atan2(-aYL, aZL)
+        let rightMountOffset =   0.0; // Right sensor neutral = 0° with atan2(aYR, aZR)
 
                 let doubleStanceMs = 0;
         let currentStepOverlap = 0;
@@ -479,10 +481,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     // Complementary filter: gyro integration for short-term dynamics,
                     // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction)
                     const CF_ALPHA = 0.94;
-                    let accelAngleL = Math.atan2(aYL,  aZL) * (180 / Math.PI);
-                    let accelAngleR = Math.atan2(aYR,  aZR) * (180 / Math.PI); // aZR: right sensor Z-axis reads +1g at rest (rotation around vertical axis keeps Z unchanged)
+                    // Left sensor aY is physically inverted: negate aYL so heel-down gives positive angle
+                    let accelAngleL = Math.atan2(-aYL, aZL) * (180 / Math.PI);
+                    let accelAngleR = Math.atan2( aYR, aZR) * (180 / Math.PI);
                     lastAccelAngleL = accelAngleL; // keep fresh for tare
                     lastAccelAngleR = accelAngleR;
+                    // Save T-1 CF angles before this frame's update — used for direction & theta at trigger
+                    prevPitchLeftAngle  = pitchLeftAngleRaw;
+                    prevPitchRightAngle = pitchRightAngleRaw;
                     if (leftOk) {
                         pitchLeftAngleRaw  = CF_ALPHA * (pitchLeftAngleRaw  + gPitchL * dt) + (1 - CF_ALPHA) * accelAngleL;
                     }
@@ -491,6 +497,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     }
 
                     // 2. STEP & HEEL/TOE-STRIKE DETECTION
+
                                         let triggerImpact = false;
                                         let activeFoot = "";
                                         let activeTheta = 0;
@@ -498,60 +505,73 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         let activeDirection = "FORWARD";
 
                                                                                 // 1. Raw Transient Step Impact Sensing — offline sensors never trigger
-                                                                                let leftSignal  = leftOk  && (Math.abs(aZL) > 1.08 || Math.abs(gPitchL) > 80);
-                                                                                let rightSignal = rightOk && (Math.abs(aZR) > 1.08 || Math.abs(gPitchR) > 80);
+                                                                                // gPitch trigger requires a minimum aZ change (preJerk > 8) to suppress zero-jerk
+                                                                                // liftoff/rotation ghosts that have high gyro but no vertical impact signature.
+                                                                                let preJerkL = Math.abs(aZL - prevAccelZLeft)  / 0.005;
+                                                                                let preJerkR = Math.abs(aZR - prevAccelZRight) / 0.005;
+                                                                                let leftSignal  = leftOk  && (Math.abs(aZL) > 1.08 || (Math.abs(gPitchL) > 80 && preJerkL > 8));
+                                                                                let rightSignal = rightOk && (Math.abs(aZR) > 1.08 || (Math.abs(gPitchR) > 80 && preJerkR > 8));
 
                                                                                 let detectedFoot = null;
 
                                                                                 if (leftSignal && rightSignal) {
-                                                                                    // Pick the foot with stronger rotational motion / impact
-                                                                                    detectedFoot = (Math.abs(gPitchL) >= Math.abs(gPitchR)) ? "L" : "R";
+                                                                                    // Pick the foot with higher vertical ground-reaction force (landing foot has more |aZ|).
+                                                                                    // |aZ| is more reliable than |gPitch| here: the swinging/pushing-off foot can have high gyro
+                                                                                    // even when it is NOT the one making contact.
+                                                                                    detectedFoot = (Math.abs(aZL) >= Math.abs(aZR)) ? "L" : "R";
                                                                                 } else if (leftSignal) {
                                                                                     detectedFoot = "L";
                                                                                 } else if (rightSignal) {
                                                                                     detectedFoot = "R";
                                                                                 }
 
-                                                                                                                                                                // 2. Strict Per-Foot 220 ms Lockout Guard Clause
+                                                                                                                                                                // 2. Per-Foot 220 ms Lockout + Alternation Guard
+                                                                                // Feet must alternate (L→R→L or R→L→R). Same foot firing twice without
+                                                                                // the other foot in between = liftoff re-detection or vibration ghost.
                                                                                 if (detectedFoot === "L") {
                                                                                     if (now - lastStepTimeLeft < 220) {
-                                                                                        detectedFoot = null; // Suppress double trigger on Left Foot (< 220 ms)
+                                                                                        detectedFoot = null; // hard lockout: too soon after last L event
                                                                                     } else {
                                                                                         lastStepTimeLeft = now;
+                                                                                        if (lastActiveFoot === "L") {
+                                                                                            detectedFoot = null; // alternation guard: L→L without R in between
+                                                                                        }
                                                                                     }
                                                                                 } else if (detectedFoot === "R") {
                                                                                     if (now - lastStepTimeRight < 220) {
-                                                                                        detectedFoot = null; // Suppress double trigger on Right Foot (< 220 ms)
+                                                                                        detectedFoot = null; // hard lockout: too soon after last R event
                                                                                     } else {
                                                                                         lastStepTimeRight = now;
+                                                                                        if (lastActiveFoot === "R") {
+                                                                                            detectedFoot = null; // alternation guard: R→R without L in between
+                                                                                        }
                                                                                     }
                                                                                 }
 
                                                                                 // 3. Process Verified Step Trigger & Polarity Logic
                                                                                 if (detectedFoot === "L") {
-                                                                                    // LEFT FOOT (Standard Mounting): L:aY < 0.0g --> BACKWARD
                                                                                     lastActiveFoot = "L";
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "L";
-                                                                                    // Accel snapshot: gravity-based foot angle at the moment of detection,
-                                                                                    // independent of CF swing-phase history.  accelAngleL already computed above.
-                                                                                    activeTheta = Math.round(accelAngleL - leftMountOffset);
+                                                                                    // Use T-1 CF angle (frame before trigger): captures pre-contact orientation
+                                                                                    // before roll-through distorts the instantaneous accel angle at impact.
+                                                                                    activeTheta = Math.round(prevPitchLeftAngle - leftMountOffset);
                                                                                     activeJerk = Math.abs((aZL - prevAccelZLeft)  / 0.005); // 0.005 s = native 200 Hz sensor step
 
-                                                                                    let is_backward = (aYL < 0.0);
+                                                                                    let is_backward = (prevPitchLeftAngle < leftMountOffset);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     pitchLeftAngleRaw = leftMountOffset;
                                                                                 }
                                                                                 else if (detectedFoot === "R") {
-                                                                                    // RIGHT FOOT: accelAngleR rest = 0° (same convention as left after formula fix)
+                                                                                    // RIGHT FOOT
                                                                                     lastActiveFoot = "R";
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "R";
-                                                                                    // Accel snapshot: gravity-based foot angle at the moment of detection.
-                                                                                    activeTheta = Math.round(accelAngleR - rightMountOffset);
+                                                                                    // Use T-1 CF angle — same principle as left foot.
+                                                                                    activeTheta = Math.round(prevPitchRightAngle - rightMountOffset);
                                                                                     activeJerk = Math.abs((aZR - prevAccelZRight) / 0.005); // 0.005 s = native 200 Hz sensor step
 
-                                                                                    let is_backward = (aYR < 0.0);
+                                                                                    let is_backward = (prevPitchRightAngle < rightMountOffset);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     pitchRightAngleRaw = rightMountOffset;
                                                                                 }
@@ -568,6 +588,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         // Guard against accel transients during rapid direction changes (e.g. 107° spike in v4 analysis).
                         // No valid WCS step angle exceeds ±45° — values outside that range are sensor artefacts.
                         activeTheta = Math.max(-45, Math.min(45, activeTheta));
+
+                        // Flat contact: |θ| < 5° is at the FORWARD/BACKWARD aY boundary — direction unreliable.
+                        if (Math.abs(activeTheta) < 5) activeDirection = "AMBIGUOUS";
 
                         document.getElementById('strikeAngleVal').innerText = activeTheta + "° (" + activeFoot + ")";
                         document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
@@ -587,7 +610,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 badge.className = "badge badge-red"; badge.innerText = "FLAT-FOOT!";
                                 if (activeJerk > 160) playImpactClick(1200); // only alert on hard flat impacts (>40 g/s displayed)
                             }
-                        } else {
+                        } else if (activeDirection === "BACKWARD") {
                             dirBadge.innerText = "⬅️ BACKWARD";
                             dirBadge.style.background = "#a371f7";
 
@@ -602,6 +625,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             } else {
                                 badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";  // extreme backward overshoot
                             }
+                        } else {
+                            // AMBIGUOUS: |θ| < 5° — foot landed flat, aY unreliable for direction.
+                            dirBadge.innerText = "↔️ FLAT";
+                            dirBadge.style.background = "#555";
+                            badge.className = "badge badge-red"; badge.innerText = "FLAT-FOOT!";
+                            if (activeJerk > 160) playImpactClick(1200);
                         }
 
                         // Visuelles Aufblinken der Kachel bei jedem erkannten Schritt
