@@ -16,7 +16,7 @@ The Solo Training System operates as a high-frequency biomechanical feedback loo
  +--------------------------+           +--------------------------+
  |  Left Foot Sensor (ID 1) |           | Right Foot Sensor (ID 2) |
  |  M5Stick S3 @ 200 Hz     |           | M5Stick S3 @ 200 Hz      |
- |  Standard Mounting       |           | 180° Inverted Mounting   |
+ |  Inverted aY Mounting    |           | Standard Mounting        |
  +------------+-------------+           +------------+-------------+
               |                                      |
               +-----------------+  +-----------------+
@@ -37,7 +37,7 @@ The Solo Training System operates as a high-frequency biomechanical feedback loo
 ```
 
 * **Foot Nodes (IDs 1 & 2):** M5Stick S3 units equipped with 6-axis IMUs (BMI270 / MPU6886). Firmware operates at **200 Hz (5 ms sampling interval)** to capture ultra-fast transient impact peaks during heel-strikes and toe-landings.
-* **Central Master Unit:** Aggregates ESP-NOW streams and delivers JSON data packets (`lG`, `lA`, `lAy`, `rG`, `rA`, `rAy`) to the browser via the `/data` endpoint.
+* **Central Master Unit:** Aggregates ESP-NOW streams and delivers JSON data packets (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`) to the browser via the `/data` endpoint.
 * **Web Dashboard (`/solo`):** Client-side JavaScript executes state machine filtering, direction mapping, pitch integration, stance timeline calculations, and Web Audio API feedback.
 
 ---
