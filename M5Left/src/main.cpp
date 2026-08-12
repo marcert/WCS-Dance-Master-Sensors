@@ -15,9 +15,10 @@ uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 // --- DATA STRUCTURE TRANSMIT PACKET (IMU) ---
 typedef struct struct_imu_data {
   uint8_t foot_id;
-  float gyro_x;  // Roll-off value (Y-rotation of sensor coordinate system)
-  float accel_z; // Vertical acceleration on foot strike
-  float accel_y; // Längsbeschleunigung (Vorwärts/Rückwärts Vektor)
+  float gyro_x;    // Pitch rotation (gy — roll-off)
+  float accel_z;   // Vertical acceleration (impact)
+  float accel_y;   // Longitudinal acceleration (forward/backward)
+  float gyro_roll; // Lateral roll rotation (gx — pronation/supination)
 } struct_imu_data;
 
 // --- DATA STRUCTURE RECEIVE PACKET (HANDSHAKE ACK FROM MASTER) ---
@@ -323,8 +324,10 @@ void loop() {
   M5.Imu.getGyro(&gx, &gy, &gz);
   M5.Imu.getAccel(&ax, &ay, &az);
 
-  sensorData.gyro_x  = gy; 
-  sensorData.accel_z = az;
+  sensorData.gyro_x    = gy;
+  sensorData.accel_z   = az;
+  sensorData.accel_y   = ay;
+  sensorData.gyro_roll = gx;
   sensorData.accel_y = ay;
 
     esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));

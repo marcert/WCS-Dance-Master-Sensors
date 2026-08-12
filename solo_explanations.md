@@ -63,9 +63,17 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 
 ### B. Foot Strike Angle ($\theta$) & Landing Articulation
 
-1. **Pitch Angle Integration ($\theta_{\text{raw}}$):**
-   Continuously integrated from gyro pitch angular velocity ($\omega_{\text{pitch}}$ in $\text{deg/s}$):
-   $$\theta_{\text{raw}}(t) = \theta_{\text{raw}}(t - \Delta t) + (\omega_{\text{pitch}} \times \Delta t)$$
+1. **Complementary Filter Pitch Angle ($\theta_{\text{raw}}$):**
+   Gyro and accelerometer are fused at α = 0.94. The accelerometer reference angle differs per sensor due to physical mounting:
+
+   | Sensor | Accelerometer reference | Reason |
+   | :--- | :--- | :--- |
+   | Right (ID 2) | $\theta_{\text{accel}} = \text{atan2}(aY_R,\; aZ_R)$ | Standard orientation |
+   | Left (ID 1) | $\theta_{\text{accel}} = \text{atan2}(-aY_L,\; aZ_L)$ | aY axis physically inverted by mounting |
+
+   $$\theta_{\text{raw}}(t) = \alpha \cdot \bigl(\theta_{\text{raw}}(t-\Delta t) + \omega_{\text{pitch}} \cdot \Delta t\bigr) + (1-\alpha) \cdot \theta_{\text{accel}}, \quad \alpha = 0.94$$
+
+   **T-1 Snapshot for step classification:** At the moment of impact, the angle from the *previous frame* (T-1) is used — not the instantaneous value. The aZ > 1.08 g trigger fires after partial weight loading when roll-through has already begun; the T-1 frame captures pre-contact foot orientation before distortion.
 
 2. **Zero-Tare Compensation ($\theta_{\text{calibrated}}$):**
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -73,7 +81,7 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 
 3. **Strike Angle Evaluation Rules:**
    * **Forward Step:**
-     * $10^\circ \le \theta \le 25^\circ \longrightarrow$ `OPTIMAL HEEL` (Clean heel articulation)
+     * $10^\circ \le \theta \le 35^\circ \longrightarrow$ `OPTIMAL HEEL` (Clean heel articulation)
      * $5^\circ \le \theta < 10^\circ \longrightarrow$ `FLAT` (Borderline flat landing)
      * $\theta < 5^\circ \longrightarrow$ `FLAT-FOOT!` (Harsh flat-foot placement; triggers 1200 Hz audio warning)
      * $\theta > 35^\circ \longrightarrow$ `HEEL SPIKE` (Gyro overshoot during fast swing)
@@ -82,17 +90,23 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
      * $-20^\circ \le \theta \le 5^\circ \longrightarrow$ `OPTIMAL TOE` (Clean toe-ball roll-off)
      * $5^\circ < \theta \le 10^\circ \longrightarrow$ `HEEL DROP` (Borderline flat landing)
      * $\theta > 10^\circ \longrightarrow$ `HEEL LANDING!` (Biomechanical error: heel landing while moving backward; triggers 1200 Hz audio warning)
-   * **Ambiguous / Touch Step:**
-     * $|\theta| < 5^\circ \longrightarrow$ `TOUCH / TAP` (Superficial touch step without full weight transfer)
+   * **Ambiguous / Flat Landing:**
+     * $|\theta| < 5^\circ \longrightarrow$ ↔️ `FLAT` + `FLAT-FOOT!` (Foot landed too flat to reliably classify direction; both the direction badge and strike badge reflect a flat-foot error. Requires |θ| ≥ 5° on next detected impact to resume directional classification.)
 
 ---
 
 ### C. Terminal Stance & Power Push Propulsion
-West Coast Swing propulsion requires an active toe push-off (*Windlass Mechanism*) from the trailing leg at the end of the stance phase:
+West Coast Swing propulsion requires an active toe push-off (*Windlass Mechanism*) from the trailing leg at the end of the stance phase. Biomechanical research identifies ~250°/s plantarflexion angular velocity as the target for efficient propulsion (Third Rocker, Terminal Stance).
 
 * **Detection Condition:**
-  $$-\omega_{\text{pitch}} > 120^\circ/\text{s} \quad \text{AND} \quad aY > 0.15g$$
-* **Dashboard Feedback:** Displays **`POWER PUSH 🚀`** badge, rewarding dynamic forward propulsion over the ball of the trailing foot.
+  $$-\omega_{\text{pitch}} \ge 120^\circ/\text{s} \quad \text{AND} \quad aY > 0.15g$$
+* **Graded Feedback (holds 400 ms):**
+
+| Peak $-\omega_{\text{pitch}}$ | Badge | Meaning |
+| :---: | :---: | :--- |
+| $\ge 200^\circ/\text{s}$ | `🚀 POWER PUSH` (Green) | Scientifically optimal propulsion range |
+| $120\text{–}199^\circ/\text{s}$ | `↗ PUSH` (Yellow) | Push-off detected but below optimal — increase ankle extension drive |
+| $< 120^\circ/\text{s}$ | `— PUSH-OFF` (Grey) | No significant push-off detected |
 
 ---
 
@@ -115,6 +129,7 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 #### Why Overlap Matters in WCS Mechanics:
 * **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles touch the ground ($|aZ| > 0.55g$).
 * **Elastic Extension & Timing:** A healthy overlap ratio ($18\%\text{ to }38\%$) creates the characteristic "elastic" stretch and smooth momentum transfer in WCS. Too little overlap indicates rushing or bouncing, while too much overlap results in heavy, sluggish transitions.
+* **Note on scientific literature:** Biomechanical sources cite a single-foot stance phase of ~60% of the gait cycle. This is a different measurement — it describes how long *one* foot stays on the ground. The metric here measures the *simultaneous bilateral contact* ratio (both feet on the ground at the same time within one step cycle), which is a subset of and distinctly different from the single-foot stance phase.
 
 | Ratio Range (%) | Badge Rating | Biomechanical Meaning |
 | :---: | :---: | :--- |
@@ -128,30 +143,58 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 1. **Asymmetry Index (ASI):**
    Compares total angular work integrated across Left and Right foot roll-off cycles while feet are actively moving ($|\omega_{\text{pitch}}| > 15^\circ/\text{s}$):
-   $$\text{ASI} = \left| 1.0 - \frac{\int |\omega_{\text{left}}| \, dt}{\int |\omega_{\text{right}}| \, dt} \right| \times 100\%$$
+   $$\text{ASI} = \frac{2 \cdot \left|\int|\omega_{\text{left}}|\,dt - \int|\omega_{\text{right}}|\,dt\right|}{\int|\omega_{\text{left}}|\,dt + \int|\omega_{\text{right}}|\,dt} \times 100\%$$
    * **Target:** $< 10\%$ (`SYMMETRIC`), $11\text{--}25\%$ (`MINOR ASYM`), $>25\%$ (`ASYMMETRIC`).
 
 2. **Roll-Smoothness Index:**
-   Measures angular acceleration jerk $\left(\frac{d\omega}{dt}\right)$ smoothed over a 25-frame ($0.5\text{ s}$) sliding window:
-   $$\text{Smoothness} = 100 - \text{Mean}_{25}\left(\left| \frac{\Delta \omega_{\text{pitch}}}{\Delta t} \right| \times 0.018\right)$$
+   Measures combined angular acceleration jerk of both feet smoothed over a 25-frame (0.5 s) sliding window:
+   $$\text{Smoothness} = 100 - \text{Mean}_{25}\!\left(\min\!\left(100,\;\left(\left|\frac{\Delta\omega_L}{\Delta t}\right| + \left|\frac{\Delta\omega_R}{\Delta t}\right|\right) \times 0.018\right)\right)$$
    * **Target:** Higher values ($\ge 65$) indicate `SMOOTH`, continuous ankle articulation without micro-stutters.
 
 ---
 
-## 3. Configured Thresholds & Audio Biofeedback Summary
+### G. Weight Transfer Gradient & Ankle Shock Absorption
+
+Both metrics are computed from a post-impact monitoring window that opens immediately after each step trigger.
+
+**Weight Transfer Gradient** (240 ms window, 12 samples):
+$$\text{loadRise} = \overline{aZ}_{[160\text{–}240\,\text{ms}]} - \overline{aZ}_{[0\text{–}80\,\text{ms}]}$$
+
+| loadRise | Badge | Biomechanical Meaning |
+| :---: | :---: | :--- |
+| $> 0.12\,g$ | `SMOOTH LOAD` (Green) | Progressive weight transfer — COM moves gradually over foot |
+| $-0.08\text{ to }+0.12\,g$ | `INSTANT LOAD` (Yellow) | Weight transferred immediately at impact — less joint protection |
+| $< -0.08\,g$ | `EARLY UNLOAD` (Yellow) | Weight already shifting to next foot before settling — rushed transfer |
+
+**Ankle Shock Absorption** (100 ms window, 5 samples of `gRoll`):
+$$\text{rollIntegral} = \left|\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\,\text{s}\right| \quad [\text{degrees}]$$
+
+| rollIntegral | Badge | Biomechanical Meaning |
+| :---: | :---: | :--- |
+| $> 4°$ | `ANKLE FLEX` (Green) | Pronation impulse detected — ankle joint absorbing impact energy |
+| $1°\text{–}4°$ | `MODERATE ROLL` (Yellow) | Some ankle mobility, could be increased |
+| $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — shock transmitted directly to knee/hip joints |
+
+> **Firmware requirement:** `gRoll` (`gx` axis) is transmitted as `lGr`/`rGr` in the JSON payload. Both foot sensors and the master must be flashed with the updated firmware for these badges to show non-zero values.
 
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Forward Heel Angle** | $10^\circ \text{ to } 25^\circ$ | `OPTIMAL HEEL` (Green) | None |
-| **Forward Flat Foot** | $< 5^\circ$ | `FLAT-FOOT!` (Red) | 1200 Hz Sine Click (80 ms) |
+| **Forward Heel Angle** | $10^\circ \text{ to } 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
+| **Forward Flat Foot** | $< 5^\circ$ | `FLAT-FOOT!` (Red) | 1200 Hz Click if Impact Jerk > 40 g/s |
 | **Anchor Settle** | $-2^\circ \text{ to } +5^\circ$ AND $aZ > 0.85g$ | `ANCHOR SETTLE` (Green) | None |
 | **Backward Toe Angle** | $-20^\circ \text{ to } +5^\circ$ | `OPTIMAL TOE` (Green) | None |
 | **Backward Heel Error** | $> 10^\circ$ | `HEEL LANDING!` (Red) | 1200 Hz Warning Beep (80 ms) |
-| **Trailing Foot Push-off**| $-\omega_{\text{pitch}} > 120^\circ/\text{s}$ AND $aY > 0.15g$ | `POWER PUSH 🚀` (Green) | None |
+| **Trailing Foot Push-off (optimal)**| $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
+| **Trailing Foot Push-off (weak)** | $120\text{–}199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
 | **Impact Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
 | **Double Stance Ratio** | 18% to 38% | `OPTIMAL ROLL` (Green) | None |
 | **Double Stance Hectic** | $< 18\%$ | `HECTIC` (Yellow) | None |
 | **Double Stance Sluggish**| $> 38\%$ | `SLUGGISH` (Yellow) | None |
+| **Weight Transfer — Progressive** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Green) | None |
+| **Weight Transfer — Instant** | $-0.08 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Yellow) | None |
+| **Weight Transfer — Early Unload** | loadRise $< -0.08\,g$ | `EARLY UNLOAD` (Yellow) | None |
+| **Ankle Shock Absorption** | rollIntegral $> 4°$ | `ANKLE FLEX` (Green) | None |
+| **Ankle Stiffness** | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | None |
 | **Per-Foot Lockout Window**| $220\text{ ms}$ + Alternation Guard | Suppresses same-foot re-trigger | None |
 
 ---
@@ -161,7 +204,9 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 To prevent false secondary step triggers caused by micro-taps, foot unweighting, or floor vibrations, the DSP pipeline executes a **Dual-Stage Filtering & Lockout Concept**:
 
 1. **Transient Signal Candidate Sensing:**
-   The system continuously monitors vertical impact acceleration ($|aZ| > 1.08g$) and angular pitch velocity ($|\omega_{\text{pitch}}| > 80\text{ deg/s}$ with $preJerk > 8$). When both foot sensors report threshold breaches in the same sampling frame, the algorithm dynamically selects the dominant foot based on peak ground reaction force ($|aZ|$).
+   Each foot independently qualifies as an impact candidate via OR-logic:
+   $$\text{signal}_{\text{foot}} = \bigl(|aZ| > 1.08\,g\bigr) \;\mathbf{OR}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{AND}\; \text{preJerk} > 8\bigr)$$
+   The `preJerk` gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) on the gyro path suppresses liftoff rotation artefacts that would otherwise ghost as step triggers. When both feet signal in the same frame, the dominant foot is selected by peak ground reaction force: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
 2. **Per-Foot 220 ms Lockout & Alternation Guard:**
    * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than $220\text{ ms}$.
