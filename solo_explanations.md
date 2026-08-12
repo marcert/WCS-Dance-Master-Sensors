@@ -228,3 +228,145 @@ The Solo Training Dashboard is optimized for mobile browser use (tablets/smartph
   * `⛶ FULL`: Triggers Native Fullscreen API to maximize screen real estate.
   * `📐 ZERO`: Recalibrates static instep pitch angles for both feet.
   * `🔊 Audio`: Toggles Web Audio API synthesized biofeedback tones ON/OFF.
+
+---
+
+## 6. Dancer's Training Guide
+
+This chapter is written for dancers, not engineers. You do not need to understand the math — you need to know **what to watch, when to watch it, and what to do when a badge turns red or yellow.**
+
+---
+
+### 6.1 Setup Before You Start
+
+1. **Mount your phone or tablet on a tripod** at eye level, facing you. Landscape mode gives the best view.
+2. **Tap `📷 CAM`** to activate the camera overlay. You will now see your live body behind the data cards.
+3. **Put on your dance shoes** before the next step.
+4. **Stand naturally in your dance stance** (feet shoulder-width, slight forward pitch). Tap `📐 ZERO`. The system now knows what "flat foot on the floor" feels like for your specific shoes and instep angle.
+5. **Tap `🔊 Audio` ON.** The audio beeps are your real-time alarm system — they fire faster than you can read the screen.
+6. Start walking or dancing. Give yourself 10–15 steps to warm up before you analyse anything.
+
+> **Re-tare whenever you change shoes or surfaces.** The `📐 ZERO` calibration is shoe-specific.
+
+---
+
+### 6.2 Reading the Step Badge Card
+
+This is the primary real-time feedback card. It updates on every detected foot contact.
+
+#### What the numbers mean
+
+| Display element | What it tells you |
+| :--- | :--- |
+| **➡️ FORWARD** | The step that just landed was a forward step |
+| **⬅️ BACKWARD** | The step that just landed was a backward step |
+| **↔️ FLAT** | Foot landed too flat to classify direction — treat as a flat-foot warning |
+| **θ (signed angle)** | Pitch of your foot at the moment of landing, relative to flat. Positive = heel higher than toe; negative = toe higher than heel. |
+| **Badge** | Classification of that landing (see table below) |
+| **Jerk (g/s)** | Rate of impact force — how hard your foot hit the floor |
+
+#### Forward step badges
+
+| Badge | θ | What you did | What to aim for |
+| :--- | :--- | :--- | :--- |
+| `OPTIMAL HEEL` ✅ | +10° to +35° | Clean heel strike — forefoot lifted, heel contacts first | This is the target for all forward walks and breaks |
+| `FLAT` ⚠️ | +5° to +10° | Slight heel lead, foot nearly flat | Acceptable but increase heel articulation |
+| `FLAT-FOOT!` ❌ | < +5° | Foot landed flat or toe-first on a forward step | Common cause: rushing the step, tense ankles, or insufficient hip extension |
+| `HEEL SPIKE` ⚠️ | > +35° | Extremely steep heel angle | Usually a fast, aggressive step; reduce drive force or relax the ankle |
+
+#### Backward step badges
+
+| Badge | θ | What you did | What to aim for |
+| :--- | :--- | :--- | :--- |
+| `OPTIMAL TOE` ✅ | −20° to +5° | Clean toe-ball landing — foot rolled onto the floor from the toe | Target for all backward walks, anchors, and extensions |
+| `ANCHOR SETTLE` ✅ | −2° to +5° AND full weight | Heel just kissed the floor with full weight investment | The ideal anchor completion — leverage is built here |
+| `HEEL DROP` ⚠️ | +5° to +9° | Heel beginning to drop before full weight transfer | Keep the ankle dorsiflexed a moment longer |
+| `HEEL LANDING!` ❌ | ≥ +10° | Heel struck first on a backward step | The most common WCS technique error — pulls partner off-axis and kills momentum |
+| `HEEL SPIKE` ⚠️ | < −20° | Over-pointed foot at contact | Moderate the extension slightly |
+
+#### Impact Jerk bar
+
+- **Short bar, no click** → soft, controlled landing. Ideal for most steps.
+- **Full red bar + 500 Hz click** → heavy stomping. Bend the knee as the foot meets the floor and absorb with the ankle rather than dropping the foot.
+
+---
+
+### 6.3 Reading the Push-Off & Loading Badges
+
+These three badges appear below the Jerk bar and update together after each step.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `🚀 POWER PUSH` ✅ | Strong, biomechanically optimal push-off from your trailing foot | Maintain — you are actively driving forward |
+| `↗ PUSH` ⚠️ | Push-off detected but below optimal force | Drive more actively through the ball of the trailing foot; think "push the floor away" |
+| `— PUSH-OFF` | No significant push-off detected | Your trailing leg is passive. Actively extend the ankle at the end of each walk |
+| `SMOOTH LOAD` ✅ | Weight transferred progressively onto the landing foot | Good joint mechanics — keep it |
+| `INSTANT LOAD` ⚠️ | Full weight dropped onto the landing foot immediately at impact | Slow the COM down; think of "receiving" the floor rather than landing on it |
+| `EARLY UNLOAD` ⚠️ | Weight already shifting away before the landing foot is settled | You are rushing to the next step. Complete the current weight investment before moving |
+| `ANKLE FLEX` ✅ | Ankle rolling through impact (pronation impulse detected) | Good shock absorption — ankle acting as natural spring |
+| `MODERATE ROLL` ⚠️ | Some ankle mobility, could be more | Consciously relax the ankle at landing; avoid bracing the foot rigid |
+| `STIFF ANKLE` ⚠️ | Minimal ankle roll — impact transmitted directly up the chain | Focus on landing with a soft, unlocked ankle. Over time this reduces knee and hip load |
+
+---
+
+### 6.4 Reading the Double Stance Card
+
+This card tells you how long both feet are on the floor at the same time during each weight transfer.
+
+| Badge | Ratio | What it means | Training implication |
+| :--- | :--- | :--- | :--- |
+| `OPTIMAL ROLL` ✅ | 18%–38% | Smooth, grounded weight transfer with natural bilateral overlap | Maintain — this is the characteristic WCS rolling connection |
+| `HECTIC` ⚠️ | < 18% | Rushed transfer — one foot leaves before the other is secure | Slow down; roll through the foot before lifting. Think "peel not lift" |
+| `SLUGGISH` ⚠️ | > 38% | Prolonged double contact — hesitation or heavy stance | Commit to the weight transfer earlier; move the COM, not just the foot |
+
+**Watch this card during triple steps and walks.** A consistent `OPTIMAL ROLL` across a full 8-count pattern means your weight transfer timing is on. `HECTIC` on the anchor step often means you are rushing out of the anchor before building the connection.
+
+---
+
+### 6.5 Reading the Symmetry & Smoothness Card
+
+| Display | What it tells you | Green target |
+| :--- | :--- | :--- |
+| **ASI %** | How much difference there is between your left and right foot roll-off | `SYMMETRIC` — below 10% |
+| **Smoothness** | How fluid your overall ankle articulation is across both feet | `SMOOTH` — 65 or above |
+
+- A high **ASI** (e.g. `ASYMMETRIC` > 25%) often means one leg is doing most of the work or one ankle is stiffer. This is common when recovering from an old injury or when one foot's technique habit differs from the other.
+- A low **Smoothness** score means your ankle movements are jerky or stuttering — not a continuous, fluid arc. Slow your tempo down and focus on rolling through the full foot rather than stepping flat.
+
+---
+
+### 6.6 What to Focus on — by Skill Level
+
+#### Beginner (just starting out)
+Ignore all other cards. Focus on one thing only: **Step Badge direction + badge**.
+
+1. Walk forward. Does the badge say `OPTIMAL HEEL`? If not, lift your heel slightly more before the step lands.
+2. Walk backward. Does the badge say `OPTIMAL TOE` or `ANCHOR SETTLE`? If not, send your toe out first like a probe — before the body weight follows.
+3. If you hear the **1200 Hz beep**, stop and slow down. That sound means `HEEL LANDING!` or hard `FLAT-FOOT!`.
+
+#### Intermediate (technique refinement)
+1. Forward walks → aim for consistent `OPTIMAL HEEL` with Jerk bar under 50%.
+2. Backward walks → aim for `OPTIMAL TOE` → `ANCHOR SETTLE` sequence on anchor steps.
+3. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triples.
+4. Watch the **POWER PUSH badge**: is your trailing leg passive? Drive through the ball of the foot on every walk.
+
+#### Advanced (biomechanical optimisation)
+1. Use **SMOOTH LOAD vs INSTANT LOAD** to fine-tune how you receive weight — especially on syncopated patterns where COM timing matters.
+2. Compare **ASI** between your left and right sides. If one side is consistently worse, isolate that foot with single-foot drills.
+3. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — stiffness increases when ankles tire. This is a natural cue to slow down or rest.
+4. Film yourself with `📷 CAM` and replay during pauses. Look for the frame where `HEEL LANDING!` fires — your posture in that moment reveals the root cause (usually upper body tension or early COM shift).
+
+---
+
+### 6.7 Common Problems and How to Fix Them
+
+| What you see | Root cause | Fix |
+| :--- | :--- | :--- |
+| `FLAT-FOOT!` on every forward walk | Ankle held rigid; no heel articulation | Slow down. Exaggerate the heel-first contact consciously. Drill: walk in place, touching heel then ball in sequence. |
+| `HEEL LANDING!` on backward steps | Body weight moving backward too fast before foot scouts | Delay the COM — send the foot first, body follows. Drill: backward walks holding a wall for balance, exaggerating toe-first contact. |
+| `HECTIC` Double Stance | Rushing the transfer; foot lifts too early | Think "leave the floor last" — let the whole foot peel up from toe. |
+| `SLUGGISH` Double Stance | Hesitating before committing weight | Trust the floor. Move the body, not just the foot. Drill: metronome walks, landing on the beat. |
+| `STIFF ANKLE` consistently | Braced ankle at landing | Visualise landing on a sponge. Consciously unlock the ankle joint before contact. |
+| `ASYMMETRIC` ASI | One foot stiffer or less articulated | Identify which foot (left or right from the badge) and drill that foot in isolation with slow deliberate rolls. |
+| `— PUSH-OFF` (no badge) | Trailing leg passive — no drive | Think "push the floor, don't just lift the foot". Add a conscious toe-extension at the end of each walk. |
+| `INSTANT LOAD` on anchors | Dropping weight abruptly at anchor | Slow the settle. Think "melt into the anchor" rather than "land on it". |
