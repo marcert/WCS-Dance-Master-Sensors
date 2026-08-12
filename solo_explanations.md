@@ -57,9 +57,18 @@ ____/_____ (Floor)                      _______/___ (Floor)
 1. **Pitch Angle Estimation via Complementary Filter ($\theta_{\text{raw}}$):**
    Combines short-term gyro integration with long-term accelerometer angle correction to prevent gyro drift:
    
-   $$\theta_{\text{raw}}(t) = 0.94 \times \bigl(\theta_{\text{raw}}(t - \Delta t) + \omega_{\text{pitch}} \times \Delta t\bigr) + 0.06 \times \arctan2(a_Y, a_Z) \times \frac{180}{\pi}$$
+   $$\theta_{\text{raw}}(t) = 0.94 \times \bigl(\theta_{\text{raw}}(t - \Delta t) + \omega_{\text{pitch}} \times \Delta t\bigr) + 0.06 \times \theta_{\text{accel}}(t)$$
    
-   The 6 % accelerometer contribution corrects up to ~1°/s drift per frame without degrading dynamic response. The right sensor is mounted with its Z-axis reading +1g at rest (rotation around the shoe's vertical axis leaves Z unchanged), so its accelerometer term uses $\arctan2(a_Y, a_Z)$ — the same formula as the left sensor, without negation.
+   where the accelerometer angle term $\theta_{\text{accel}}$ differs per sensor due to a confirmed physical mounting difference in the aY axis:
+   
+   | Sensor | Accelerometer Term | Reason |
+   | :--- | :--- | :--- |
+   | **Right foot** | $\arctan2(a_Y,\; a_Z) \times \tfrac{180}{\pi}$ | Standard convention: $a_Y > 0$ when heel is lower than toe |
+   | **Left foot** | $\arctan2(-a_Y,\; a_Z) \times \tfrac{180}{\pi}$ | Left sensor's $a_Y$ axis is physically inverted; negation restores the shared sign convention |
+   
+   After this correction both sensors share the same convention: $\theta > 0$ means heel lower than toe (forward-step geometry), $\theta < 0$ means toe lower than heel (backward-step geometry). The **mount offset** at rest differs accordingly: right sensor ≈ 0°, left sensor ≈ −28° (auto-corrected by the TARE function).
+   
+   The 6% accelerometer contribution corrects up to ~1°/s drift per frame without degrading dynamic response.
 
 2. **Zero-Tare Compensation ($\theta_{\text{calibrated}}$):**
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -67,16 +76,23 @@ ____/_____ (Floor)                      _______/___ (Floor)
    $$\theta = \theta_{\text{raw}} - \text{mountOffset}$$
 
 3. **Strike Angle Evaluation Rules:**
-   * **Forward Step:**
-     * $10^\circ \le \theta \le 35^\circ \longrightarrow$ `OPTIMAL HEEL` (Clean heel articulation)
-     * $5^\circ \le \theta < 10^\circ \longrightarrow$ `FLAT` (Borderline flat landing)
-     * $\theta < 5^\circ$ (including negative) $\longrightarrow$ `FLAT-FOOT!` (Toe-down or flat landing; triggers 1200 Hz audio only when impact jerk > 40 g/s)
-   * **Backward Step:**
-     * $-20^\circ \le \theta \le 5^\circ \longrightarrow$ `OPTIMAL TOE` (Clean toe-ball roll-off)
-     * $5^\circ < \theta < 10^\circ \longrightarrow$ `HEEL DROP` (Heel beginning to sink — caution)
-     * $\theta \ge 10^\circ \longrightarrow$ `HEEL LANDING!` (Biomechanical error: heel landing while moving backward; triggers 1200 Hz audio)
 
-   > **Sign convention:** $\theta$ is the signed pitch angle relative to the tare zero. Positive = heel higher than toe; negative = toe higher than heel. The HUD displays the raw signed value so the polarity immediately explains the badge (e.g. $-8°$ FLAT-FOOT! = toe dipped during a forward step).
+   > **Priority override — AMBIGUOUS / FLAT state:** If $|\theta| < 5°$ at trigger time, direction is unconditionally overridden to `↔️ FLAT` and the badge is `FLAT-FOOT!` regardless of foot movement direction. This occurs when the foot lands essentially flat and the sensor cannot reliably distinguish heel-first from toe-first contact.
+
+   * **Forward Step (➡️ FORWARD):**
+     * $\theta > 35^\circ \longrightarrow$ `HEEL SPIKE` ⚠️ (Excessive heel angle; reduce drive force or relax the ankle)
+     * $10^\circ \le \theta \le 35^\circ \longrightarrow$ `OPTIMAL HEEL` ✅ (Clean heel articulation — target for all forward walks)
+     * $5^\circ \le \theta < 10^\circ \longrightarrow$ `FLAT` ⚠️ (Borderline flat landing)
+     * $\theta < 5^\circ$ (including negative) $\longrightarrow$ `FLAT-FOOT!` ❌ (Toe-down or flat landing; triggers 1200 Hz audio only when impact jerk > 40 g/s)
+   * **Backward Step (⬅️ BACKWARD):**
+     * $\theta \ge 10^\circ \longrightarrow$ `HEEL LANDING!` ❌ (Biomechanically impossible in correct WCS technique; triggers 1200 Hz audio)
+     * $5^\circ \le \theta < 10^\circ \longrightarrow$ `HEEL DROP` ⚠️ (Heel sinking before full weight transfer — caution)
+     * $-20^\circ \le \theta < 5^\circ \longrightarrow$ `OPTIMAL TOE` ✅ (Clean toe-ball roll-off — target for all backward walks)
+     * $\theta < -20^\circ \longrightarrow$ `HEEL SPIKE` ⚠️ (Extremely steep toe angle; weight too far forward)
+   * **Flat Contact (↔️ FLAT, $|\theta| < 5°$):**
+     * Always shows `FLAT-FOOT!` badge. Direction is displayed as `↔️ FLAT` regardless of movement.
+
+   > **Sign convention:** $\theta = \theta_{\text{CF}}(t{-}1) - \text{mountOffset}$. Positive = heel lower than toe (forward-step geometry); negative = toe lower than heel (backward-step geometry). Both sensors share this convention after the left-sensor $a_Y$ negation. Note that $\theta$ is sampled from the **T-1 complementary-filter angle** (see Section 4), not from the instantaneous accelerometer reading at the trigger frame.
 
 ---
 
@@ -141,11 +157,14 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Forward Heel Angle** | $10^\circ \text{ to } 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
-| **Forward Flat Foot** | $< 5^\circ$ (incl. negative) | `FLAT-FOOT!` (Red) | 1200 Hz Sine Click — only when jerk > 40 g/s |
-| **Backward Toe Angle** | $-20^\circ \text{ to } +5^\circ$ | `OPTIMAL TOE` (Green) | None |
-| **Backward Heel Drop** | $5^\circ < \theta < 10^\circ$ | `HEEL DROP` (Yellow) | None |
-| **Backward Heel Error** | $\ge 10^\circ$ | `HEEL LANDING!` (Red) | 1200 Hz Warning Beep (80 ms) |
+| **Flat Contact Override** | $|\theta| < 5°$ | `↔️ FLAT` + `FLAT-FOOT!` (overrides direction) | 1200 Hz click — only when jerk > 40 g/s |
+| **Forward Heel Spike** | $\theta > 35°$ | `HEEL SPIKE` (Yellow) | None |
+| **Forward Optimal Heel** | $10° \text{ to } 35°$ | `OPTIMAL HEEL` (Green) | None |
+| **Forward Flat Foot** | $< 5°$ (incl. negative) | `FLAT-FOOT!` (Red) | 1200 Hz Sine Click — only when jerk > 40 g/s |
+| **Backward Heel Error** | $\ge 10°$ | `HEEL LANDING!` (Red) | 1200 Hz Warning Beep (80 ms) |
+| **Backward Heel Drop** | $5° < \theta < 10°$ | `HEEL DROP` (Yellow) | None |
+| **Backward Optimal Toe** | $-20° \text{ to } +5°$ | `OPTIMAL TOE` (Green) | None |
+| **Backward Toe Spike** | $< -20°$ | `HEEL SPIKE` (Yellow) | None |
 | **Impact Jerk ($J_{\text{impact}}$)** | $> 120\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
 | **Double Stance Ratio** | 18% to 38% | `OPTIMAL ROLL` (Green) | None |
 | **Double Stance Hectic** | $< 18\%$ | `HECTIC` (Yellow) | None |
@@ -160,17 +179,68 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 ---
 
-## 4. Signal Filtering & Lockout Concept
+## 4. Signal Filtering & Step Detection Pipeline
 
-To prevent false secondary step triggers caused by micro-taps, foot unweighting, or floor vibrations, the DSP pipeline executes a **Dual-Stage Filtering & Lockout Concept**:
+To reliably detect genuine foot contacts while suppressing false triggers (vibration, liftoff ghosts, swing-phase inertia), the pipeline executes four sequential stages on every 20 ms poll frame.
 
-1. **Transient Signal Candidate Sensing:**
-   The system continuously monitors vertical impact acceleration ($|aZ| > 1.08g$) and angular pitch velocity ($|\omega_{\text{pitch}}| > 80\text{ deg/s}$). When both foot sensors report threshold breaches in the same sampling frame, the algorithm dynamically selects the dominant foot based on peak angular momentum.
+---
 
-2. **Independent Per-Foot Lockout State Machine ($220\text{ ms}$):**
-   * **The Problem:** During a single foot contact or roll-off, secondary micro-impacts (e.g. heel strike followed by ball contact) can cause multiple false step events on the *same* leg.
-   * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than $220\text{ ms}$.
-   * **Behavior:** If the elapsed time is $< 220\text{ ms}$ on the same leg, the event is suppressed as a secondary vibration. If the dancer switches feet (`Left -> Right`), the opposite leg's timer is checked, allowing rapid alternating steps (such as Triple Steps at $220\text{ to }250\text{ ms}$ intervals) to pass without latency.
+### Stage 1 — Impact Signal Candidates
+
+Both feet are evaluated independently each frame:
+
+$$\text{signal}_f = \text{online}_f \;\wedge\; \Bigl(|aZ_f| > 1.08g \;\;\vee\;\; \bigl(|\omega_f| > 80\tfrac{°}{s} \;\wedge\; \text{preJerk}_f > 8\bigr)\Bigr)$$
+
+where:
+
+$$\text{preJerk}_f = \frac{|aZ_{f,\,t} - aZ_{f,\,t-1}|}{0.005\text{ s}}$$
+
+**Why two trigger paths?**
+- The $|aZ| > 1.08g$ path catches hard heel and ball-of-foot impacts.
+- The $|\omega| > 80°/s$ path catches soft or fast toe contacts where the vertical spike is mild but foot rotation is high.
+- The **preJerk gate** ($> 8$) on the gyro path suppresses **liftoff and rotation ghosts**: high-gPitch events where the foot is rotating in the air or pivoting on the floor without any associated vertical impact. Without this gate, liftoff events produce false same-foot re-detections.
+
+---
+
+### Stage 2 — Dual-Foot Tiebreaker
+
+If both feet breach their thresholds simultaneously, the foot with higher **vertical ground-reaction force** wins:
+
+$$\text{detectedFoot} = \underset{f \in \{L, R\}}{\operatorname{argmax}}\; |aZ_f|$$
+
+The landing foot always receives the floor's reaction force; the swinging or pushing-off foot can have high $|\omega|$ but lower $|aZ|$. Using $|aZ|$ as the tiebreaker makes the selection robust to asymmetric swing dynamics.
+
+---
+
+### Stage 3 — Per-Foot Lockout + Alternation Guard
+
+Two independent 220 ms timers prevent rapid same-foot re-triggers. An additional **alternation guard** rejects any two consecutive detections on the same foot without an intervening detection on the opposite foot (L→L or R→R sequences). This eliminates liftoff-vibration chains where a zero-jerk ghost on the opposite sensor resets the alternation state and allows the same foot to fire twice.
+
+| Condition | Action |
+| :--- | :--- |
+| Same foot, $\Delta t < 220\text{ ms}$ | Hard lockout — event suppressed |
+| Same foot twice in a row (L→L or R→R) | Alternation guard — event suppressed |
+| Alternating foot, $\Delta t \ge 220\text{ ms}$ | Event accepted |
+
+---
+
+### Stage 4 — T-1 CF Angle: Direction & Theta Snapshot
+
+At the trigger frame $t$, both $\theta$ and direction are read from the **previous frame's complementary-filter angle** $\theta_{\text{CF}}(t{-}1)$, not from the instantaneous accelerometer reading at $t$:
+
+$$\theta_{\text{active}} = \theta_{\text{CF}}(t{-}1) - \text{mountOffset}$$
+
+$$\text{direction} = \begin{cases} \text{BACKWARD} & \text{if } \theta_{\text{CF}}(t{-}1) < \text{mountOffset} \\ \text{FORWARD} & \text{otherwise} \end{cases}$$
+
+**Why T-1?**
+The $|aZ| > 1.08g$ trigger fires at **weight transfer** — a late-landing event that occurs after the foot has already rolled from its initial contact geometry toward a more neutral or heel-down position (the *roll-through artifact*). Reading $\theta$ at frame $t$ would capture this post-roll orientation. At frame $t{-}1$ the CF angle tracks the foot's pre-contact approach:
+
+| Step type | T-1 foot orientation | $\theta_{\text{active}}$ | Direction |
+| :--- | :--- | :--- | :--- |
+| Forward (heel-first) | Heel lower than toe | Positive | ➡️ FORWARD |
+| Backward (toe-first) | Toe lower than heel | Negative | ⬅️ BACKWARD |
+
+The CF angle at T-1 is preferred over the raw accelerometer angle because the 94% gyro weighting makes it immune to single-frame accelerometer noise while still tracking rapid foot rotation faithfully.
 
 ---
 
@@ -216,7 +286,9 @@ This is the primary real-time feedback card. It updates on every detected foot c
 
 | Display element | What it tells you |
 | :--- | :--- |
-| **➡️ FORWARD / ⬅️ BACKWARD** | Direction of the step that just landed |
+| **➡️ FORWARD** | The step that just landed was a forward step |
+| **⬅️ BACKWARD** | The step that just landed was a backward step |
+| **↔️ FLAT** | Foot landed nearly flat (&#124;θ&#124; < 5°) — direction is ambiguous; the sensor cannot reliably distinguish forward from backward at this angle |
 | **θ (signed angle)** | Pitch of your foot at the moment of landing, relative to flat. Positive = heel higher than toe; negative = toe higher than heel. |
 | **Badge** | Classification of that landing (see table below) |
 | **Jerk (g/s)** | Rate of impact force — how hard your foot hit the floor |
