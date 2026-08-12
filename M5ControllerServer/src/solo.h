@@ -272,6 +272,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     <div class="bar-container">
                         <div id="jerkBar" class="bar-fill" style="background: var(--accent-left);"></div>
                     </div>
+                    <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap; min-height:22px;">
+                        <span id="powerBadge" class="badge" style="background:#1e272e; color:#8b949e;">— PUSH-OFF</span>
+                        <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
+                        <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
+                    </div>
                 </div>
 
                                 <!-- BILATERAL OVERLAP (DOUBLE STANCE) -->
@@ -416,6 +421,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 let lastStepTimeLeft = 0;
                 let lastStepTimeRight = 0;
                 let lastActiveFoot = "";
+                let lastPowerPushTime = 0;
                 let prevPitchLeftAngle  = -28.0; // T-1 CF angle saved before each frame's CF update
                 let prevPitchRightAngle =   0.0;
 
@@ -448,8 +454,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                 let smoothnessBuffer = [];
         let smoothnessAvg = 0;
-        let stanceBuffer = new Array(100).fill(0); // rolling 2-second window: 0=none,1=left,2=right,3=both
-        let asiSmoothed = 0; // IIR-smoothed ASI to suppress single-swing asymmetry spikes
+        let stanceBuffer = new Array(100).fill(0);
+        let asiSmoothed = 0;
+        let loadingSamples = []; let loadingActive = false; let loadingFoot = "";
+        let rollSamples    = []; let rollActive    = false; let rollFoot    = "";
 
         // Last accel-snapshot angles — updated every poll cycle, used by tare instead of CF angle
         let lastAccelAngleL = 0;
@@ -462,12 +470,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let dt = 0.02; // 20ms
                     let now = Date.now();
 
-                                        let gPitchL = data.lG ?? 0;
-                    let aZL = data.lA ?? 1.0;
-                    let aYL = data.lAy ?? 0.0;
-                    let gPitchR = data.rG ?? 0;
-                    let aZR = data.rA ?? 1.0;
-                    let aYR = data.rAy ?? 0.0;
+                                        let gPitchL = data.lG   ?? 0;
+                    let aZL     = data.lA   ?? 1.0;
+                    let aYL     = data.lAy  ?? 0.0;
+                    let gRollL  = data.lGr  ?? 0;
+                    let gPitchR = data.rG   ?? 0;
+                    let aZR     = data.rA   ?? 1.0;
+                    let aYR     = data.rAy  ?? 0.0;
+                    let gRollR  = data.rGr  ?? 0;
                     let leftOk  = data.lOk === true;
                     let rightOk = data.rOk === true;
 
@@ -577,10 +587,31 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 }
 
                                         // 4. TERMINAL STANCE / POWER PUSH DETECTION (Windlass Push-off from Trailing Foot)
-                                        // Strong negative angular pitch velocity (foot extending/pushing off) with positive forward acceleration
-                                        let pushOffL = (gPitchL < -120 && aYL > 0.15);
-                                        let pushOffR = (gPitchR < -120 && aYR > 0.15);
-                                        let powerPushActive = pushOffL || pushOffR;
+                                        // Graded: ≥200°/s = optimal per biomechanical research (Terminal Stance Third Rocker ~250°/s)
+                                        //         120–200°/s = detected but below optimal threshold
+                                        let pushPeakL = aYL > 0.15 ? -gPitchL : 0; // magnitude only when forward accel present
+                                        let pushPeakR = aYR > 0.15 ? -gPitchR : 0;
+                                        let pushPeak = Math.max(pushPeakL, pushPeakR);
+                                        let pushLevel = (pushPeak >= 200) ? 2 : (pushPeak >= 120) ? 1 : 0;
+                                        if (pushLevel > 0) lastPowerPushTime = now;
+                                        let powerBadge = document.getElementById('powerBadge');
+                                        if (powerBadge) {
+                                            if (now - lastPowerPushTime < 400) {
+                                                if (pushLevel === 2) {
+                                                    powerBadge.className = "badge badge-green";
+                                                    powerBadge.style.cssText = "";
+                                                    powerBadge.innerText = "🚀 POWER PUSH";
+                                                } else {
+                                                    powerBadge.className = "badge badge-yellow";
+                                                    powerBadge.style.cssText = "";
+                                                    powerBadge.innerText = "↗ PUSH";
+                                                }
+                                            } else {
+                                                powerBadge.className = "badge";
+                                                powerBadge.style.cssText = "background:#1e272e; color:#8b949e;";
+                                                powerBadge.innerText = "— PUSH-OFF";
+                                            }
+                                        }
 
                                         // Wenn ein Schritt gelandet ist -> UI & Richtungsbewertung sofort aktualisieren
                     if (triggerImpact) {
@@ -656,6 +687,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         document.getElementById('jerkBar').style.background = (activeFoot === "L") ? "var(--accent-left)" : "var(--accent-right)";
 
                         if (activeJerk > 120) playImpactClick(500); // threshold scaled to native 200 Hz dt (×4 vs 20 ms poll)
+
+                        // Start post-impact monitoring windows — reset badges to pending
+                        loadingSamples = []; loadingActive = true; loadingFoot = activeFoot;
+                        rollSamples    = []; rollActive    = true; rollFoot    = activeFoot;
+                        let lBadge = document.getElementById('loadBadge');
+                        let rBadge = document.getElementById('rollBadge');
+                        if (lBadge) { lBadge.className = "badge"; lBadge.style.cssText = "background:#1e272e;color:#8b949e;"; lBadge.innerText = "— LOADING"; }
+                        if (rBadge) { rBadge.className = "badge"; rBadge.style.cssText = "background:#1e272e;color:#8b949e;"; rBadge.innerText = "— ANKLE ROLL"; }
                     
                         // Dynamic Tempo-Adaptive Doppelstand-Ratio (%)
                         let stanceRatio = Math.round((currentStepOverlap / currentStepDuration) * 100);
@@ -677,6 +716,50 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     // 3. Stance-Phasen & Überlappung — offline sensors never count as grounded
                     let leftOnGround  = leftOk  && Math.abs(aZL) > 0.55;
                     let rightOnGround = rightOk && Math.abs(aZR) > 0.55;
+
+                    // A. Weight Transfer Gradient — 12 samples (~240 ms) after impact
+                    // earlyMean vs lateMean: positive rise = progressive loading (smooth weight transfer)
+                    if (loadingActive) {
+                        let footAZ = Math.abs(loadingFoot === "L" ? aZL : aZR);
+                        loadingSamples.push(footAZ);
+                        if (loadingSamples.length >= 12) {
+                            loadingActive = false;
+                            let earlyMean = loadingSamples.slice(0, 4).reduce((a, b) => a + b, 0) / 4;
+                            let lateMean  = loadingSamples.slice(8, 12).reduce((a, b) => a + b, 0) / 4;
+                            let loadRise  = lateMean - earlyMean;
+                            let lBadge = document.getElementById('loadBadge');
+                            if (lBadge) {
+                                if (loadRise > 0.12) {
+                                    lBadge.className = "badge badge-green";  lBadge.style.cssText = ""; lBadge.innerText = "SMOOTH LOAD";
+                                } else if (loadRise < -0.08) {
+                                    lBadge.className = "badge badge-yellow"; lBadge.style.cssText = ""; lBadge.innerText = "EARLY UNLOAD";
+                                } else {
+                                    lBadge.className = "badge badge-yellow"; lBadge.style.cssText = ""; lBadge.innerText = "INSTANT LOAD";
+                                }
+                            }
+                        }
+                    }
+
+                    // B. Ankle Shock Absorption — 5 samples (~100 ms) after impact
+                    // |∫gRoll dt| > threshold = pronation impulse detected (ankle flex for shock absorption)
+                    if (rollActive) {
+                        let footGRoll = rollFoot === "L" ? gRollL : gRollR;
+                        rollSamples.push(footGRoll);
+                        if (rollSamples.length >= 5) {
+                            rollActive = false;
+                            let rollIntegral = Math.abs(rollSamples.reduce((a, b) => a + b, 0) * 0.02);
+                            let rBadge = document.getElementById('rollBadge');
+                            if (rBadge) {
+                                if (rollIntegral > 4) {
+                                    rBadge.className = "badge badge-green";  rBadge.style.cssText = ""; rBadge.innerText = "ANKLE FLEX";
+                                } else if (rollIntegral > 1) {
+                                    rBadge.className = "badge badge-yellow"; rBadge.style.cssText = ""; rBadge.innerText = "MODERATE ROLL";
+                                } else {
+                                    rBadge.className = "badge badge-yellow"; rBadge.style.cssText = ""; rBadge.innerText = "STIFF ANKLE";
+                                }
+                            }
+                        }
+                    }
 
                     if (leftOnGround && rightOnGround) {
                         currentStepOverlap += dt * 1000;
