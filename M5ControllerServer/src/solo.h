@@ -11,7 +11,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     <style>
                 :root {
             --bg-color: #0b0e14;
-            --card-bg: rgba(10, 14, 22, 0.35);
+            --card-bg: rgba(20, 20, 30, 0.15);
             --accent-left: #00f0ff;
             --accent-right: #ff007f;
             --text-color: #f0f6fc;
@@ -74,10 +74,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 10px;
-            padding: 12px;
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
+            padding: 6px 10px;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.9);
         }
 
                 .card-flash {
@@ -90,19 +91,18 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         }
 
         /* METRICS & GAUGES */
-        .metric-value { font-size: 2rem; font-weight: bold; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 6px; }
+        .metric-value { font-size: 2rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 6px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
         .badge-green { background: var(--ok-color); color: #fff; }
         .badge-yellow { background: var(--warn-color); color: #000; }
         .badge-red { background: var(--danger-color); color: #fff; }
 
-                /* CANVASES */
+        /* CANVASES — absolute-fill inside #canvas-wrapper; pixel dims set by ResizeObserver */
         canvas {
+            position: absolute;
+            top: 0; left: 0;
             width: 100%;
-            height: 160px;
-            background: rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
+            height: 100%;
             display: block;
         }
 
@@ -123,6 +123,109 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         .stance-left { background: var(--accent-left); opacity: 0.8; }
         .stance-right { background: var(--accent-right); opacity: 0.8; }
         .stance-double { background: #e3b341; opacity: 0.9; }
+
+        /* ====================================================
+           CARD TITLE
+           ==================================================== */
+        .card-title {
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        /* ====================================================
+           GRAPH CARD & CANVAS WRAPPER
+           ==================================================== */
+        #graphCard {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        /* Sized to 160px in portrait; flex:1 in landscape via media query below */
+        #canvas-wrapper {
+            position: relative;
+            height: 160px;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        /* ====================================================
+           MAIN LAYOUT WRAPPER (graph + metric cards)
+           ==================================================== */
+        #main-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ====================================================
+           PORTRAIT — single-column, scrollable (default)
+           ==================================================== */
+        @media (orientation: portrait) {
+            body { min-height: 100vh; }
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 12px;
+            }
+        }
+
+        /* ====================================================
+           LANDSCAPE — 2-column split, no vertical scroll
+           ==================================================== */
+        @media (orientation: landscape) {
+            body {
+                min-height: unset;
+                height: 100vh;
+                overflow: hidden;
+                padding: 6px 10px;
+                gap: 6px;
+            }
+            header { padding-bottom: 4px; }
+            h1 { font-size: 1.05rem; }
+            .audio-toggle { padding: 4px 8px; font-size: 0.78rem; }
+            .card-title { font-size: 0.72rem; margin-bottom: 3px; }
+
+            /* Left col (graph) + right col (metric cards) side by side */
+            #main-layout {
+                flex-direction: row;
+                gap: 8px;
+                overflow: hidden;
+            }
+
+            /* Left column: graph fills available height */
+            #graphCard {
+                flex: 0 0 47%;
+                overflow: hidden;
+            }
+
+            /* Canvas wrapper grows to fill the graphCard */
+            #canvas-wrapper {
+                flex: 1;
+                height: auto;
+                min-height: 0;
+            }
+
+            /* Right column: 2×2 grid of metric cards */
+            .dashboard-grid {
+                flex: 1;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                align-content: start;
+                overflow: hidden;
+                min-height: 0;
+            }
+
+            .card { padding: 5px 8px; }
+            .metric-value { font-size: 1.4rem; }
+            .stance-timeline { height: 22px; margin-top: 4px; }
+            .bar-container { margin-top: 4px; }
+        }
     </style>
 </head>
 <body>
@@ -140,10 +243,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             </div>
         </header>
 
+<main id="main-layout">
+
         <!-- LIVE PITCH GRAPH -->
-    <div class="card">
+    <div class="card" id="graphCard">
         <div class="card-title">Live Roll-off Dynamics – Pitch Angular Velocity (&omega;_pitch)</div>
-        <canvas id="chartPitch" width="800" height="200"></canvas>
+        <div id="canvas-wrapper"><canvas id="chartPitch"></canvas></div>
     </div>
 
     <!-- METRICS GRID -->
@@ -204,6 +309,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 </div>
 
     </div>
+
+</main>
 
 <script>
     // --- FULLSCREEN LOGIC ---
@@ -282,6 +389,19 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     const canvas = document.getElementById('chartPitch');
     const ctx = canvas.getContext('2d');
 
+    // Sync canvas pixel buffer to its CSS display size whenever the layout changes
+    // (orientation switch, fullscreen toggle, window resize).
+    const canvasRO = new ResizeObserver(() => {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        if (w > 0 && h > 0 && (canvas.width !== w || canvas.height !== h)) {
+            canvas.width  = w;
+            canvas.height = h;
+            drawPitchChart();
+        }
+    });
+    canvasRO.observe(canvas);
+
     const maxHistory = 200;
     let pitchLeftHistory = new Array(maxHistory).fill(0);
     let pitchRightHistory = new Array(maxHistory).fill(0);
@@ -290,16 +410,16 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let prevAccelZRight = 1.0;
         let prevGyroPitchLeft = 0.0;
         let prevGyroPitchRight = 0.0;
-        let pitchLeftAngleRaw = 28.0;
-        let pitchRightAngleRaw = 28.0;
+        let pitchLeftAngleRaw  = 28.0; // Left sensor rests at ~28° shoe slope; converges quickly after tare
+        let pitchRightAngleRaw =  0.0; // Right sensor rests at ~0° with atan2(aY, aZ) formula
 
                 let lastStepTimeLeft = 0;
                 let lastStepTimeRight = 0;
                 let lastActiveFoot = "";
 
                 // Instep pitch offsets
-        let leftMountOffset = 28.0;  // Standard shoe incline ~28 deg
-        let rightMountOffset = 28.0;
+        let leftMountOffset  = 28.0; // Standard shoe incline ~28°
+        let rightMountOffset =  0.0; // Right sensor neutral = 0° with corrected formula
 
                 let doubleStanceMs = 0;
         let currentStepOverlap = 0;
@@ -307,9 +427,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let stepDurationMs = 500; // Standard 500ms ~= 120 BPM
 
                 function tareFootAngles() {
-                    // Calculate instep slope from current static acceleration values a_y & a_z
-                    leftMountOffset = pitchLeftAngleRaw;
-                    rightMountOffset = pitchRightAngleRaw;
+                    // Use the live accel-snapshot angle (not the CF angle) so the offset is
+                    // immune to gyro drift that may have accumulated during active movement.
+                    leftMountOffset  = lastAccelAngleL;
+                    rightMountOffset = lastAccelAngleR;
+                    // Sync CF integration to the same reference so the graph re-centres too.
+                    pitchLeftAngleRaw  = leftMountOffset;
+                    pitchRightAngleRaw = rightMountOffset;
         
             let btn = document.getElementById('tareBtn');
             btn.innerText = "📐 ZEROED! ✓";
@@ -323,6 +447,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 let smoothnessBuffer = [];
         let smoothnessAvg = 0;
         let stanceBuffer = new Array(100).fill(0); // rolling 2-second window: 0=none,1=left,2=right,3=both
+        let asiSmoothed = 0; // IIR-smoothed ASI to suppress single-swing asymmetry spikes
+
+        // Last accel-snapshot angles — updated every poll cycle, used by tare instead of CF angle
+        let lastAccelAngleL = 0;
+        let lastAccelAngleR = 0;
 
         function fetchStream() {
             fetch('/data')
@@ -349,9 +478,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                     // Complementary filter: gyro integration for short-term dynamics,
                     // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction)
-                    const CF_ALPHA = 0.98;
+                    const CF_ALPHA = 0.94;
                     let accelAngleL = Math.atan2(aYL,  aZL) * (180 / Math.PI);
-                    let accelAngleR = Math.atan2(aYR, -aZR) * (180 / Math.PI); // -aZR: right sensor mounted 180° inverted
+                    let accelAngleR = Math.atan2(aYR,  aZR) * (180 / Math.PI); // aZR: right sensor Z-axis reads +1g at rest (rotation around vertical axis keeps Z unchanged)
+                    lastAccelAngleL = accelAngleL; // keep fresh for tare
+                    lastAccelAngleR = accelAngleR;
                     if (leftOk) {
                         pitchLeftAngleRaw  = CF_ALPHA * (pitchLeftAngleRaw  + gPitchL * dt) + (1 - CF_ALPHA) * accelAngleL;
                     }
@@ -359,10 +490,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         pitchRightAngleRaw = CF_ALPHA * (pitchRightAngleRaw + gPitchR * dt) + (1 - CF_ALPHA) * accelAngleR;
                     }
 
-                    let calibratedAngleL = pitchLeftAngleRaw - leftMountOffset;
-                    let calibratedAngleR = pitchRightAngleRaw - rightMountOffset;
-
-                                        // 2. STEP & HEEL/TOE-STRIKE DETECTION (Strict L/R Alternation & Inverted Right Polarity Fix)
+                    // 2. STEP & HEEL/TOE-STRIKE DETECTION
                                         let triggerImpact = false;
                                         let activeFoot = "";
                                         let activeTheta = 0;
@@ -384,16 +512,16 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     detectedFoot = "R";
                                                                                 }
 
-                                                                                                                                                                // 2. Strict Per-Foot 800 ms Lockout Guard Clause
+                                                                                                                                                                // 2. Strict Per-Foot 220 ms Lockout Guard Clause
                                                                                 if (detectedFoot === "L") {
-                                                                                    if (now - lastStepTimeLeft < 800) {
-                                                                                        detectedFoot = null; // Suppress double trigger on Left Foot (< 800 ms)
+                                                                                    if (now - lastStepTimeLeft < 220) {
+                                                                                        detectedFoot = null; // Suppress double trigger on Left Foot (< 220 ms)
                                                                                     } else {
                                                                                         lastStepTimeLeft = now;
                                                                                     }
                                                                                 } else if (detectedFoot === "R") {
-                                                                                    if (now - lastStepTimeRight < 800) {
-                                                                                        detectedFoot = null; // Suppress double trigger on Right Foot (< 800 ms)
+                                                                                    if (now - lastStepTimeRight < 220) {
+                                                                                        detectedFoot = null; // Suppress double trigger on Right Foot (< 220 ms)
                                                                                     } else {
                                                                                         lastStepTimeRight = now;
                                                                                     }
@@ -405,7 +533,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     lastActiveFoot = "L";
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "L";
-                                                                                    activeTheta = Math.round(calibratedAngleL);
+                                                                                    // Accel snapshot: gravity-based foot angle at the moment of detection,
+                                                                                    // independent of CF swing-phase history.  accelAngleL already computed above.
+                                                                                    activeTheta = Math.round(accelAngleL - leftMountOffset);
                                                                                     activeJerk = Math.abs((aZL - prevAccelZLeft)  / 0.005); // 0.005 s = native 200 Hz sensor step
 
                                                                                     let is_backward = (aYL < 0.0);
@@ -413,11 +543,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     pitchLeftAngleRaw = leftMountOffset;
                                                                                 }
                                                                                 else if (detectedFoot === "R") {
-                                                                                    // RIGHT FOOT (180° Inverted Mounting): R:aY < 0.0g --> BACKWARD
+                                                                                    // RIGHT FOOT: accelAngleR rest = 0° (same convention as left after formula fix)
                                                                                     lastActiveFoot = "R";
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "R";
-                                                                                    activeTheta = Math.round(calibratedAngleR);
+                                                                                    // Accel snapshot: gravity-based foot angle at the moment of detection.
+                                                                                    activeTheta = Math.round(accelAngleR - rightMountOffset);
                                                                                     activeJerk = Math.abs((aZR - prevAccelZRight) / 0.005); // 0.005 s = native 200 Hz sensor step
 
                                                                                     let is_backward = (aYR < 0.0);
@@ -434,7 +565,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         let dirBadge = document.getElementById('dirBadge');
                         let badge = document.getElementById('strikeBadge');
                         
-                        document.getElementById('strikeAngleVal').innerText = Math.abs(activeTheta) + "° (" + activeFoot + ")";
+                        // Guard against accel transients during rapid direction changes (e.g. 107° spike in v4 analysis).
+                        // No valid WCS step angle exceeds ±45° — values outside that range are sensor artefacts.
+                        activeTheta = Math.max(-45, Math.min(45, activeTheta));
+
+                        document.getElementById('strikeAngleVal').innerText = activeTheta + "° (" + activeFoot + ")";
                         document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
 
                                                 if (activeDirection === "FORWARD") {
@@ -442,26 +577,30 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             dirBadge.style.background = "#1f6beb";
 
                             // Forward Rating (Heel-Strike)
-                            if (activeTheta >= 10 && activeTheta <= 25) {
+                            if (activeTheta > 35) {
+                                badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";  // gyro overshoot during fast swing
+                            } else if (activeTheta >= 10) {
                                 badge.className = "badge badge-green"; badge.innerText = "OPTIMAL HEEL";
-                            } else if (activeTheta >= 5 && activeTheta < 10) {
+                            } else if (activeTheta >= 5) {
                                 badge.className = "badge badge-yellow"; badge.innerText = "FLAT";
                             } else {
                                 badge.className = "badge badge-red"; badge.innerText = "FLAT-FOOT!";
-                                playImpactClick(1200);
+                                if (activeJerk > 160) playImpactClick(1200); // only alert on hard flat impacts (>40 g/s displayed)
                             }
                         } else {
                             dirBadge.innerText = "⬅️ BACKWARD";
                             dirBadge.style.background = "#a371f7";
 
                             // Backward Rating (Toe-Ball-Heel)
-                            if (activeTheta <= 5 && activeTheta >= -20) {
-                                badge.className = "badge badge-green"; badge.innerText = "OPTIMAL TOE";
-                            } else if (activeTheta > 5 && activeTheta <= 10) {
-                                badge.className = "badge badge-yellow"; badge.innerText = "FLAT";
-                            } else {
+                            if (activeTheta >= 10) {
                                 badge.className = "badge badge-red"; badge.innerText = "HEEL LANDING!";
-                                playImpactClick(1200); // Warning tone for heel-first backward landing
+                                playImpactClick(1200);
+                            } else if (activeTheta > 5) {
+                                badge.className = "badge badge-yellow"; badge.innerText = "HEEL DROP";
+                            } else if (activeTheta >= -20) {
+                                badge.className = "badge badge-green"; badge.innerText = "OPTIMAL TOE";
+                            } else {
+                                badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";  // extreme backward overshoot
                             }
                         }
 
@@ -476,7 +615,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         document.getElementById('jerkBar').style.width = jerkPercent + "%";
                         document.getElementById('jerkBar').style.background = (activeFoot === "L") ? "var(--accent-left)" : "var(--accent-right)";
 
-                        if (activeJerk > 80) playImpactClick(500); // threshold scaled to native 200 Hz dt (×4 vs 20 ms poll)
+                        if (activeJerk > 120) playImpactClick(500); // threshold scaled to native 200 Hz dt (×4 vs 20 ms poll)
                     
                         // Dynamic Tempo-Adaptive Doppelstand-Ratio (%)
                         let stanceRatio = Math.round((currentStepOverlap / currentStepDuration) * 100);
@@ -495,9 +634,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         currentStepOverlap = 0; // Reset für neuen Schritt
                     }
 
-                                        // 3. Stance-Phasen & Überlappung — offline sensors never count as grounded
-                    let leftOnGround  = leftOk  && Math.abs(aZL) > 0.85;
-                    let rightOnGround = rightOk && Math.abs(aZR) > 0.85;
+                    // 3. Stance-Phasen & Überlappung — offline sensors never count as grounded
+                    let leftOnGround  = leftOk  && Math.abs(aZL) > 0.55;
+                    let rightOnGround = rightOk && Math.abs(aZR) > 0.55;
 
                     if (leftOnGround && rightOnGround) {
                         currentStepOverlap += dt * 1000;
@@ -530,23 +669,28 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     rightBarEl.style.width  = rightPct + "%";
 
                     // 4. ASI (Abroll-Symmetrie) & GEGLÄTTETE Roll-Smoothness
-                    let intL = pitchLeftHistory.reduce((a, b) => a + Math.abs(b), 0);
-                    let intR = pitchRightHistory.reduce((a, b) => a + Math.abs(b), 0);
-                    let intSum = intL + intR;
-                    let asi = (intSum > 0) ? (2 * Math.abs(intL - intR) / intSum) * 100 : 0;
-                    let asiRounded = Math.min(100, Math.round(asi));
-                    document.getElementById('asiVal').innerText = asiRounded + " %";
-                    let asiBadge = document.getElementById('asiBadge');
-                    if (asiBadge) {
-                        if (asiRounded <= 10)      { asiBadge.className = "badge badge-green";  asiBadge.innerText = "SYMMETRIC"; }
-                        else if (asiRounded <= 25) { asiBadge.className = "badge badge-yellow"; asiBadge.innerText = "MINOR ASYM"; }
-                        else                       { asiBadge.className = "badge badge-red";    asiBadge.innerText = "ASYMMETRIC"; }
+                    // Only recalculate while either foot is actively moving — prevents noise accumulation during static standing
+                    if (Math.abs(gPitchL) > 15 || Math.abs(gPitchR) > 15) {
+                        let intL = pitchLeftHistory.reduce((a, b) => a + Math.abs(b), 0);
+                        let intR = pitchRightHistory.reduce((a, b) => a + Math.abs(b), 0);
+                        let intSum = intL + intR;
+                        let asiRaw = (intSum > 0) ? (2 * Math.abs(intL - intR) / intSum) * 100 : 0;
+                        // IIR smoothing (α=0.15): suppresses single-swing asymmetry spikes while tracking real bilateral imbalance
+                        asiSmoothed = asiSmoothed * 0.85 + Math.min(100, asiRaw) * 0.15;
+                        let asiRounded = Math.round(asiSmoothed);
+                        document.getElementById('asiVal').innerText = asiRounded + " %";
+                        let asiBadge = document.getElementById('asiBadge');
+                        if (asiBadge) {
+                            if (asiRounded <= 10)      { asiBadge.className = "badge badge-green";  asiBadge.innerText = "SYMMETRIC"; }
+                            else if (asiRounded <= 25) { asiBadge.className = "badge badge-yellow"; asiBadge.innerText = "MINOR ASYM"; }
+                            else                       { asiBadge.className = "badge badge-red";    asiBadge.innerText = "ASYMMETRIC"; }
+                        }
                     }
 
                                         // Smoothness calculation with moving average buffer (over 25 frames / 0.5s)
                     let dOmegaL = (gPitchL - prevGyroPitchLeft)  / dt;
                     let dOmegaR = (gPitchR - prevGyroPitchRight) / dt;
-                    let rawJerkiness = Math.min(100, Math.round((Math.abs(dOmegaL) + Math.abs(dOmegaR)) * 0.075));
+                    let rawJerkiness = Math.min(100, Math.round((Math.abs(dOmegaL) + Math.abs(dOmegaR)) * 0.018));
                     let rawSmoothness = 100 - rawJerkiness; // invert: higher = smoother
 
                     smoothnessBuffer.push(rawSmoothness);
@@ -573,18 +717,19 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         }
 
     function drawPitchChart() {
+        const midY = canvas.height / 2;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // Nulllinie
         ctx.strokeStyle = "rgba(255,255,255,0.15)";
-        ctx.beginPath(); ctx.moveTo(0, 100); ctx.lineTo(canvas.width, 100); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(canvas.width, midY); ctx.stroke();
 
         let stepX = canvas.width / maxHistory;
 
         // Linker Fuß (Cyan)
         ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 2; ctx.beginPath();
         for(let i=0; i<maxHistory; i++) {
-            let y = 100 - (pitchLeftHistory[i] / 300) * 100;
+            let y = midY - (pitchLeftHistory[i] / 300) * midY;
             if(i===0) ctx.moveTo(0, y); else ctx.lineTo(i * stepX, y);
         }
         ctx.stroke();
@@ -592,7 +737,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         // Rechter Fuß (Magenta)
         ctx.strokeStyle = "#ff007f"; ctx.lineWidth = 2; ctx.beginPath();
         for(let i=0; i<maxHistory; i++) {
-            let y = 100 - (pitchRightHistory[i] / 300) * 100;
+            let y = midY - (pitchRightHistory[i] / 300) * midY;
             if(i===0) ctx.moveTo(0, y); else ctx.lineTo(i * stepX, y);
         }
         ctx.stroke();
