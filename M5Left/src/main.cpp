@@ -327,11 +327,10 @@ void loop() {
   sensorData.accel_z = az;
   sensorData.accel_y = ay;
 
-  esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
+    esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
 
-  // Stay awake 2 ms so the master's ACK can arrive, then light-sleep the rest of the period.
-  // Light sleep cuts active draw from ~30 mA to ~0.8 mA for the idle portion of each 5 ms cycle.
-  delay(2);
-  esp_sleep_enable_timer_wakeup((SAMPLE_RATE_MS - 2) * 1000ULL);
-  esp_light_sleep_start();
+  // Maintain 200 Hz sampling (5 ms) using standard delay.
+  // Note: Avoid esp_light_sleep_start() in the high-speed loop as light sleep disables 
+  // the Wi-Fi/ESP-NOW RF hardware modem, causing dropped ACK packets and connection loss.
+  delay(SAMPLE_RATE_MS);
 }

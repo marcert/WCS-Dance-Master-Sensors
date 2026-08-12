@@ -384,21 +384,24 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     detectedFoot = "R";
                                                                                 }
 
-                                                                                // 2. Strict Per-Foot 800 ms Lockout Guard Clause
+                                                                                                                                                                // 2. Strict Per-Foot 800 ms Lockout Guard Clause
                                                                                 if (detectedFoot === "L") {
                                                                                     if (now - lastStepTimeLeft < 800) {
                                                                                         detectedFoot = null; // Suppress double trigger on Left Foot (< 800 ms)
+                                                                                    } else {
+                                                                                        lastStepTimeLeft = now;
                                                                                     }
                                                                                 } else if (detectedFoot === "R") {
                                                                                     if (now - lastStepTimeRight < 800) {
                                                                                         detectedFoot = null; // Suppress double trigger on Right Foot (< 800 ms)
+                                                                                    } else {
+                                                                                        lastStepTimeRight = now;
                                                                                     }
                                                                                 }
 
-                                                                                                                                                                // 3. Process Verified Step Trigger & Polarity Logic
+                                                                                // 3. Process Verified Step Trigger & Polarity Logic
                                                                                 if (detectedFoot === "L") {
                                                                                     // LEFT FOOT (Standard Mounting): L:aY < 0.0g --> BACKWARD
-                                                                                    lastStepTimeLeft = now;
                                                                                     lastActiveFoot = "L";
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "L";
@@ -411,7 +414,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 }
                                                                                 else if (detectedFoot === "R") {
                                                                                     // RIGHT FOOT (180° Inverted Mounting): R:aY < 0.0g --> BACKWARD
-                                                                                    lastStepTimeRight = now;
                                                                                     lastActiveFoot = "R";
                                                                                     triggerImpact = true;
                                                                                     activeFoot = "R";
@@ -541,7 +543,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         else                       { asiBadge.className = "badge badge-red";    asiBadge.innerText = "ASYMMETRIC"; }
                     }
 
-                    // Smoothness-Glied mit gleitendem Mittelwert (Buffer über 25 Frames / 0.5s)
+                                        // Smoothness calculation with moving average buffer (over 25 frames / 0.5s)
                     let dOmegaL = (gPitchL - prevGyroPitchLeft)  / dt;
                     let dOmegaR = (gPitchR - prevGyroPitchRight) / dt;
                     let rawJerkiness = Math.min(100, Math.round((Math.abs(dOmegaL) + Math.abs(dOmegaR)) * 0.075));
