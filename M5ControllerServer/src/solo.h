@@ -173,10 +173,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
                 gap: 12px;
             }
+            .hud-spacer { display: none; }
         }
 
         /* ====================================================
-           LANDSCAPE — 2-column split, no vertical scroll
+           LANDSCAPE — left: graph (bottom-half) + right: 2×2 grid
            ==================================================== */
         @media (orientation: landscape) {
             body {
@@ -191,41 +192,76 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             .audio-toggle { padding: 4px 8px; font-size: 0.78rem; }
             .card-title { font-size: 0.72rem; margin-bottom: 3px; }
 
-            /* Left col (graph) + right col (metric cards) side by side */
+            /* Left (graph) + right (metric cards) side by side */
             #main-layout {
                 flex-direction: row;
                 gap: 8px;
                 overflow: hidden;
             }
 
-            /* Left column: graph fills available height */
+            /* Graph: bottom ~50% of left column; top half stays empty (camera visible) */
             #graphCard {
-                flex: 0 0 47%;
+                flex: 0 0 45%;
+                height: 52%;
+                align-self: flex-end;
                 overflow: hidden;
             }
 
-            /* Canvas wrapper grows to fill the graphCard */
+            /* Canvas wrapper grows to fill graphCard */
             #canvas-wrapper {
                 flex: 1;
                 height: auto;
                 min-height: 0;
             }
 
-            /* Right column: 2×2 grid of metric cards */
+            /* Right column: 2×2 grid fills full height */
             .dashboard-grid {
                 flex: 1;
                 grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 1fr;
                 gap: 6px;
-                align-content: start;
+                align-content: stretch;
                 overflow: hidden;
                 min-height: 0;
             }
 
-            .card { padding: 5px 8px; }
+            .hud-spacer { display: block; }
+
+            .card { padding: 5px 8px; height: 100%; box-sizing: border-box; }
             .metric-value { font-size: 1.4rem; }
             .stance-timeline { height: 22px; margin-top: 4px; }
             .bar-container { margin-top: 4px; }
         }
+
+        /* Cards become legible over live camera feed */
+        body.cam-active .card {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(10, 10, 20, 0.60);
+        }
+
+        /* --- LEVEL-BASED VISIBILITY --- */
+
+        /* BEGINNER: only step direction + strikeBadge visible; hide Double Stance, ASI, jerk, lower badges */
+        main.level-beginner #doubleStanceCard,
+        main.level-beginner #asiCard,
+        main.level-beginner .jerk-section,
+        main.level-beginner .bar-container,
+        main.level-beginner .step-lower-badges { display: none !important; }
+
+        /* BEGINNER: push sole visible card to bottom-right */
+        main.level-beginner #stepCard { grid-column: 2; grid-row: 2; }
+
+        /* INTERMEDIATE: step card full (with jerk + power push); Double Stance visible; hide ASI, load/roll badges */
+        main.level-intermediate #asiCard,
+        main.level-intermediate #loadBadge,
+        main.level-intermediate #rollBadge { display: none !important; }
+
+        /* INTERMEDIATE: push both visible cards to bottom row */
+        main.level-intermediate #doubleStanceCard { grid-column: 1; grid-row: 2; }
+        main.level-intermediate #stepCard         { grid-column: 2; grid-row: 2; }
+
+        /* ADVANCED: everything visible — no rules needed */
     </style>
 </head>
 <body>
@@ -240,6 +276,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="fullBtn" class="audio-toggle" style="background: rgba(80, 80, 80, 0.6);" onclick="toggleFullscreen()">⛶ FULL</button>
                 <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
+                <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
             </div>
         </header>
 
@@ -253,34 +290,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
     <!-- METRICS GRID -->
     <div class="dashboard-grid">
-        
-                                <!-- HEEL STRIKE & IMPACT JERK -->
-                <div class="card" id="stepCard">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div class="card-title" style="margin: 0;">Last Step (Heel/Toe-Strike & Jerk)</div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                        <div>
-                            <span id="dirBadge" class="badge" style="background:#30363d; font-size:0.85rem;">➡️ FORWARD</span>
-                            <span id="strikeAngleVal" class="metric-value">0°</span>
-                            <span id="strikeBadge" class="badge badge-green">OPTIMAL</span>
-                        </div>
-                        <div style="text-align: right; font-size: 0.9rem; color: #8b949e;">
-                            Impact Jerk: <strong id="jerkVal" style="color:#fff;">0</strong> g/s
-                        </div>
-                    </div>
-                    <div class="bar-container">
-                        <div id="jerkBar" class="bar-fill" style="background: var(--accent-left);"></div>
-                    </div>
-                    <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap; min-height:22px;">
-                        <span id="powerBadge" class="badge" style="background:#1e272e; color:#8b949e;">— PUSH-OFF</span>
-                        <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
-                        <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
-                    </div>
-                </div>
 
-                                <!-- BILATERAL OVERLAP (DOUBLE STANCE) -->
-                <div class="card">
+                                <!-- TOP-LEFT: empty — keeps camera HUD visible -->
+                <div class="hud-spacer"></div>
+
+                                <!-- TOP-RIGHT: BILATERAL OVERLAP (DOUBLE STANCE) -->
+                <div class="card" id="doubleStanceCard">
                     <div class="card-title">Double Stance Overlap (&Delta;t double_stance)</div>
                     <div style="display: flex; justify-content: space-between; align-items: baseline;">
                         <div>
@@ -296,8 +311,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     </div>
                 </div>
 
-                                <!-- ASI (SYMMETRY) & SMOOTHNESS -->
-                <div class="card">
+                                <!-- BOTTOM-LEFT: ASI (SYMMETRY) & SMOOTHNESS -->
+                <div class="card" id="asiCard">
                     <div class="card-title">Roll-off Symmetry (ASI) & Smoothness</div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div style="flex: 0 0 50%;">
@@ -310,6 +325,31 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             <div class="metric-value" id="smoothVal" style="font-size: 1.4rem;">0</div>
                             <span id="smoothBadge" class="badge badge-green">SMOOTH</span>
                         </div>
+                    </div>
+                </div>
+
+                                <!-- BOTTOM-RIGHT: HEEL STRIKE & IMPACT JERK -->
+                <div class="card" id="stepCard">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div class="card-title" style="margin: 0;">Last Step (Heel/Toe-Strike & Jerk)</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <div>
+                            <span id="dirBadge" class="badge" style="background:#30363d; font-size:0.85rem;">➡️ FORWARD</span>
+                            <span id="strikeAngleVal" class="metric-value">0°</span>
+                            <span id="strikeBadge" class="badge badge-green">OPTIMAL</span>
+                        </div>
+                        <div class="jerk-section" style="text-align: right; font-size: 0.9rem; color: #8b949e;">
+                            Impact Jerk: <strong id="jerkVal" style="color:#fff;">0</strong> g/s
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div id="jerkBar" class="bar-fill" style="background: var(--accent-left);"></div>
+                    </div>
+                    <div class="step-lower-badges" style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap; min-height:22px;">
+                        <span id="powerBadge" class="badge" style="background:#1e272e; color:#8b949e;">— PUSH-OFF</span>
+                        <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
+                        <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
                     </div>
                 </div>
 
@@ -351,7 +391,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 });
 
                 videoElement.srcObject = activeStream;
-                camBtn.style.display = 'none'; 
+                document.body.classList.add('cam-active');
+                camBtn.style.display = 'none';
                 flipBtn.style.display = 'inline-block';
             } catch (error) { 
                 alert("Camera access failed: " + error.message); 
@@ -867,6 +908,30 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     }
 
     fetchStream();
+
+    // --- LEVEL SELECTOR ---
+    const LEVELS      = ['beginner', 'intermediate', 'advanced'];
+    const LEVEL_LABEL = { beginner: '👤 BEG', intermediate: '🏃 INT', advanced: '⭐ ADV' };
+    const LEVEL_COLOR = { beginner: 'rgba(46,160,67,0.6)', intermediate: 'rgba(255,149,0,0.6)', advanced: 'rgba(139,92,246,0.6)' };
+
+    let currentLevel = localStorage.getItem('soloLevel') || 'beginner';
+
+    function applyLevel(level) {
+        const mainEl = document.getElementById('main-layout');
+        LEVELS.forEach(l => mainEl.classList.remove('level-' + l));
+        mainEl.classList.add('level-' + level);
+        const btn = document.getElementById('levelBtn');
+        if (btn) { btn.innerText = LEVEL_LABEL[level]; btn.style.background = LEVEL_COLOR[level]; }
+        localStorage.setItem('soloLevel', level);
+        currentLevel = level;
+    }
+
+    function cycleLevel() {
+        const next = LEVELS[(LEVELS.indexOf(currentLevel) + 1) % LEVELS.length];
+        applyLevel(next);
+    }
+
+    applyLevel(currentLevel);
 </script>
 </body>
 </html>

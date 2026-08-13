@@ -233,7 +233,11 @@ The Solo Training Dashboard is optimized for mobile browser use (tablets/smartph
 
 ## 6. Dancer's Training Guide
 
-This chapter is written for dancers, not engineers. You do not need to understand the math — you need to know **what to watch, when to watch it, and what to do when a badge turns red or yellow.**
+> **This chapter has been extracted into a standalone file: [`dancer_guide.md`](dancer_guide.md)**
+>
+> The dancer guide is self-contained — dancers can open it directly without reading the technical sections of this document. It covers dashboard layout, the level selector (BEG / INT / ADV), all badge cards, skill-level training progressions, and a common-problems reference.
+>
+> The abbreviated section below is kept for quick cross-reference within this document.
 
 ---
 

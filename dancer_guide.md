@@ -1,0 +1,236 @@
+# WCS Solo-Training — Dancer's Guide
+
+> This guide is written for dancers, not engineers. You do not need to understand the math.  
+> Open the dashboard on your phone or tablet, follow the setup steps, and use the badge colour as your real-time coach.
+
+---
+
+## 1. Getting Started
+
+1. **Mount your phone or tablet on a tripod** at eye level, facing you. Use **landscape orientation** for best results.
+2. **Open the Solo Dashboard** in your browser (`http://192.168.4.1/solo` on the M5 hotspot, or the home WiFi IP shown on the M5 display).
+3. **Tap `📷 CAM`** to activate the camera overlay. Your live body appears behind the data cards.
+4. **Put on your dance shoes** before the next step.
+5. **Stand in your natural dance stance** — feet shoulder-width, slight forward weight. Tap `📐 ZERO`. The system now knows what "flat foot on the floor" means for your shoes.
+6. **Tap `🔊 Biofeedback: OFF`** to turn audio ON. The beeps fire faster than you can read the screen — they are your primary alert.
+7. Start walking or dancing. Give yourself 10–15 steps to warm up before analysing anything.
+
+> **Re-tare whenever you change shoes or surfaces.** The `📐 ZERO` calibration is shoe-specific.
+
+---
+
+## 2. The Dashboard Layout
+
+> **📸 SCREENSHOT:** *Full landscape view — Advanced level, camera active. Show the graph in the bottom-left, three metric cards in the right 2×2 grid, and the empty top-left area showing the camera feed.*
+
+In landscape mode the screen is divided into two columns:
+
+```
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │                  │  Double Stance   │
+│   📷  CAMERA            │  (empty)         │  Overlap         │
+│   visible here          │                  │                  │
+├─────────────────────────├──────────────────┼──────────────────┤
+│   Roll-off Dynamics     │  Roll-off        │  Last Step       │
+│   Graph                 │  Symmetry (ASI)  │  (Step Badge)    │
+└─────────────────────────┴──────────────────┴──────────────────┘
+```
+
+- **Top-left area**: intentionally empty — the camera feed shows through here unobstructed.
+- **Bottom-left**: live roll-off dynamics graph (pitch angular velocity of both feet over time).
+- **Top-right**: Double Stance Overlap card.
+- **Bottom-right**: Last Step card (your primary real-time feedback).
+- **Bottom-centre**: Roll-off Symmetry & Smoothness card.
+
+---
+
+## 3. Choosing Your Training Level
+
+The **`👤 BEG`** button in the top-right corner of the header cycles through three training levels. Tap it to switch; the selection is remembered between sessions.
+
+| Button | Level | What is visible |
+| :--- | :--- | :--- |
+| `👤 BEG` (green) | **Beginner** | Step Badge card only — direction, angle, strike badge |
+| `🏃 INT` (orange) | **Intermediate** | Step Badge (full, with Jerk + Push-Off) + Double Stance |
+| `⭐ ADV` (purple) | **Advanced** | All cards — Step Badge, Double Stance, Roll-off Symmetry & Smoothness |
+
+Cards that are not relevant for your level are hidden, giving the camera maximum screen space.
+
+### Beginner view
+
+> **📸 SCREENSHOT:** *Beginner level in landscape — only the Last Step card visible in the bottom-right corner. Top three-quarters of the screen shows the camera feed.*
+
+One card, bottom-right. Everything else is camera. Look at the direction badge and the strike badge after each step. Nothing else.
+
+### Intermediate view
+
+> **📸 SCREENSHOT:** *Intermediate level in landscape — Last Step card (bottom-right) and Double Stance card (bottom-left). Upper half is camera.*
+
+Two cards at the bottom. Step technique on the right, timing quality on the left. The upper half of the screen remains camera.
+
+### Advanced view
+
+> **📸 SCREENSHOT:** *Advanced level in landscape — all three metric cards visible. Roll-off Dynamics graph in the bottom-left.*
+
+All three metric cards plus the live graph. Use this level for detailed analysis sessions, not for learning new patterns.
+
+---
+
+## 4. The Step Badge Card
+
+This is the **primary real-time feedback card**. It updates on every detected foot contact.
+
+> **📸 SCREENSHOT:** *Step Badge card close-up showing: direction badge (e.g. ➡️ FORWARD), angle value, strike badge (e.g. OPTIMAL HEEL in green), Jerk bar, and the three lower badges (POWER PUSH / LOADING / ANKLE ROLL).*
+
+### What the display elements mean
+
+| Element | What it tells you |
+| :--- | :--- |
+| **➡️ FORWARD** / **⬅️ BACKWARD** | Direction of the step that just landed |
+| **↔️ FLAT** | Foot landed too flat to classify — treat as a flat-foot warning |
+| **θ angle** | Pitch of your foot at landing. Positive = heel higher than toe. |
+| **Strike badge** (large coloured label) | Classification of that landing — see tables below |
+| **Jerk bar** | Rate of impact force — how hard your foot hit the floor |
+| **PUSH-OFF badge** | Push-off power of your trailing foot (Beginner: hidden) |
+| **LOADING badge** | How smoothly you transferred weight onto the landing foot (Advanced only) |
+| **ANKLE ROLL badge** | Ankle shock absorption at landing (Advanced only) |
+
+### Forward step strike badges
+
+| Badge | Angle | What you did | Target |
+| :--- | :--- | :--- | :--- |
+| `OPTIMAL HEEL` ✅ | +10° to +35° | Clean heel strike — heel contacts first | Target for all forward walks and breaks |
+| `FLAT` ⚠️ | +5° to +10° | Slight heel lead, foot nearly flat | Acceptable — increase heel articulation |
+| `FLAT-FOOT!` ❌ | < +5° | Foot landed flat or toe-first | Rushing, tense ankles, or insufficient hip extension |
+| `HEEL SPIKE` ⚠️ | > +35° | Extremely steep heel angle | Reduce drive force or relax the ankle |
+
+### Backward step strike badges
+
+| Badge | Angle | What you did | Target |
+| :--- | :--- | :--- | :--- |
+| `OPTIMAL TOE` ✅ | −20° to +5° | Clean toe-ball landing | Target for all backward walks, anchors, extensions |
+| `ANCHOR SETTLE` ✅ | −2° to +5° + full weight | Heel kissed the floor with full weight | Ideal anchor completion |
+| `HEEL DROP` ⚠️ | +5° to +9° | Heel beginning to drop too early | Keep the ankle dorsiflexed a moment longer |
+| `HEEL LANDING!` ❌ | ≥ +10° | Heel struck first on a backward step | Most common WCS error — pulls partner off-axis |
+| `HEEL SPIKE` ⚠️ | < −20° | Over-pointed foot at contact | Moderate the extension slightly |
+
+### Impact Jerk bar
+
+- **Short bar, no click** → soft, controlled landing. Ideal.
+- **Full red bar + 500 Hz click** → heavy stomping. Bend the knee on contact and absorb with the ankle.
+
+---
+
+## 5. Push-Off & Loading Badges
+
+These three badges appear below the Jerk bar and update after each step. Visible from **Intermediate** level (Push-Off) or **Advanced** (Loading + Ankle Roll).
+
+> **📸 SCREENSHOT:** *Step Badge card bottom section showing all three badges lit: 🚀 POWER PUSH (green), SMOOTH LOAD (green), ANKLE FLEX (green).*
+
+### Push-Off badge (INT + ADV)
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `🚀 POWER PUSH` ✅ | Strong, biomechanically optimal push-off | Maintain — you are actively driving forward |
+| `↗ PUSH` ⚠️ | Push-off detected but below optimal force | Drive more actively through the ball of the trailing foot; think "push the floor away" |
+| `— PUSH-OFF` | No significant push-off detected | Trailing leg is passive. Actively extend the ankle at the end of each walk |
+
+### Loading badge (ADV only)
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `SMOOTH LOAD` ✅ | Weight transferred progressively onto the landing foot | Good joint mechanics — keep it |
+| `INSTANT LOAD` ⚠️ | Full weight dropped at impact | Slow the COM; think of "receiving" the floor rather than landing on it |
+| `EARLY UNLOAD` ⚠️ | Weight shifting away before foot is settled | You are rushing to the next step. Complete the current weight investment before moving |
+
+### Ankle Roll badge (ADV only)
+
+> **Note:** The Ankle Roll badge requires the `gyro_roll` channel. If the firmware has not been updated on both foot sensors, this badge will always show `STIFF ANKLE` regardless of technique.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `ANKLE FLEX` ✅ | Ankle rolling through impact (pronation impulse detected) | Good shock absorption — ankle acting as natural spring |
+| `MODERATE ROLL` ⚠️ | Some ankle mobility, but could be more | Consciously relax the ankle at landing; avoid bracing the foot rigid |
+| `STIFF ANKLE` ⚠️ | Minimal ankle roll — impact transmitted directly up the chain | Land with a soft, unlocked ankle. Over time this reduces knee and hip load |
+
+---
+
+## 6. The Double Stance Card
+
+Visible from **Intermediate** level. This card tells you how long both feet are on the floor simultaneously during each weight transfer.
+
+> **📸 SCREENSHOT:** *Double Stance card showing the timeline bar (cyan left section, yellow overlap section, magenta right section) and the OPTIMAL ROLL badge.*
+
+| Badge | Overlap ratio | What it means | Training implication |
+| :--- | :--- | :--- | :--- |
+| `OPTIMAL ROLL` ✅ | 18%–38% | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
+| `HECTIC` ⚠️ | < 18% | Rushed — one foot leaves before the other is secure | "Peel, don't lift" — roll through the foot before stepping |
+| `SLUGGISH` ⚠️ | > 38% | Prolonged double contact — hesitation or heavy stance | Commit to the COM shift earlier |
+
+Watch this card during **triple steps and walks**. `HECTIC` on an anchor step often means you are rushing out of the anchor before building connection.
+
+---
+
+## 7. The Roll-off Symmetry & Smoothness Card
+
+Visible at **Advanced** level only.
+
+> **📸 SCREENSHOT:** *ASI card showing ASI value, SYMMETRIC badge, Smoothness value, and SMOOTH badge.*
+
+| Display | What it tells you | Green target |
+| :--- | :--- | :--- |
+| **ASI %** | Difference between left and right foot roll-off | `SYMMETRIC` — below 10% |
+| **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` — 65 or above |
+
+- High **ASI** (e.g. `ASYMMETRIC` > 25%) usually means one ankle is stiffer, or one side is compensating for an old injury.
+- Low **Smoothness** means your ankle movements are jerky. Slow the tempo and focus on rolling through the full foot rather than stepping flat.
+
+---
+
+## 8. Training by Skill Level
+
+### Beginner — use `👤 BEG`
+
+**One focus: heel vs. toe contact.**
+
+1. Walk forward. Does the badge say `OPTIMAL HEEL`? If not — lift your heel slightly more before the foot lands.
+2. Walk backward. Does the badge say `OPTIMAL TOE` or `ANCHOR SETTLE`? If not — send your toe out first, like a probe, before the body weight follows.
+3. If you hear the **1200 Hz beep**, stop and slow down. That sound means `HEEL LANDING!` or hard `FLAT-FOOT!`.
+4. Practise at a slow tempo until `OPTIMAL HEEL` and `OPTIMAL TOE` appear consistently. Only then increase speed.
+
+> **How to read the screen:** After each step, glance at the bottom-right card. The large coloured badge is the verdict. Green = correct. Red/yellow = adjust.
+
+### Intermediate — use `🏃 INT`
+
+**Two focuses: technique consistency + weight transfer timing.**
+
+1. Forward walks → aim for consistent `OPTIMAL HEEL` with the Jerk bar under half.
+2. Backward walks → aim for `OPTIMAL TOE` → `ANCHOR SETTLE` sequence on anchor steps.
+3. Watch the **POWER PUSH badge**: is your trailing leg passive? Drive through the ball of the foot at the end of each walk.
+4. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triple steps. `HECTIC` during the anchor means you are rushing.
+
+### Advanced — use `⭐ ADV`
+
+**Full biomechanical feedback loop.**
+
+1. Use **SMOOTH LOAD vs INSTANT LOAD** to fine-tune how you receive weight — especially on syncopated patterns where COM timing is critical.
+2. Compare **ASI** between your left and right sides over a full practice session. A consistently worse side points to a compensation pattern worth isolating.
+3. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — ankle stiffness increases as muscles tire. This is a natural cue to take a break.
+4. Film with `📷 CAM` and replay during pauses. Find the exact frame where `HEEL LANDING!` fires — your body position at that moment reveals the root cause (usually upper body tension or early COM shift).
+5. Use the **Roll-off Dynamics graph** (bottom-left) to compare peak gyro values between your left and right foot over multiple steps — uneven peaks indicate asymmetric push-off.
+
+---
+
+## 9. Common Problems and How to Fix Them
+
+| What you see | Root cause | Fix |
+| :--- | :--- | :--- |
+| `FLAT-FOOT!` on every forward walk | Ankle held rigid; no heel articulation | Slow down. Exaggerate heel-first contact consciously. Drill: walk in place, touching heel then ball in sequence. |
+| `HEEL LANDING!` on backward steps | Body weight moving backward before foot scouts | Delay the COM — send the foot first, body follows. Drill: backward walks holding a wall, exaggerating toe-first contact. |
+| `HECTIC` Double Stance | Rushing the transfer; foot lifts too early | "Leave the floor last" — let the whole foot peel up from the toe. |
+| `SLUGGISH` Double Stance | Hesitating before committing weight | Trust the floor. Move the body, not just the foot. Drill: metronome walks, landing on the beat. |
+| `STIFF ANKLE` consistently | Braced ankle at landing | Visualise landing on a sponge. Consciously unlock the ankle before contact. |
+| `ASYMMETRIC` ASI | One foot stiffer or less articulated | Identify which foot and drill that foot in isolation with slow, deliberate rolls. |
+| `— PUSH-OFF` (no badge) | Trailing leg passive — no ankle drive | "Push the floor, don't just lift the foot." Add a conscious toe-extension at the end of each walk. |
+| `INSTANT LOAD` on anchors | Dropping weight abruptly at anchor | Slow the settle. "Melt into the anchor" rather than "land on it". |
+| `↗ PUSH` but never `🚀 POWER PUSH` | Drive force below 200°/s push-off threshold | Increase hip extension range and actively drive the ball of the trailing foot into the floor. Think longer stride, not harder stomp. |
