@@ -661,8 +661,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         // No valid WCS step angle exceeds ±45° — values outside that range are sensor artefacts.
                         activeTheta = Math.max(-45, Math.min(45, activeTheta));
 
-                        // Flat contact: |θ| < 5° is at the FORWARD/BACKWARD aY boundary — direction unreliable.
-                        if (Math.abs(activeTheta) < 5) activeDirection = "AMBIGUOUS";
+                        // Asymmetric ambiguous zone: negative θ (toe-first) is unambiguously backward even at −5°.
+                        // Positive θ up to +9° is genuinely ambiguous — could be forward+flat or backward+heel-drop;
+                        // a foot-mounted IMU cannot separate these via angle alone.
+                        if (activeTheta >= -5 && activeTheta < 10) activeDirection = "AMBIGUOUS";
 
                         document.getElementById('strikeAngleVal').innerText = activeTheta + "° (" + activeFoot + ")";
                         document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
