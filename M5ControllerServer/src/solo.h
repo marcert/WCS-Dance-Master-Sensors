@@ -233,13 +233,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             .bar-container { margin-top: 4px; }
         }
 
-        /* Cards become legible over live camera feed */
-        body.cam-active .card {
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            background: rgba(10, 10, 20, 0.60);
-        }
-
         /* --- LEVEL-BASED VISIBILITY --- */
 
         /* BEGINNER: only step direction + strikeBadge visible; hide Double Stance, ASI, jerk, lower badges */
@@ -499,6 +492,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let asiSmoothed = 0;
         let loadingSamples = []; let loadingActive = false; let loadingFoot = "";
         let rollSamples    = []; let rollActive    = false; let rollFoot    = "";
+        let brushPending = false; let brushPendingTime = 0; let brushPendingFoot = "";
 
         // Last accel-snapshot angles — updated every poll cycle, used by tare instead of CF angle
         let lastAccelAngleL = 0;
@@ -677,16 +671,21 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             dirBadge.innerText = "➡️ FORWARD";
                             dirBadge.style.background = "#1f6beb";
 
-                            // Forward Rating (Heel-Strike)
+                            // Forward Rating (Heel-Strike / Ball-Step / Brush+Heel)
                             if (activeTheta > 35) {
-                                badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";  // gyro overshoot during fast swing
+                                badge.className = "badge badge-yellow"; badge.style.cssText = ""; badge.innerText = "HEEL SPIKE";
                             } else if (activeTheta >= 10) {
-                                badge.className = "badge badge-green"; badge.innerText = "OPTIMAL HEEL";
+                                badge.className = "badge badge-green";  badge.style.cssText = ""; badge.innerText = "OPTIMAL HEEL";
                             } else if (activeTheta >= 5) {
-                                badge.className = "badge badge-yellow"; badge.innerText = "FLAT";
+                                badge.className = "badge badge-yellow"; badge.style.cssText = ""; badge.innerText = "FLAT";
+                            } else if (activeTheta < -5) {
+                                // Ball-first: intentional technique, not flagged as error
+                                badge.className = "badge"; badge.style.cssText = "background:#0d6efd; color:#fff;"; badge.innerText = "BALL-STEP";
                             } else {
-                                badge.className = "badge badge-red"; badge.innerText = "FLAT-FOOT!";
-                                if (activeJerk > 160) playImpactClick(1200); // only alert on hard flat impacts (>40 g/s displayed)
+                                // Flat contact (−5° to +5°): show FLAT-FOOT! but open brush+heel reclassification window
+                                badge.className = "badge badge-red"; badge.style.cssText = ""; badge.innerText = "FLAT-FOOT!";
+                                if (activeJerk > 160) playImpactClick(1200);
+                                brushPending = true; brushPendingTime = now; brushPendingFoot = activeFoot;
                             }
                         } else if (activeDirection === "BACKWARD") {
                             dirBadge.innerText = "⬅️ BACKWARD";
@@ -709,11 +708,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                     badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";
                                                 }
                         } else {
-                            // AMBIGUOUS: |θ| < 5° — foot landed flat, aY unreliable for direction.
+                            // AMBIGUOUS: |θ| < 5° — foot landed flat, direction unreliable; open brush+heel window
                             dirBadge.innerText = "↔️ FLAT";
                             dirBadge.style.background = "#555";
-                            badge.className = "badge badge-red"; badge.innerText = "FLAT-FOOT!";
+                            badge.className = "badge badge-red"; badge.style.cssText = ""; badge.innerText = "FLAT-FOOT!";
                             if (activeJerk > 160) playImpactClick(1200);
+                            brushPending = true; brushPendingTime = now; brushPendingFoot = activeFoot;
                         }
 
                         // Visuelles Aufblinken der Kachel bei jedem erkannten Schritt
@@ -781,17 +781,23 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
                     }
 
-                    // B. Ankle Shock Absorption — 5 samples (~100 ms) after impact
-                    // |∫gRoll dt| > threshold = pronation impulse detected (ankle flex for shock absorption)
+                    // B. Ankle Shock Absorption + Rigid Lever — 10 samples (~200 ms) after impact
+                    // First 100 ms (samples 0–4): pronation integral for shock absorption
+                    // Samples 0–3 vs 6–9: sign reversal = supination lock (Rigid Lever for push-off)
                     if (rollActive) {
                         let footGRoll = rollFoot === "L" ? gRollL : gRollR;
                         rollSamples.push(footGRoll);
-                        if (rollSamples.length >= 5) {
+                        if (rollSamples.length >= 10) {
                             rollActive = false;
-                            let rollIntegral = Math.abs(rollSamples.reduce((a, b) => a + b, 0) * 0.02);
+                            let rollIntegral = Math.abs(rollSamples.slice(0, 5).reduce((a, b) => a + b, 0) * 0.02);
+                            let earlyRoll = rollSamples.slice(0, 4).reduce((a, b) => a + b, 0) / 4;
+                            let lateRoll  = rollSamples.slice(6, 10).reduce((a, b) => a + b, 0) / 4;
+                            let rigidLever = Math.abs(earlyRoll) > 8 && (earlyRoll * lateRoll < 0);
                             let rBadge = document.getElementById('rollBadge');
                             if (rBadge) {
-                                if (rollIntegral > 4) {
+                                if (rigidLever) {
+                                    rBadge.className = "badge badge-green";  rBadge.style.cssText = ""; rBadge.innerText = "RIGID LEVER";
+                                } else if (rollIntegral > 4) {
                                     rBadge.className = "badge badge-green";  rBadge.style.cssText = ""; rBadge.innerText = "ANKLE FLEX";
                                 } else if (rollIntegral > 1) {
                                     rBadge.className = "badge badge-yellow"; rBadge.style.cssText = ""; rBadge.innerText = "MODERATE ROLL";
@@ -799,6 +805,27 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                     rBadge.className = "badge badge-yellow"; rBadge.style.cssText = ""; rBadge.innerText = "STIFF ANKLE";
                                 }
                             }
+                        }
+                    }
+
+                    // C. Brush+Heel reclassification — 200 ms window after flat/ambiguous forward contact
+                    // If a second aZ peak (>1.05g) with positive accel angle (>8°) is detected on the
+                    // same foot, the initial flat contact was the brush phase → reclassify to BRUSH+HEEL.
+                    if (brushPending) {
+                        if (now - brushPendingTime < 200) {
+                            let footAZ    = Math.abs(brushPendingFoot === "L" ? aZL : aZR);
+                            let footAngle = brushPendingFoot === "L"
+                                ? (lastAccelAngleL - leftMountOffset)
+                                : (lastAccelAngleR - rightMountOffset);
+                            if (footAZ > 1.05 && footAngle > 8) {
+                                brushPending = false;
+                                let badge  = document.getElementById('strikeBadge');
+                                let dirBdg = document.getElementById('dirBadge');
+                                if (badge)  { badge.className = "badge badge-green"; badge.style.cssText = ""; badge.innerText = "BRUSH+HEEL"; }
+                                if (dirBdg) { dirBdg.innerText = "➡️ FORWARD"; dirBdg.style.background = "#1f6beb"; }
+                            }
+                        } else {
+                            brushPending = false; // window expired — keep current badge (FLAT-FOOT!)
                         }
                     }
 
