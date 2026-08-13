@@ -1,92 +1,151 @@
 # 🕺 WCS Movement and Connection Analysis System
 
-A real-time wireless sensor network and video feedback system built specifically for **West Coast Swing (WCS)** dancers and coaches.
+A real-time wireless sensor network and video-overlay feedback system built for **West Coast Swing (WCS)** dancers and coaches. Sensors stream live biomechanical data to a web dashboard that overlays directly on the phone camera — giving instant physical telemetry while you dance.
+
+![Dashboard Screenshot](Attachments/screenshot.png)
 
 ---
 
-## 🎯 Purpose & Goal
+## What It Measures
 
-Improving connection, timing, and footwork in West Coast Swing often relies on subjective feeling or delayed video review. This system tries to solve that problem by giving **instant physical telemetry and visual feedback** while you dance even with the sensor graphs as an overlay to the camera of the mobile phone:
-![Screenshot](/Attachments/screenshot.png)
+| Sensor | Measures |
+| :--- | :--- |
+| **Left & Right Foot** | Foot roll-off quality (gyro angular rate), heel/toe strike angle, impact force (Z-axis g-force), push-off power |
+| **Hand / Scale Unit** | Lead-follow tension in grams (−3.5 kg to +3.5 kg via HX711 strain gauge), connection jerk index |
 
-### What it measures in real-time:
-* **Footwork & Roll-off Quality (Left & Right Foot):** Measures foot roll-off dynamics via gyroscope angular rate and detects hard impacts / stomping (Z-axis g-force spikes).
-* **Connection & Lead/Follow Smoothness (Hand Unit):** Measures pull and push tension in grams via a strain-gauge load cell (-3.5 kg to +3.5 kg) and detects abrupt, harsh movements (jerk index).
-* **Live Acoustic & Visual Feedback:** Triggers immediate audio alert tones (e.g., 1000 Hz beep on connection jerk or poor roll-off with heavy impact) and displays synchronized overlay lines directly on a live video feed.
-
-**Now with an extra dashboard for solo training to work on better foot articulation. Find more [here](solo_explanations.md).**
-
-If you want to build that by your own check the required parts [here](parts.md).
-
-For those of you who want to get a better understanding of what is measured, calculated and displayed check [here](explanations.md).
+Alerts fire immediately as audio beeps and coloured badge overlays — faster than you can read a graph.
 
 ---
 
-## 🚀 Quick Start / How to Use
+## Two Dashboards
 
-1. **Power On:** Turn on the **Master Unit** first so it establishes its Wi-Fi channel (either the WiFi around- has to be maintained in secrets.h or spans its own WiFi).
-2. **Connect Sensors:** Power on the Foot and Hand sensors. They automatically scan channels (1–13), pair with the Master, and lock onto the channel.
-3. **Open Dashboard:** Connect your tablet, phone, or laptop to the Master's Wi-Fi network and open the IP address in any web browser.
-4. **Train & Review:**
-   * Tap **START CAM** to overlay the telemetry graphs directly over your live camera feed.
-   * Use **FREEZE** during or after a pattern to pause graph rendering and analyze connection/footwork spikes frame-by-frame.
-   * Press **Button A** on the Hand Unit at any time to tare (zero-out) the weight scale.
+### Main Dashboard — Connection & Footwork Overview
+Real-time canvas graphs for both feet and the hand sensor. Designed for coaches observing from the side. Open in any browser at the Master's IP address root (`/`).
 
----
+### Solo Training Dashboard — Foot Articulation Deep-Dive
+Detailed step-by-step badge feedback for solo drills. Designed for the dancer to glance at between steps. Open at `/solo`.
 
-## 🛠️ Getting Started (Setup & Installation)
+Three training levels hide or reveal cards depending on what is relevant:
 
-### Hardware Requirements
-* **1x Master Unit:** M5Stack main unit (M5StickC PLUS / PLUS2 / Core).
-* **2x Foot Sensors:** M5Stack units with internal 6-axis IMU.
-* **1x Hand Sensor:** M5Stack unit + **HX711** load cell amplifier + Strain-Gauge Load Cell (connected to GPIO 33 DOUT / GPIO 32 SCK).
-
-### Software Requirements
-Install the following libraries in Arduino IDE / PlatformIO:
-* `M5Unified`
-* `WiFi.h` & `esp_wifi.h`
-* `esp_now.h`
-* `WebServer.h`
-* `HX711.h`
-
-### Firmware Flashing
-1. **Master Unit:**
-   * Create a `secrets.h` file containing your Wi-Fi credentials (`STAMMI_SSID` & `STAMMI_PASS`).
-   * Flash the Master code. (If Wi-Fi fails, it falls back to standalone Access Point mode with password `12345678` at `192.168.4.1`).
-2. **Foot Sensors:**
-   * Flash Unit 1 with `#define FOOT_ID 1` (Left Foot).
-   * Flash Unit 2 with `#define FOOT_ID 2` (Right Foot).
-3. **Hand Sensor:**
-   * Flash with `#define HAND_ID 3` (Scale factor default is set to `129.1f`).
+| Level | What is shown | Who it is for |
+| :--- | :--- | :--- |
+| `👤 BEG` | Step direction + heel/toe badge only | Learning basic foot contact |
+| `🏃 INT` | + Jerk bar, Push-Off badge, Double Stance card | Technique refinement |
+| `⭐ ADV` | All cards — full biomechanical feedback | Detailed analysis |
 
 ---
 
-## 📐 System Architecture
+## Documentation
+
+| Document | Audience | Contents |
+| :--- | :--- | :--- |
+| [**Dancer's Guide**](dancer_guide.md) | Dancers | How to use the Solo Dashboard: setup, level selector, all badge cards, training progressions, common problems. Start here if you want to train — no technical knowledge required. |
+| [**Solo Dashboard — Technical Reference**](solo_explanations.md) | Coaches / Developers | Architecture, sensor math, complementary filter, step detection algorithm, all metric formulas, threshold tables, firmware notes. |
+| [**Connection Dashboard — Explanations**](explanations.md) | All | Explanation of the main dashboard metrics (connection force, jerk, foot graphs). |
+| [**Parts List**](parts.md) | Builders | Bill of materials, wiring, and sourcing notes for building the hardware. |
+
+---
+
+## Quick Start
+
+### First-time setup
+1. **Flash the firmware** — see [Firmware Flashing](#firmware-flashing) below.
+2. Create `secrets.h` with your Wi-Fi credentials (optional — without it the Master runs as a standalone access point).
+
+### Every session
+1. **Power on the Master Unit** first — it locks the Wi-Fi channel.
+2. **Power on the Foot Sensors** (and Hand Unit if using). They scan channels 1–13 and auto-pair with the Master.
+3. **Connect your phone or tablet** to the Master's Wi-Fi network (`M5-Dance-Master` / `12345678`, or your home Wi-Fi if configured).
+4. **Open the dashboard** in your browser:
+   - Main dashboard: `http://<IP>/`
+   - Solo dashboard: `http://<IP>/solo`
+5. **Tap `📷 CAM`** to show your live camera behind the data cards.
+6. **Tap `📐 ZERO`** while standing naturally in your dance stance to calibrate the foot angle baseline.
+7. **Tap `🔊 Biofeedback: OFF`** to enable audio alerts.
+
+> The IP address is shown on the Master's display on startup. In AP-only mode it is always `192.168.4.1`.
+
+---
+
+## System Architecture
 
 ```text
-                       +-------------------------+
-                       |   Foot Sensor (Left)    |
-                       | ID: 1 | M5Stack + IMU   |
-                       +------------+------------+
-                                    |
-                                    | (ESP-NOW Broadcast / Channel Auto-Sync)
-                                    v
-+------------------------+     +----+--------------------+     +-------------------------+
-|   Hand / Scale Unit    |---->|   Central Master Unit   |<----|   Foot Sensor (Right)   |
-| ID: 3 | HX711 + IMU    |     |    M5Stack Master       |     | ID: 2 | M5Stack + IMU   |
-+------------------------+     +----------+--------------+     +-------------------------+
-                                          |
-                                          | (Wi-Fi AP / STA + WebServer)
-                                          v
-                              +-----------+--------------+
-                              |   Web Dashboard (HTML5)  |
-                              | Real-time Canvas Graphs  |
-                              | Live Camera Overlay      |
-                              +--------------------------+
-
+                   +-------------------------+
+                   |   Foot Sensor (Left)    |
+                   | ID: 1 | M5Stack + IMU   |
+                   +------------+------------+
+                                |
+                                | ESP-NOW Broadcast / Channel Auto-Sync
+                                v
++------------------------+  +---+--------------------+  +-------------------------+
+|   Hand / Scale Unit    |->|   Central Master Unit  |<-|   Foot Sensor (Right)   |
+| ID: 3 | HX711 + IMU   |  |    M5Stack Master      |  | ID: 2 | M5Stack + IMU   |
++------------------------+  +----------+-------------+  +-------------------------+
+                                       |
+                                       | Wi-Fi AP/STA + WebServer (port 80)
+                                       v
+                           +-----------+-------------+
+                           |   Web Dashboard (HTML5) |
+                           |  /      Main dashboard  |
+                           |  /solo  Solo dashboard  |
+                           |  /data  JSON endpoint   |
+                           +-------------------------+
 ```
 
-## Open Items / To-Dos
-* Improve the physical handles/grips on the hand scale unit.
+### Data flow
+- Foot and Hand sensors broadcast IMU/scale packets via **ESP-NOW** at 200 Hz.
+- Master receives packets, aggregates them, and exposes a `/data` JSON endpoint.
+- Dashboard polls `/data` at 50 Hz and renders badges, graphs, and camera overlay in the browser.
 
-If you have suggestions or ideas for improvement, feel free to share them!
+---
+
+## Hardware Requirements
+
+| Unit | Hardware |
+| :--- | :--- |
+| Master | M5StickC Plus / Plus2 or M5Stack Core |
+| Foot Sensors (×2) | M5StickC Plus / Plus2 (internal 6-axis IMU required) |
+| Hand / Scale Unit | M5StickC + HX711 load cell amplifier + strain-gauge load cell (GPIO 33 DOUT / GPIO 32 SCK) |
+
+Full bill of materials and wiring: [parts.md](parts.md)
+
+---
+
+## Software Requirements
+
+Install the following libraries in **Arduino IDE** or **PlatformIO**:
+
+- `M5Unified`
+- `WiFi.h` / `esp_wifi.h`
+- `esp_now.h`
+- `WebServer.h`
+- `HX711.h`
+
+---
+
+## Firmware Flashing
+
+1. **Master Unit**
+   - Optionally create `M5ControllerServer/src/secrets.h` with your Wi-Fi credentials:
+     ```cpp
+     #define STAMMI_SSID "YourNetworkName"
+     #define STAMMI_PASS "YourPassword"
+     ```
+   - Without `secrets.h` the Master runs as a standalone access point (`192.168.4.1`).
+   - Flash `M5ControllerServer/`.
+
+2. **Foot Sensors**
+   - Flash `M5Left/` — `#define FOOT_ID 1` (Left foot, physically mounted with aY axis inverted).
+   - Flash `M5Right/` — `#define FOOT_ID 2` (Right foot, standard mounting).
+
+3. **Hand / Scale Unit**
+   - Flash with `#define HAND_ID 3`.
+   - Default scale factor: `129.1f` — calibrate against a known weight if needed.
+
+---
+
+## Open Items
+
+- Improve the physical grip/handle on the hand scale unit.
+
+Suggestions and ideas welcome.
