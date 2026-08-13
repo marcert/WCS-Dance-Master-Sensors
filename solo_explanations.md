@@ -79,20 +79,26 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
    $$\theta = \theta_{\text{raw}} - \text{mountOffset}$$
 
-3. **Strike Angle Evaluation Rules:**
-   * **Forward Step:**
-     * $\theta > 35^\circ \longrightarrow$ `HEEL SPIKE` (Gyro overshoot during fast swing)
-     * $10^\circ \le \theta \le 35^\circ \longrightarrow$ `OPTIMAL HEEL` (Clean heel articulation)
-     * $5^\circ \le \theta < 10^\circ \longrightarrow$ `FLAT` (Borderline flat landing)
-     * $-5^\circ \le \theta < 5^\circ \longrightarrow$ `FLAT-FOOT!` (Red) — but opens a **200 ms brush+heel reclassification window** (see §4); if a second aZ peak > 1.05g with accel angle > 8° is detected on the same foot, badge upgrades to `BRUSH+HEEL`
-     * $\theta < -5^\circ \longrightarrow$ `BALL-STEP` (Blue) — ball/toe struck first; intentional technique, no error tone
-   * **Backward Step / Anchor:**
-     * $-2^\circ \le \theta \le 5^\circ$ AND $aZ > 0.85g \longrightarrow$ `ANCHOR SETTLE` (Full weight investment & leverage)
-     * $-20^\circ \le \theta \le 5^\circ \longrightarrow$ `OPTIMAL TOE` (Clean toe-ball roll-off)
-     * $5^\circ < \theta \le 10^\circ \longrightarrow$ `HEEL DROP` (Borderline flat landing)
-     * $\theta > 10^\circ \longrightarrow$ `HEEL LANDING!` (Biomechanical error: heel landing while moving backward; triggers 1200 Hz audio warning)
-   * **Ambiguous / Flat Landing:**
-     * $|\theta| < 5^\circ \longrightarrow$ ↔️ `FLAT` + `FLAT-FOOT!` (Foot landed too flat to reliably classify direction; also opens the 200 ms brush+heel window — if heel-set is detected, direction upgrades to ➡️ FORWARD + `BRUSH+HEEL`)
+3. **Direction Classification & Strike Angle Evaluation:**
+
+   Direction is determined from the T-1 pitch angle relative to mount offset ($\theta$). Because a single foot-mounted IMU cannot separate travel direction from foot orientation in the flat-contact zone, an **asymmetric ambiguous range** overrides the raw direction signal:
+
+   $$\text{activeDirection} = \begin{cases} \text{BACKWARD} & \theta < -5° \\ \text{AMBIGUOUS} & -5° \le \theta < 10° \\ \text{FORWARD} & \theta \ge 10° \end{cases}$$
+
+   **Why asymmetric:** Negative θ reliably indicates toe-first contact (unambiguously backward); positive θ below +10° is genuinely ambiguous — a flat forward step and a backward step with an early heel drop produce the same angle range (+5° to +9°).
+
+   * **Forward Step ($\theta \ge 10°$):**
+     * $\theta > 35° \longrightarrow$ `HEEL SPIKE` (extreme dorsiflexion)
+     * $10° \le \theta \le 35° \longrightarrow$ `OPTIMAL HEEL` (clean heel articulation)
+     * BRUSH+HEEL reclassification window (200 ms) can upgrade any prior `FLAT-FOOT!` to `BRUSH+HEEL` if a second aZ > 1.05g peak with accelAngle > 8° is detected on the same foot.
+   * **Backward Step ($\theta < -5°$):**
+     * $-5° > \theta \ge -20° \longrightarrow$ `OPTIMAL TOE` (clean toe-ball contact)
+     * $\theta < -20° \longrightarrow$ `HEEL SPIKE` (over-pointed foot)
+   * **Ambiguous Zone ($-5° \le \theta < 10°$):**
+     * ↔️ FLAT + `FLAT-FOOT!` (Red) — direction unreliable; also opens the 200 ms brush+heel reclassification window.
+     * Covers: flat forward steps, backward steps with early heel drop (+5° to +9°), and any genuinely flat landing.
+
+   **Detector limitations:** `BALL-STEP` (forward step with negative θ), `ANCHOR SETTLE` (θ = −2° to +5°), `HEEL DROP` (backward + θ = +5° to +9°), and `HEEL LANDING!` (backward + θ ≥ +10°) cannot be reliably shown because the direction signal requires θ outside the ambiguous zone. Steps with those angle values fall into the AMBIGUOUS branch regardless of actual body movement direction.
 
 ---
 
@@ -186,13 +192,12 @@ $$\text{rigidLever} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;\t
 
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Forward Heel Angle** | $10^\circ \text{ to } 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
-| **Forward Brush+Heel** | flat brush → accelAngle $> 8^\circ$ within 200 ms | `BRUSH+HEEL` (Green) — reclassified from FLAT-FOOT! | None |
-| **Forward Ball-Step** | $\theta < -5^\circ$ | `BALL-STEP` (Blue) — intentional, no error | None |
-| **Forward Flat Foot** | $-5^\circ \le \theta < 5^\circ$, no heel-set within 200 ms | `FLAT-FOOT!` (Red) | 1200 Hz Click if Impact Jerk > 40 g/s |
-| **Anchor Settle** | $-2^\circ \text{ to } +5^\circ$ AND $aZ > 0.85g$ | `ANCHOR SETTLE` (Green) | None |
-| **Backward Toe Angle** | $-20^\circ \text{ to } +5^\circ$ | `OPTIMAL TOE` (Green) | None |
-| **Backward Heel Error** | $> 10^\circ$ | `HEEL LANDING!` (Red) | 1200 Hz Warning Beep (80 ms) |
+| **Forward Heel — Optimal** | $10^\circ \le \theta \le 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
+| **Forward Heel — Spike** | $\theta > 35^\circ$ | `HEEL SPIKE` (Yellow) | None |
+| **Forward Brush+Heel** | flat → accelAngle $> 8^\circ$ within 200 ms | `BRUSH+HEEL` (Green) — reclassified from FLAT-FOOT! | None |
+| **Ambiguous flat contact** | $-5^\circ \le \theta < 10^\circ$, no heel-set within 200 ms | ↔️ FLAT + `FLAT-FOOT!` (Red) — covers flat forward steps and backward steps with early heel drop | 1200 Hz Click if Impact Jerk > 40 g/s |
+| **Backward Toe — Optimal** | $-20^\circ \le \theta < -5^\circ$ | `OPTIMAL TOE` (Green) | None |
+| **Backward Toe — Spike** | $\theta < -20^\circ$ | `HEEL SPIKE` (Yellow) | None |
 | **Trailing Foot Push-off (optimal)**| $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
 | **Trailing Foot Push-off (weak)** | $120\text{–}199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
 | **Impact Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |

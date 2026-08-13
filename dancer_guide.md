@@ -97,26 +97,41 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 | **LOADING badge** | How smoothly you transferred weight onto the landing foot (Advanced only) |
 | **ANKLE ROLL badge** | Ankle shock absorption at landing (Advanced only) |
 
-### Forward step strike badges
+### How direction is determined
+
+The system classifies direction from foot pitch angle θ. Direction is **reliable only at the extremes**:
+
+| Direction badge | θ at landing | Meaning |
+| :--- | :--- | :--- |
+| **➡️ FORWARD** | θ ≥ +10° | Clear dorsiflexion — heel contacted first |
+| **↔️ FLAT** | −5° to +9° | Ambiguous zone — foot too flat to classify direction |
+| **⬅️ BACKWARD** | θ < −5° | Clear plantarflexion — toe-ball contacted first |
+
+A single foot IMU cannot separate a flat forward step from a backward step with an early heel drop when θ is between −5° and +9°. Both show ↔️ FLAT.
+
+### Forward step badges (➡️ FORWARD, θ ≥ +10°)
 
 | Badge | Angle | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL HEEL` ✅ | +10° to +35° | Clean heel strike — heel contacts first | Target for all forward walks and breaks |
-| `BRUSH+HEEL` ✅ | flat brush → +8° heel | Ball brushed the floor during the swing, then heel set cleanly — two-phase contact | Advanced WCS technique; system auto-detects the heel phase and reclassifies |
-| `FLAT` ⚠️ | +5° to +10° | Slight heel lead, foot nearly flat | Acceptable — increase heel articulation |
-| `BALL-STEP` 🔵 | < −5° | Ball/toe struck first, heel settles after | Intentional style choice in some WCS patterns — not flagged as an error |
-| `FLAT-FOOT!` ❌ | −5° to +5° | Foot landed flat with no brush+heel follow-through | Common cause: rushing the step, tense ankles, or insufficient hip extension |
 | `HEEL SPIKE` ⚠️ | > +35° | Extremely steep heel angle | Reduce drive force or relax the ankle |
+| `OPTIMAL HEEL` ✅ | +10° to +35° | Clean heel strike — heel contacts first | Target for all forward walks and breaks |
+| `BRUSH+HEEL` ✅ | flat → +8° heel within 200 ms | Ball brushed during swing, then heel set cleanly | Reclassified from FLAT-FOOT! when the sensor detects the two-phase contact |
 
-### Backward step strike badges
+### Ambiguous zone (↔️ FLAT, −5° to +9°)
+
+| Badge | Condition | What it means |
+| :--- | :--- | :--- |
+| `FLAT-FOOT!` ❌ | flat landing, no follow-through | Could be: forward step with insufficient heel lift, OR backward step with heel dropping too early. Use camera to check actual direction. |
+| `BRUSH+HEEL` ✅ | flat → heel-set detected within 200 ms | System auto-reclassifies — correct forward technique confirmed |
+
+### Backward step badges (⬅️ BACKWARD, θ < −5°)
 
 | Badge | Angle | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL TOE` ✅ | −20° to +5° | Clean toe-ball landing | Target for all backward walks, anchors, extensions |
-| `ANCHOR SETTLE` ✅ | −2° to +5° + full weight | Heel kissed the floor with full weight | Ideal anchor completion |
-| `HEEL DROP` ⚠️ | +5° to +9° | Heel beginning to drop too early | Keep the ankle dorsiflexed a moment longer |
-| `HEEL LANDING!` ❌ | ≥ +10° | Heel struck first on a backward step | Most common WCS error — pulls partner off-axis |
+| `OPTIMAL TOE` ✅ | −5° to −20° | Clean toe-ball contact | Target for all backward walks, anchors, extensions |
 | `HEEL SPIKE` ⚠️ | < −20° | Over-pointed foot at contact | Moderate the extension slightly |
+
+> **Note on backward HEEL errors:** A backward step where the heel drops early (θ = +5° to +9°) or strikes first (θ ≥ +10°) will show ↔️ FLAT or ➡️ FORWARD — the sensor cannot confirm backward direction in those ranges. If you see consistent FLAT-FOOT! on what you believe are backward steps, your heel is most likely contacting too early. Focus on sending the toe out first and keeping the ankle dorsiflexed until the foot settles.
 
 ### Impact Jerk bar
 
@@ -199,8 +214,8 @@ Visible at **Advanced** level only.
 **One focus: heel vs. toe contact.**
 
 1. Walk forward. Does the badge say `OPTIMAL HEEL`? If not — lift your heel slightly more before the foot lands.
-2. Walk backward. Does the badge say `OPTIMAL TOE` or `ANCHOR SETTLE`? If not — send your toe out first, like a probe, before the body weight follows.
-3. If you hear the **1200 Hz beep**, stop and slow down. That sound means `HEEL LANDING!` or hard `FLAT-FOOT!`.
+2. Walk backward. Does the badge say `OPTIMAL TOE`? If not — send your toe out first, like a probe, before the body weight follows. If you see ↔️ FLAT + `FLAT-FOOT!` on backward steps, your heel is contacting the floor before the toe.
+3. If you hear the **1200 Hz beep**, stop and slow down. That is a hard `FLAT-FOOT!` impact.
 4. Practise at a slow tempo until `OPTIMAL HEEL` and `OPTIMAL TOE` appear consistently. Only then increase speed.
 
 > **How to read the screen:** After each step, glance at the bottom-right card. The large coloured badge is the verdict. Green = correct. Red/yellow = adjust.
@@ -210,7 +225,7 @@ Visible at **Advanced** level only.
 **Two focuses: technique consistency + weight transfer timing.**
 
 1. Forward walks → aim for consistent `OPTIMAL HEEL` with the Jerk bar under half.
-2. Backward walks → aim for `OPTIMAL TOE` → `ANCHOR SETTLE` sequence on anchor steps.
+2. Backward walks → aim for `OPTIMAL TOE`. The direction badge ⬅️ BACKWARD confirms good toe-first technique. ↔️ FLAT on a backward step means the foot is landing too flat — check the camera to confirm whether it is a heel drop or a genuine flat landing.
 3. Watch the **POWER PUSH badge**: is your trailing leg passive? Drive through the ball of the foot at the end of each walk.
 4. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triple steps. `HECTIC` during the anchor means you are rushing.
 
@@ -231,7 +246,7 @@ Visible at **Advanced** level only.
 | What you see | Root cause | Fix |
 | :--- | :--- | :--- |
 | `FLAT-FOOT!` on every forward walk | Ankle held rigid; no heel articulation | Slow down. Exaggerate heel-first contact consciously. Drill: walk in place, touching heel then ball in sequence. |
-| `HEEL LANDING!` on backward steps | Body weight moving backward before foot scouts | Delay the COM — send the foot first, body follows. Drill: backward walks holding a wall, exaggerating toe-first contact. |
+| `FLAT-FOOT!` + ↔️ FLAT on backward steps | Heel contacting before toe during backward walk | Sensor cannot show ⬅️ BACKWARD when θ ≥ −5°. If camera confirms you are moving backward, your heel is landing too early — send the toe first, keep the ankle dorsiflexed until the foot settles. |
 | `HECTIC` Double Stance | Rushing the transfer; foot lifts too early | "Leave the floor last" — let the whole foot peel up from the toe. |
 | `SLUGGISH` Double Stance | Hesitating before committing weight | Trust the floor. Move the body, not just the foot. Drill: metronome walks, landing on the beat. |
 | `STIFF ANKLE` consistently | Braced ankle at landing | Visualise landing on a sponge. Consciously unlock the ankle before contact. |
