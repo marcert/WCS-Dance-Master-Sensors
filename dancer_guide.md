@@ -56,6 +56,8 @@ The **`👤 BEG`** button in the top-right corner of the header cycles through t
 
 Cards that are not relevant for your level are hidden, giving the camera maximum screen space.
 
+> **Note:** These levels describe the **complexity of feedback shown on screen** — they have nothing to do with your WSDC competition division. A Champion-level dancer starting a new drill should use `👤 BEG` to focus on one thing at a time. An absolute newcomer drilling something specific may benefit from switching to `🏃 INT`. Choose the level that matches what you are currently working on, not your competition résumé.
+
 ### Beginner view
 
 > **📸 SCREENSHOT:** *Beginner level in landscape — only the Last Step card visible in the bottom-right corner. Top three-quarters of the screen shows the camera feed.*
