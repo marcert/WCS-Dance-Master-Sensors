@@ -81,17 +81,18 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 
 3. **Strike Angle Evaluation Rules:**
    * **Forward Step:**
+     * $\theta > 35^\circ \longrightarrow$ `HEEL SPIKE` (Gyro overshoot during fast swing)
      * $10^\circ \le \theta \le 35^\circ \longrightarrow$ `OPTIMAL HEEL` (Clean heel articulation)
      * $5^\circ \le \theta < 10^\circ \longrightarrow$ `FLAT` (Borderline flat landing)
-     * $\theta < 5^\circ \longrightarrow$ `FLAT-FOOT!` (Harsh flat-foot placement; triggers 1200 Hz audio warning)
-     * $\theta > 35^\circ \longrightarrow$ `HEEL SPIKE` (Gyro overshoot during fast swing)
+     * $-5^\circ \le \theta < 5^\circ \longrightarrow$ `FLAT-FOOT!` (Red) — but opens a **200 ms brush+heel reclassification window** (see §4); if a second aZ peak > 1.05g with accel angle > 8° is detected on the same foot, badge upgrades to `BRUSH+HEEL`
+     * $\theta < -5^\circ \longrightarrow$ `BALL-STEP` (Blue) — ball/toe struck first; intentional technique, no error tone
    * **Backward Step / Anchor:**
      * $-2^\circ \le \theta \le 5^\circ$ AND $aZ > 0.85g \longrightarrow$ `ANCHOR SETTLE` (Full weight investment & leverage)
      * $-20^\circ \le \theta \le 5^\circ \longrightarrow$ `OPTIMAL TOE` (Clean toe-ball roll-off)
      * $5^\circ < \theta \le 10^\circ \longrightarrow$ `HEEL DROP` (Borderline flat landing)
      * $\theta > 10^\circ \longrightarrow$ `HEEL LANDING!` (Biomechanical error: heel landing while moving backward; triggers 1200 Hz audio warning)
    * **Ambiguous / Flat Landing:**
-     * $|\theta| < 5^\circ \longrightarrow$ ↔️ `FLAT` + `FLAT-FOOT!` (Foot landed too flat to reliably classify direction; both the direction badge and strike badge reflect a flat-foot error. Requires |θ| ≥ 5° on next detected impact to resume directional classification.)
+     * $|\theta| < 5^\circ \longrightarrow$ ↔️ `FLAT` + `FLAT-FOOT!` (Foot landed too flat to reliably classify direction; also opens the 200 ms brush+heel window — if heel-set is detected, direction upgrades to ➡️ FORWARD + `BRUSH+HEEL`)
 
 ---
 
@@ -166,21 +167,29 @@ $$\text{loadRise} = \overline{aZ}_{[160\text{–}240\,\text{ms}]} - \overline{aZ
 | $-0.08\text{ to }+0.12\,g$ | `INSTANT LOAD` (Yellow) | Weight transferred immediately at impact — less joint protection |
 | $< -0.08\,g$ | `EARLY UNLOAD` (Yellow) | Weight already shifting to next foot before settling — rushed transfer |
 
-**Ankle Shock Absorption** (100 ms window, 5 samples of `gRoll`):
+**Ankle Shock Absorption + Rigid Lever** (200 ms window, 10 samples of `gRoll`):
+
+Pronation integral over first 100 ms (samples 0–4):
 $$\text{rollIntegral} = \left|\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\,\text{s}\right| \quad [\text{degrees}]$$
 
-| rollIntegral | Badge | Biomechanical Meaning |
+Rigid Lever check — sign reversal between early (samples 0–3) and late (samples 6–9) phase with sufficient pronation magnitude:
+$$\text{rigidLever} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;\text{AND}\;\; \overline{\omega}_{[0\text{–}3]} \cdot \overline{\omega}_{[6\text{–}9]} < 0$$
+
+| Condition | Badge | Biomechanical Meaning |
 | :---: | :---: | :--- |
-| $> 4°$ | `ANKLE FLEX` (Green) | Pronation impulse detected — ankle joint absorbing impact energy |
-| $1°\text{–}4°$ | `MODERATE ROLL` (Yellow) | Some ankle mobility, could be increased |
-| $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — shock transmitted directly to knee/hip joints |
+| rigidLever = true | `RIGID LEVER` (Green) | Full pronation → supination cycle: ankle absorbed impact AND locked for push-off (Windlass Mechanism) |
+| rollIntegral $> 4°$ | `ANKLE FLEX` (Green) | Pronation impulse detected — ankle joint absorbing impact energy |
+| rollIntegral $1°\text{–}4°$ | `MODERATE ROLL` (Yellow) | Some ankle mobility, could be increased |
+| rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — shock transmitted directly to knee/hip joints |
 
 > **Firmware requirement:** `gRoll` (`gx` axis) is transmitted as `lGr`/`rGr` in the JSON payload. Both foot sensors and the master must be flashed with the updated firmware for these badges to show non-zero values.
 
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
 | **Forward Heel Angle** | $10^\circ \text{ to } 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
-| **Forward Flat Foot** | $< 5^\circ$ | `FLAT-FOOT!` (Red) | 1200 Hz Click if Impact Jerk > 40 g/s |
+| **Forward Brush+Heel** | flat brush → accelAngle $> 8^\circ$ within 200 ms | `BRUSH+HEEL` (Green) — reclassified from FLAT-FOOT! | None |
+| **Forward Ball-Step** | $\theta < -5^\circ$ | `BALL-STEP` (Blue) — intentional, no error | None |
+| **Forward Flat Foot** | $-5^\circ \le \theta < 5^\circ$, no heel-set within 200 ms | `FLAT-FOOT!` (Red) | 1200 Hz Click if Impact Jerk > 40 g/s |
 | **Anchor Settle** | $-2^\circ \text{ to } +5^\circ$ AND $aZ > 0.85g$ | `ANCHOR SETTLE` (Green) | None |
 | **Backward Toe Angle** | $-20^\circ \text{ to } +5^\circ$ | `OPTIMAL TOE` (Green) | None |
 | **Backward Heel Error** | $> 10^\circ$ | `HEEL LANDING!` (Red) | 1200 Hz Warning Beep (80 ms) |
@@ -193,7 +202,8 @@ $$\text{rollIntegral} = \left|\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\
 | **Weight Transfer — Progressive** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Green) | None |
 | **Weight Transfer — Instant** | $-0.08 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Yellow) | None |
 | **Weight Transfer — Early Unload** | loadRise $< -0.08\,g$ | `EARLY UNLOAD` (Yellow) | None |
-| **Ankle Shock Absorption** | rollIntegral $> 4°$ | `ANKLE FLEX` (Green) | None |
+| **Rigid Lever** | pronation $> 8°/\text{s}$ AND sign reversal in 200 ms | `RIGID LEVER` (Green) | None |
+| **Ankle Shock Absorption** | rollIntegral $> 4°$ (no reversal) | `ANKLE FLEX` (Green) | None |
 | **Ankle Stiffness** | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | None |
 | **Per-Foot Lockout Window**| $220\text{ ms}$ + Alternation Guard | Suppresses same-foot re-trigger | None |
 

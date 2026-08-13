@@ -102,8 +102,10 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 | Badge | Angle | What you did | Target |
 | :--- | :--- | :--- | :--- |
 | `OPTIMAL HEEL` ✅ | +10° to +35° | Clean heel strike — heel contacts first | Target for all forward walks and breaks |
+| `BRUSH+HEEL` ✅ | flat brush → +8° heel | Ball brushed the floor during the swing, then heel set cleanly — two-phase contact | Advanced WCS technique; system auto-detects the heel phase and reclassifies |
 | `FLAT` ⚠️ | +5° to +10° | Slight heel lead, foot nearly flat | Acceptable — increase heel articulation |
-| `FLAT-FOOT!` ❌ | < +5° | Foot landed flat or toe-first | Rushing, tense ankles, or insufficient hip extension |
+| `BALL-STEP` 🔵 | < −5° | Ball/toe struck first, heel settles after | Intentional style choice in some WCS patterns — not flagged as an error |
+| `FLAT-FOOT!` ❌ | −5° to +5° | Foot landed flat with no brush+heel follow-through | Common cause: rushing the step, tense ankles, or insufficient hip extension |
 | `HEEL SPIKE` ⚠️ | > +35° | Extremely steep heel angle | Reduce drive force or relax the ankle |
 
 ### Backward step strike badges
@@ -151,6 +153,7 @@ These three badges appear below the Jerk bar and update after each step. Visible
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
+| `RIGID LEVER` ✅ | Full pronation → supination cycle detected: ankle absorbed the impact AND locked up for push-off | Optimal ankle mechanics — maintain |
 | `ANKLE FLEX` ✅ | Ankle rolling through impact (pronation impulse detected) | Good shock absorption — ankle acting as natural spring |
 | `MODERATE ROLL` ⚠️ | Some ankle mobility, but could be more | Consciously relax the ankle at landing; avoid bracing the foot rigid |
 | `STIFF ANKLE` ⚠️ | Minimal ankle roll — impact transmitted directly up the chain | Land with a soft, unlocked ankle. Over time this reduces knee and hip load |
