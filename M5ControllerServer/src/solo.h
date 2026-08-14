@@ -270,7 +270,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
                 <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
-                <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5);"      onclick="toggleDebug()">🔍 DBG</button>
+                <button id="dbgBtn"   class="audio-toggle" style="display:none; background: rgba(80,80,80,0.5);" onclick="toggleDebug()">🔍 DBG</button>
             </div>
         </header>
 
@@ -512,6 +512,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let lastDirSrc  = "θ";
         let debugMode   = false;
 
+        // Last confirmed step direction per foot — used to set directional push-off threshold.
+        // A foot that last stepped BACKWARD is now trailing in a forward walk → needs higher push threshold.
+        // A foot that last stepped FORWARD is trailing in backward walk / anchor → lower threshold applies.
+        let lastDirectionL = "FORWARD";
+        let lastDirectionR = "FORWARD";
+
         // Last accel-snapshot angles — updated every poll cycle, used by tare instead of CF angle
         let lastAccelAngleL = 0;
         let lastAccelAngleR = 0;
@@ -550,7 +556,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                     // Complementary filter: gyro integration for short-term dynamics,
                     // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction)
-                    const CF_ALPHA = 0.94;
+                    const CF_ALPHA = 0.94; // τ ≈ 78 ms — validated value; T-1 snapshot already protects θ from impact corruption
                     // Left sensor aY is physically inverted: negate aYL so heel-down gives positive angle
                     let accelAngleL = Math.atan2(-aYL, aZL) * (180 / Math.PI);
                     let accelAngleR = Math.atan2( aYR, aZR) * (180 / Math.PI);
@@ -630,6 +636,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                                                                     let is_backward = (prevPitchLeftAngle < leftMountOffset);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
+                                                                                    lastDirectionL = activeDirection;
                                                                                     pitchLeftAngleRaw = leftMountOffset;
                                                                                 }
                                                                                 else if (detectedFoot === "R") {
@@ -643,16 +650,25 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                                                                     let is_backward = (prevPitchRightAngle < rightMountOffset);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
+                                                                                    lastDirectionR = activeDirection;
                                                                                     pitchRightAngleRaw = rightMountOffset;
                                                                                 }
 
                                         // 4. TERMINAL STANCE / POWER PUSH DETECTION (Windlass Push-off from Trailing Foot)
-                                        // Graded: ≥200°/s = optimal per biomechanical research (Terminal Stance Third Rocker ~250°/s)
-                                        //         120–200°/s = detected but below optimal threshold
-                                        let pushPeakL = aYL > 0.15 ? -gPitchL : 0; // magnitude only when forward accel present
+                                        // Directional thresholds: a foot that last stepped BACKWARD is trailing in a forward walk
+                                        // → needs more drive (≥200°/s). A foot that last stepped FORWARD is trailing in a
+                                        // backward walk / anchor redistribution → subtler push sufficient (≥160°/s).
+                                        // Detection gate: aY > 0.15g confirms floor shear (filters unweighted foot swings).
+                                        const PUSH_DETECT   = 120;  // minimum to register any push
+                                        const PUSH_OPT_FWD  = 200;  // optimal for forward propulsion
+                                        const PUSH_OPT_BWD  = 160;  // optimal for backward / anchor redistribution
+                                        let pushPeakL = aYL > 0.15 ? -gPitchL : 0;
                                         let pushPeakR = aYR > 0.15 ? -gPitchR : 0;
-                                        let pushPeak = Math.max(pushPeakL, pushPeakR);
-                                        let pushLevel = (pushPeak >= 200) ? 2 : (pushPeak >= 120) ? 1 : 0;
+                                        let pushOptL  = (lastDirectionL === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
+                                        let pushOptR  = (lastDirectionR === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
+                                        let pushLevelL = (pushPeakL >= pushOptL)   ? 2 : (pushPeakL >= PUSH_DETECT) ? 1 : 0;
+                                        let pushLevelR = (pushPeakR >= pushOptR)   ? 2 : (pushPeakR >= PUSH_DETECT) ? 1 : 0;
+                                        let pushLevel  = Math.max(pushLevelL, pushLevelR);
                                         if (pushLevel > 0) lastPowerPushTime = now;
                                         let powerBadge = document.getElementById('powerBadge');
                                         if (powerBadge) {
