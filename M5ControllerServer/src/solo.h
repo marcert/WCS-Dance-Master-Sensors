@@ -270,6 +270,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
                 <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
+                <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5);"      onclick="toggleDebug()">🔍 DBG</button>
             </div>
         </header>
 
@@ -343,6 +344,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         <span id="powerBadge" class="badge" style="background:#1e272e; color:#8b949e;">— PUSH-OFF</span>
                         <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
                         <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
+                    </div>
+                    <div id="debugRow" style="display:none; margin-top:5px; border-top:1px solid #2a2a3a; padding-top:4px; font-family:monospace; font-size:11px; color:#666;">
+                        <span>dθ&nbsp;<strong id="dbgDirVal" style="color:#aaa;">—</strong>&nbsp;<span id="dbgDirSrc" style="color:#666;">[θ]</span></span>
+                        <span style="margin-left:10px;">L&nbsp;<strong id="dbgAYL" style="color:#4fc3f7;">0.00</strong>&nbsp;R&nbsp;<strong id="dbgAYR" style="color:#ef5350;">0.00</strong></span>
                     </div>
                 </div>
 
@@ -494,6 +499,19 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let rollSamples    = []; let rollActive    = false; let rollFoot    = "";
         let brushPending = false; let brushPendingTime = 0; let brushPendingFoot = "";
 
+        // Pre-contact pitch-angle ring buffers — 10 samples at 50 Hz = 200 ms history per foot.
+        // Used to resolve direction in the ambiguous θ zone via pitch-angle trend (dθ).
+        // Forward step: θ rises (dorsiflexion during swing) → positive trend.
+        // Backward step: θ falls (plantarflexion during swing) → negative trend.
+        // Both feet use the calibrated θ convention — no left/right sign inversion required.
+        let thetaBufferL = [];
+        let thetaBufferR = [];
+
+        // Debug mode state
+        let lastDirVal  = null;   // most recent direction decision value shown in debug row
+        let lastDirSrc  = "θ";
+        let debugMode   = false;
+
         // Last accel-snapshot angles — updated every poll cycle, used by tare instead of CF angle
         let lastAccelAngleL = 0;
         let lastAccelAngleR = 0;
@@ -522,6 +540,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let filtR = pitchRightHistory[pitchRightHistory.length - 1] * (1 - LP_ALPHA) + gPitchR * LP_ALPHA;
                     pitchLeftHistory.shift();  pitchLeftHistory.push(filtL);
                     pitchRightHistory.shift(); pitchRightHistory.push(filtR);
+
+                    // aY swing-phase ring buffers — update every poll before step detection.
+                    // Left foot aY is stored raw (inversion applied at read time, not here).
+                    if (thetaBufferL.length >= 10) thetaBufferL.shift();
+                    thetaBufferL.push(pitchLeftAngleRaw  - leftMountOffset);
+                    if (thetaBufferR.length >= 10) thetaBufferR.shift();
+                    thetaBufferR.push(pitchRightAngleRaw - rightMountOffset);
 
                     // Complementary filter: gyro integration for short-term dynamics,
                     // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction)
@@ -661,10 +686,33 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         // No valid WCS step angle exceeds ±45° — values outside that range are sensor artefacts.
                         activeTheta = Math.max(-45, Math.min(45, activeTheta));
 
-                        // Asymmetric ambiguous zone: negative θ (toe-first) is unambiguously backward even at −5°.
-                        // Positive θ up to +9° is genuinely ambiguous — could be forward+flat or backward+heel-drop;
-                        // a foot-mounted IMU cannot separate these via angle alone.
-                        if (activeTheta >= -5 && activeTheta < 10) activeDirection = "AMBIGUOUS";
+                        // Reset debug source — overwritten below if dθ window fires.
+                        lastDirVal = null;  lastDirSrc = "θ";
+
+                        // Ambiguous zone (−5° < θ < +10°): resolve direction from pitch-angle trend.
+                        // Compare calibrated θ at T-1 (just before contact) to T-8 (160 ms earlier).
+                        // Forward step: foot dorsiflexes during swing → θ rises → positive trend.
+                        // Backward step: foot plantarflexes during swing → θ falls → negative trend.
+                        // No left/right sign inversion required — both use same calibrated θ convention.
+                        if (activeTheta > -5 && activeTheta < 10) {
+                            let tBuf = (activeFoot === "L") ? thetaBufferL : thetaBufferR;
+                            if (tBuf.length >= 9) {
+                                let thetaTrend = tBuf[tBuf.length - 2] - tBuf[tBuf.length - 9]; // T-1 minus T-8
+                                if      (thetaTrend >  2.0) activeDirection = "FORWARD";
+                                else if (thetaTrend < -2.0) activeDirection = "BACKWARD";
+                                else                        activeDirection = "AMBIGUOUS";
+                                lastDirVal = thetaTrend;  lastDirSrc = "dθ";
+                            } else {
+                                activeDirection = "AMBIGUOUS"; // buffer not yet warm
+                                lastDirSrc = "dθ?";
+                            }
+                        }
+
+                        // Update debug display (per-step values)
+                        { let el = document.getElementById('dbgDirVal');
+                          let sr = document.getElementById('dbgDirSrc');
+                          if (el) el.innerText = lastDirVal !== null ? lastDirVal.toFixed(1) + "°" : "—";
+                          if (sr) sr.innerText = "[" + lastDirSrc + "]"; }
 
                         document.getElementById('strikeAngleVal').innerText = activeTheta + "° (" + activeFoot + ")";
                         document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
@@ -903,6 +951,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     prevGyroPitchLeft  = gPitchL;
                     prevGyroPitchRight = gPitchR;
 
+                    // Live aY debug values — update every poll when debug mode active
+                    if (debugMode) {
+                        let elL = document.getElementById('dbgAYL');
+                        let elR = document.getElementById('dbgAYR');
+                        if (elL) elL.innerText = aYL.toFixed(2);
+                        if (elR) elR.innerText = aYR.toFixed(2);
+                    }
+
                     drawPitchChart();
                     setTimeout(fetchStream, 20);
                 })
@@ -958,6 +1014,21 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     function cycleLevel() {
         const next = LEVELS[(LEVELS.indexOf(currentLevel) + 1) % LEVELS.length];
         applyLevel(next);
+    }
+
+    function toggleDebug() {
+        debugMode = !debugMode;
+        const btn = document.getElementById('dbgBtn');
+        const row = document.getElementById('debugRow');
+        if (debugMode) {
+            btn.style.background  = 'rgba(255,140,0,0.75)';
+            btn.innerText         = '🔍 DBG ON';
+            if (row) row.style.display = 'flex';
+        } else {
+            btn.style.background  = 'rgba(80,80,80,0.5)';
+            btn.innerText         = '🔍 DBG';
+            if (row) row.style.display = 'none';
+        }
     }
 
     applyLevel(currentLevel);

@@ -81,24 +81,35 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 
 3. **Direction Classification & Strike Angle Evaluation:**
 
-   Direction is determined from the T-1 pitch angle relative to mount offset ($\theta$). Because a single foot-mounted IMU cannot separate travel direction from foot orientation in the flat-contact zone, an **asymmetric ambiguous range** overrides the raw direction signal:
+   Direction is determined in two stages. Stage 1 uses the T-1 calibrated pitch angle to resolve the unambiguous extremes; Stage 2 applies a 160 ms pitch-angle trend (dθ) to resolve the ambiguous zone.
 
-   $$\text{activeDirection} = \begin{cases} \text{BACKWARD} & \theta < -5° \\ \text{AMBIGUOUS} & -5° \le \theta < 10° \\ \text{FORWARD} & \theta \ge 10° \end{cases}$$
+   **Stage 1 — θ zone classification:**
 
-   **Why asymmetric:** Negative θ reliably indicates toe-first contact (unambiguously backward); positive θ below +10° is genuinely ambiguous — a flat forward step and a backward step with an early heel drop produce the same angle range (+5° to +9°).
+   $$\text{activeDirection} = \begin{cases} \text{BACKWARD} & \theta \le -5° \\ \text{AMBIGUOUS} & -5° < \theta < 10° \\ \text{FORWARD} & \theta \ge 10° \end{cases}$$
 
-   * **Forward Step ($\theta \ge 10°$):**
+   **Why asymmetric:** Negative θ reliably indicates toe-first contact (unambiguously backward); positive θ below +10° is genuinely ambiguous — a flat forward step and a backward step with an early heel drop both land in the same angle range (+5° to +9°).
+
+   **Stage 2 — dθ pitch trend (Ambiguous Zone only):**
+
+   When Stage 1 yields AMBIGUOUS ($-5° < \theta < 10°$), the system computes a 160 ms pitch-angle trend from the pre-contact ring buffer (10 calibrated-θ samples at 50 Hz):
+   $$d\theta = \theta_{\text{calibrated}}[T{-1}] - \theta_{\text{calibrated}}[T{-8}]$$
+
+   $$\text{activeDirection} = \begin{cases} \text{FORWARD} & d\theta > +2° \\ \text{BACKWARD} & d\theta < -2° \\ \text{AMBIGUOUS} & |d\theta| \le 2° \end{cases}$$
+
+   Forward swing = dorsiflexion → θ rises → positive dθ. Backward swing = plantarflexion → θ falls → negative dθ. Validated threshold: forward dθ +2.6° to +7.9°, backward dθ −2.3° to −3.1°, neutral/anchor −0.4° to +1.9°.
+
+   * **Forward Step (FORWARD via $[\theta]$ or $[d\theta]$):**
      * $\theta > 35° \longrightarrow$ `HEEL SPIKE` (extreme dorsiflexion)
      * $10° \le \theta \le 35° \longrightarrow$ `OPTIMAL HEEL` (clean heel articulation)
      * BRUSH+HEEL reclassification window (200 ms) can upgrade any prior `FLAT-FOOT!` to `BRUSH+HEEL` if a second aZ > 1.05g peak with accelAngle > 8° is detected on the same foot.
-   * **Backward Step ($\theta < -5°$):**
-     * $-5° > \theta \ge -20° \longrightarrow$ `OPTIMAL TOE` (clean toe-ball contact)
-     * $\theta < -20° \longrightarrow$ `HEEL SPIKE` (over-pointed foot)
-   * **Ambiguous Zone ($-5° \le \theta < 10°$):**
-     * ↔️ FLAT + `FLAT-FOOT!` (Red) — direction unreliable; also opens the 200 ms brush+heel reclassification window.
-     * Covers: flat forward steps, backward steps with early heel drop (+5° to +9°), and any genuinely flat landing.
-
-   **Detector limitations:** `BALL-STEP` (forward step with negative θ), `ANCHOR SETTLE` (θ = −2° to +5°), `HEEL DROP` (backward + θ = +5° to +9°), and `HEEL LANDING!` (backward + θ ≥ +10°) cannot be reliably shown because the direction signal requires θ outside the ambiguous zone. Steps with those angle values fall into the AMBIGUOUS branch regardless of actual body movement direction.
+   * **Backward Step (BACKWARD via $[\theta]$ or $[d\theta]$):**
+     * Via $[\theta]$: $-5° > \theta \ge -20° \longrightarrow$ `OPTIMAL TOE`; $\theta < -20° \longrightarrow$ `HEEL SPIKE`
+     * Via $[d\theta]$: `OPTIMAL TOE` for any θ not matching the sub-conditions below
+     * $-2° \le \theta \le +5°$ via $[d\theta]$ AND $aZ > 0.85g$ → `ANCHOR SETTLE` (full weight, settled contact)
+     * $+5° < \theta \le +9°$ via $[d\theta]$ → `HEEL DROP` (heel contacts early on backward step)
+   * **Ambiguous ($|d\theta| \le 2°$, or ring buffer < 9 samples):**
+     * ↔️ FLAT + `FLAT-FOOT!` (Red) — direction unresolvable by θ or dθ; also opens the 200 ms brush+heel reclassification window.
+     * Covers: flat forward steps, backward steps without sufficient pitch trend, and genuinely flat landings.
 
 ---
 
@@ -195,9 +206,11 @@ $$\text{rigidLever} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;\t
 | **Forward Heel — Optimal** | $10^\circ \le \theta \le 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
 | **Forward Heel — Spike** | $\theta > 35^\circ$ | `HEEL SPIKE` (Yellow) | None |
 | **Forward Brush+Heel** | flat → accelAngle $> 8^\circ$ within 200 ms | `BRUSH+HEEL` (Green) — reclassified from FLAT-FOOT! | None |
-| **Ambiguous flat contact** | $-5^\circ \le \theta < 10^\circ$, no heel-set within 200 ms | ↔️ FLAT + `FLAT-FOOT!` (Red) — covers flat forward steps and backward steps with early heel drop | 1200 Hz Click if Impact Jerk > 40 g/s |
-| **Backward Toe — Optimal** | $-20^\circ \le \theta < -5^\circ$ | `OPTIMAL TOE` (Green) | None |
-| **Backward Toe — Spike** | $\theta < -20^\circ$ | `HEEL SPIKE` (Yellow) | None |
+| **Ambiguous flat contact** | $-5° < \theta < 10°$ and $|d\theta| \le 2°$ (or buffer < 9 samples), no heel-set within 200 ms | ↔️ FLAT + `FLAT-FOOT!` (Red) — direction unresolvable by θ or dθ | 1200 Hz Click if Impact Jerk > 40 g/s |
+| **Backward Toe — Optimal** | Via [θ]: $-20° \le \theta < -5°$; or via [dθ]: any θ in $-5°$ to $+9°$ not matching ANCHOR SETTLE or HEEL DROP | `OPTIMAL TOE` (Green) | None |
+| **Backward Toe — Spike** | $\theta < -20°$ | `HEEL SPIKE` (Yellow) | None |
+| **Backward — Anchor Settle** | BACKWARD via [dθ] + $-2° \le \theta \le +5°$ + $aZ > 0.85g$ | `ANCHOR SETTLE` (Green) — full-weight settled contact on backward step | None |
+| **Backward — Heel Drop** | BACKWARD via [dθ] + $+5° < \theta \le +9°$ | `HEEL DROP` (Yellow) — heel contacts early on backward step | None |
 | **Trailing Foot Push-off (optimal)**| $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
 | **Trailing Foot Push-off (weak)** | $120\text{–}199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
 | **Impact Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
