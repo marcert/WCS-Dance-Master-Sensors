@@ -163,9 +163,6 @@ These three badges appear below the Jerk bar and update after each step. Visible
 | `EARLY UNLOAD` ⚠️ | Weight shifting away before foot is settled | You are rushing to the next step. Complete the current weight investment before moving |
 
 ### Ankle Roll badge (ADV only)
-
-> **Note:** The Ankle Roll badge requires the `gyro_roll` channel. If the firmware has not been updated on both foot sensors, this badge will always show `STIFF ANKLE` regardless of technique.
-
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
 | `RIGID LEVER` ✅ | Full pronation → supination cycle detected: ankle absorbed the impact AND locked up for push-off | Optimal ankle mechanics — maintain |
