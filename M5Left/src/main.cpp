@@ -19,6 +19,7 @@ typedef struct struct_imu_data {
   float accel_z;   // Vertical acceleration (impact)
   float accel_y;   // Longitudinal acceleration (forward/backward)
   float gyro_roll; // Lateral roll rotation (gx — pronation/supination)
+  float accel_x;   // Lateral acceleration (for 3D impact magnitude)
 } struct_imu_data;
 
 // --- DATA STRUCTURE RECEIVE PACKET (HANDSHAKE ACK FROM MASTER) ---
@@ -328,7 +329,7 @@ void loop() {
   sensorData.accel_z   = az;
   sensorData.accel_y   = ay;
   sensorData.gyro_roll = gx;
-  sensorData.accel_y = ay;
+  sensorData.accel_x   = ax;
 
     esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
 

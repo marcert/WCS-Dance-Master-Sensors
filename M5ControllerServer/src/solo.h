@@ -446,7 +446,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     });
     canvasRO.observe(canvas);
 
-    const maxHistory = 200;
+    const maxHistory = 100;
     let pitchLeftHistory = new Array(maxHistory).fill(0);
     let pitchRightHistory = new Array(maxHistory).fill(0);
 
@@ -518,6 +518,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let lastDirectionL = "FORWARD";
         let lastDirectionR = "FORWARD";
 
+        // Push-off energy integrals — accumulated each frame while aY > 0.15g, reset when that foot lands.
+        // Captures total angular impulse during push-off (°), complementing instantaneous peak detection.
+        let pushIntegralL = 0;
+        let pushIntegralR = 0;
+
         // Last accel-snapshot angles — updated every poll cycle, used by tare instead of CF angle
         let lastAccelAngleL = 0;
         let lastAccelAngleR = 0;
@@ -533,10 +538,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let aZL     = data.lA   ?? 1.0;
                     let aYL     = data.lAy  ?? 0.0;
                     let gRollL  = data.lGr  ?? 0;
+                    let aXL     = data.lAx  ?? 0.0;
                     let gPitchR = data.rG   ?? 0;
                     let aZR     = data.rA   ?? 1.0;
                     let aYR     = data.rAy  ?? 0.0;
                     let gRollR  = data.rGr  ?? 0;
+                    let aXR     = data.rAx  ?? 0.0;
                     let leftOk  = data.lOk === true;
                     let rightOk = data.rOk === true;
 
@@ -555,8 +562,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     thetaBufferR.push(pitchRightAngleRaw - rightMountOffset);
 
                     // Complementary filter: gyro integration for short-term dynamics,
-                    // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction)
-                    const CF_ALPHA = 0.94; // τ ≈ 78 ms — validated value; T-1 snapshot already protects θ from impact corruption
+                    // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction).
+                    // α=0.94 (τ≈78ms) validated. Impact-gated variants tested and reverted:
+                    // α=0.985 compressed dθ; magnitude gate (0.3g/0.6g) fired during swing phase (1.5–2.5g),
+                    // both corrupting the T-8→T-1 dθ window. T-1 snapshot + angle reset at trigger already
+                    // protect θ from impact corruption — no additional gate needed.
+                    const CF_ALPHA = 0.94;
                     // Left sensor aY is physically inverted: negate aYL so heel-down gives positive angle
                     let accelAngleL = Math.atan2(-aYL, aZL) * (180 / Math.PI);
                     let accelAngleR = Math.atan2( aYR, aZR) * (180 / Math.PI);
@@ -571,6 +582,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     if (rightOk) {
                         pitchRightAngleRaw = CF_ALPHA * (pitchRightAngleRaw + gPitchR * dt) + (1 - CF_ALPHA) * accelAngleR;
                     }
+
+                    // Push-off energy integrals — accumulate floor-shear impulse each frame.
+                    // Gated by aY > 0.15g (floor contact); reset when foot lands (see step trigger block).
+                    if (aYL > 0.15) pushIntegralL += Math.max(0, -gPitchL) * dt;
+                    if (aYR > 0.15) pushIntegralR += Math.max(0, -gPitchR) * dt;
 
                     // 2. STEP & HEEL/TOE-STRIKE DETECTION
 
@@ -601,11 +617,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     detectedFoot = "R";
                                                                                 }
 
-                                                                                                                                                                // 2. Per-Foot 220 ms Lockout + Alternation Guard
+                                                                                                                                                                // 2. Per-Foot cadence-aware lockout + Alternation Guard
+                                                                                // Lockout = 55% of the last measured step period, clamped 180–320 ms.
+                                                                                // At rest (stepDurationMs=500): 275 ms. At 160 BPM (375 ms): 206 ms. At 200 BPM (300 ms): 180 ms.
                                                                                 // Feet must alternate (L→R→L or R→L→R). Same foot firing twice without
                                                                                 // the other foot in between = liftoff re-detection or vibration ghost.
+                                                                                let lockoutMs = Math.max(180, Math.min(320, stepDurationMs * 0.55));
                                                                                 if (detectedFoot === "L") {
-                                                                                    if (now - lastStepTimeLeft < 220) {
+                                                                                    if (now - lastStepTimeLeft < lockoutMs) {
                                                                                         detectedFoot = null; // hard lockout: too soon after last L event
                                                                                     } else {
                                                                                         lastStepTimeLeft = now;
@@ -614,7 +633,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                         }
                                                                                     }
                                                                                 } else if (detectedFoot === "R") {
-                                                                                    if (now - lastStepTimeRight < 220) {
+                                                                                    if (now - lastStepTimeRight < lockoutMs) {
                                                                                         detectedFoot = null; // hard lockout: too soon after last R event
                                                                                     } else {
                                                                                         lastStepTimeRight = now;
@@ -638,6 +657,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     lastDirectionL = activeDirection;
                                                                                     pitchLeftAngleRaw = leftMountOffset;
+                                                                                    pushIntegralL = 0; // L just landed — reset its push-off accumulator
                                                                                 }
                                                                                 else if (detectedFoot === "R") {
                                                                                     // RIGHT FOOT
@@ -652,6 +672,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     lastDirectionR = activeDirection;
                                                                                     pitchRightAngleRaw = rightMountOffset;
+                                                                                    pushIntegralR = 0; // R just landed — reset its push-off accumulator
                                                                                 }
 
                                         // 4. TERMINAL STANCE / POWER PUSH DETECTION (Windlass Push-off from Trailing Foot)
@@ -659,15 +680,26 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         // → needs more drive (≥200°/s). A foot that last stepped FORWARD is trailing in a
                                         // backward walk / anchor redistribution → subtler push sufficient (≥160°/s).
                                         // Detection gate: aY > 0.15g confirms floor shear (filters unweighted foot swings).
-                                        const PUSH_DETECT   = 120;  // minimum to register any push
-                                        const PUSH_OPT_FWD  = 200;  // optimal for forward propulsion
-                                        const PUSH_OPT_BWD  = 160;  // optimal for backward / anchor redistribution
+                                        // Two complementary signals: instantaneous peak (catches short explosive pushes) and
+                                        // energy integral accumulated since last landing (catches sustained lower-amplitude drives).
+                                        const PUSH_DETECT       = 120;  // minimum peak to register any push
+                                        const PUSH_OPT_FWD      = 200;  // optimal peak for forward propulsion
+                                        const PUSH_OPT_BWD      = 160;  // optimal peak for backward / anchor redistribution
+                                        const PUSH_INT_DETECT   = 12;   // minimum integral (°) ≈ 120°/s × 100ms
+                                        const PUSH_INT_OPT_FWD  = 20;   // optimal integral forward (°) ≈ 200°/s × 100ms
+                                        const PUSH_INT_OPT_BWD  = 16;   // optimal integral anchor (°) ≈ 160°/s × 100ms
                                         let pushPeakL = aYL > 0.15 ? -gPitchL : 0;
                                         let pushPeakR = aYR > 0.15 ? -gPitchR : 0;
-                                        let pushOptL  = (lastDirectionL === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
-                                        let pushOptR  = (lastDirectionR === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
-                                        let pushLevelL = (pushPeakL >= pushOptL)   ? 2 : (pushPeakL >= PUSH_DETECT) ? 1 : 0;
-                                        let pushLevelR = (pushPeakR >= pushOptR)   ? 2 : (pushPeakR >= PUSH_DETECT) ? 1 : 0;
+                                        let pushOptL    = (lastDirectionL === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
+                                        let pushOptR    = (lastDirectionR === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
+                                        let pushIntOptL = (lastDirectionL === "BACKWARD") ? PUSH_INT_OPT_FWD : PUSH_INT_OPT_BWD;
+                                        let pushIntOptR = (lastDirectionR === "BACKWARD") ? PUSH_INT_OPT_FWD : PUSH_INT_OPT_BWD;
+                                        let pushLevelPeakL = (pushPeakL >= pushOptL)        ? 2 : (pushPeakL >= PUSH_DETECT)     ? 1 : 0;
+                                        let pushLevelPeakR = (pushPeakR >= pushOptR)        ? 2 : (pushPeakR >= PUSH_DETECT)     ? 1 : 0;
+                                        let pushLevelIntL  = (pushIntegralL >= pushIntOptL) ? 2 : (pushIntegralL >= PUSH_INT_DETECT) ? 1 : 0;
+                                        let pushLevelIntR  = (pushIntegralR >= pushIntOptR) ? 2 : (pushIntegralR >= PUSH_INT_DETECT) ? 1 : 0;
+                                        let pushLevelL = Math.max(pushLevelPeakL, pushLevelIntL);
+                                        let pushLevelR = Math.max(pushLevelPeakR, pushLevelIntR);
                                         let pushLevel  = Math.max(pushLevelL, pushLevelR);
                                         if (pushLevel > 0) lastPowerPushTime = now;
                                         let powerBadge = document.getElementById('powerBadge');
@@ -691,9 +723,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                         // Wenn ein Schritt gelandet ist -> UI & Richtungsbewertung sofort aktualisieren
                     if (triggerImpact) {
-                                                // Determine step duration t_step since last step
+                                                // Determine step duration t_step since last step; update cadence estimate for lockout
                         let currentStepDuration = Math.max(200, Math.min(1500, now - lastStepTimestamp));
                         lastStepTimestamp = now;
+                        stepDurationMs = currentStepDuration;
 
                         let dirBadge = document.getElementById('dirBadge');
                         let badge = document.getElementById('strikeBadge');

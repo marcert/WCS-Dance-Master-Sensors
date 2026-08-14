@@ -21,6 +21,7 @@ typedef struct struct_imu_data {
   float accel_z;    // Z-acceleration (impact)
   float accel_y;    // Longitudinal acceleration (forward/backward)
   float gyro_roll;  // Lateral roll rotation (gx — pronation/supination)
+  float accel_x;    // Lateral acceleration (for 3D impact magnitude)
 } struct_imu_data;
 
 // --- DATA STRUCTURE FOR HAND/SCALE (ID 3) ---
@@ -45,8 +46,8 @@ const float GYRO_MIN  = 80.0f;   // Degrees/second (minimum roll-off)
 const float ACCEL_MAX = 1.5f;    // g-force (maximum impact)
 
 // Live measurement values
-float leftGyro = 0, leftAccel = 0, leftAccelY = 0, leftGyroRoll = 0;
-float rightGyro = 0, rightAccel = 0, rightAccelY = 0, rightGyroRoll = 0;
+float leftGyro = 0, leftAccel = 0, leftAccelY = 0, leftGyroRoll = 0, leftAccelX = 0;
+float rightGyro = 0, rightAccel = 0, rightAccelY = 0, rightGyroRoll = 0, rightAccelX = 0;
 float handWeight = 0, handAx = 0, handAy = 0, handAz = 0;
 
 // --- TIMEOUT TRACKING FOR CONNECTED SENSORS ---
@@ -76,23 +77,25 @@ void handleData() {
   bool handOk  = (millis() - lastSeenHand  < SENSOR_TIMEOUT_MS);
 
     // Send zero/defaults if sensor is offline to prevent frozen "phantom" values on dashboard
-    float sendLG  = leftOk  ? leftGyro      : 0.0f;
-    float sendLA  = leftOk  ? leftAccel     : 0.0f;
-    float sendLAy = leftOk  ? leftAccelY    : 0.0f;
-    float sendLGr = leftOk  ? leftGyroRoll  : 0.0f;
-    float sendRG  = rightOk ? rightGyro     : 0.0f;
-    float sendRA  = rightOk ? rightAccel    : 0.0f;
-    float sendRAy = rightOk ? rightAccelY   : 0.0f;
-    float sendRGr = rightOk ? rightGyroRoll : 0.0f;
-    float sendHW  = handOk  ? handWeight : 0.0f;
-    float sendAx  = handOk  ? handAx     : 0.0f;
-    float sendAy  = handOk  ? handAy     : 0.0f;
-    float sendAz  = handOk  ? handAz     : 1.0f;
+    float sendLG   = leftOk  ? leftGyro      : 0.0f;
+    float sendLA   = leftOk  ? leftAccel     : 0.0f;
+    float sendLAy  = leftOk  ? leftAccelY    : 0.0f;
+    float sendLGr  = leftOk  ? leftGyroRoll  : 0.0f;
+    float sendLAx  = leftOk  ? leftAccelX    : 0.0f;
+    float sendRG   = rightOk ? rightGyro     : 0.0f;
+    float sendRA   = rightOk ? rightAccel    : 0.0f;
+    float sendRAy  = rightOk ? rightAccelY   : 0.0f;
+    float sendRGr  = rightOk ? rightGyroRoll : 0.0f;
+    float sendRAx  = rightOk ? rightAccelX   : 0.0f;
+    float sendHW   = handOk  ? handWeight : 0.0f;
+    float sendAx   = handOk  ? handAx     : 0.0f;
+    float sendAy   = handOk  ? handAy     : 0.0f;
+    float sendAz   = handOk  ? handAz     : 1.0f;
 
-    char buf[380];
+    char buf[430];
     snprintf(buf, sizeof(buf),
-      "{\"lG\":%.1f,\"lA\":%.2f,\"lAy\":%.2f,\"lGr\":%.1f,\"rG\":%.1f,\"rA\":%.2f,\"rAy\":%.2f,\"rGr\":%.1f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
-      sendLG, sendLA, sendLAy, sendLGr, sendRG, sendRA, sendRAy, sendRGr, sendHW, sendAx, sendAy, sendAz,
+      "{\"lG\":%.1f,\"lA\":%.2f,\"lAy\":%.2f,\"lGr\":%.1f,\"lAx\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"rAy\":%.2f,\"rGr\":%.1f,\"rAx\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
+      sendLG, sendLA, sendLAy, sendLGr, sendLAx, sendRG, sendRA, sendRAy, sendRGr, sendRAx, sendHW, sendAx, sendAy, sendAz,
       leftOk ? "true" : "false", rightOk ? "true" : "false", handOk ? "true" : "false",
       (int)currentError, isJerkAlert ? "true" : "false"
     );
@@ -123,12 +126,14 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       leftAccel    = footData.accel_z;
       leftAccelY   = footData.accel_y;
       leftGyroRoll = footData.gyro_roll;
+      leftAccelX   = footData.accel_x;
       lastSeenLeft = millis();
     } else {
       rightGyro     = footData.gyro_x;
       rightAccel    = footData.accel_z;
       rightAccelY   = footData.accel_y;
       rightGyroRoll = footData.gyro_roll;
+      rightAccelX   = footData.accel_x;
       lastSeenRight = millis();
     }
 
