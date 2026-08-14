@@ -72,7 +72,7 @@ Two cards at the bottom. Step technique on the right, timing quality on the left
 
 ### Advanced view
 
-<img src="Attachments/Screen-adv.png" width="100%" alt="Advanced level — all cards: Step Badge, Double Stance, Roll-off Symmetry & Smoothness">
+<table><tr><td><img src="Attachments/Screen-adv.png" width="100%" alt="Advanced level — all cards: Step Badge, Double Stance, Roll-off Symmetry & Smoothness"></td></tr></table>
 
 All three metric cards plus the live graph. Use this level for detailed analysis sessions, not for learning new patterns.
 
