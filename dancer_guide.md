@@ -21,7 +21,7 @@
 
 ## 2. The Dashboard Layout
 
-> **📸 SCREENSHOT:** *Full landscape view — Advanced level, camera active. Show the graph in the bottom-left, three metric cards in the right 2×2 grid, and the empty top-left area showing the camera feed.*
+<img src="Attachments/Screen-adv.png" width="100%" alt="Dashboard landscape — Advanced level, all cards visible">
 
 In landscape mode the screen is divided into two columns:
 
@@ -60,19 +60,19 @@ Cards that are not relevant for your level are hidden, giving the camera maximum
 
 ### Beginner view
 
-> **📸 SCREENSHOT:** *Beginner level in landscape — only the Last Step card visible in the bottom-right corner. Top three-quarters of the screen shows the camera feed.*
+<img src="Attachments/Screen-beg.png" width="100%" alt="Beginner level — Last Step card only, camera area open">
 
 One card, bottom-right. Everything else is camera. Look at the direction badge and the strike badge after each step. Nothing else.
 
 ### Intermediate view
 
-> **📸 SCREENSHOT:** *Intermediate level in landscape — Last Step card (bottom-right) and Double Stance card (bottom-left). Upper half is camera.*
+<img src="Attachments/Screen-inter.png" width="100%" alt="Intermediate level — Last Step + Double Stance cards">
 
 Two cards at the bottom. Step technique on the right, timing quality on the left. The upper half of the screen remains camera.
 
 ### Advanced view
 
-> **📸 SCREENSHOT:** *Advanced level in landscape — all three metric cards visible. Roll-off Dynamics graph in the bottom-left.*
+<img src="Attachments/Screen-adv.png" width="100%" alt="Advanced level — all cards: Step Badge, Double Stance, Roll-off Symmetry & Smoothness">
 
 All three metric cards plus the live graph. Use this level for detailed analysis sessions, not for learning new patterns.
 
