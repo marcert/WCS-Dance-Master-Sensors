@@ -118,19 +118,22 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 ### C. Terminal Stance & Power Push Propulsion
 West Coast Swing propulsion requires an active toe push-off (*Windlass Mechanism*) from the trailing leg at the end of the stance phase. The optimal plantarflexion angular velocity depends on movement direction — forward propulsion demands more drive than the subtler redistribution at an anchor or backward walk.
 
-* **Detection Condition:**
-  $$-\omega_{\text{pitch}} \ge 120^\circ/\text{s} \quad \text{AND} \quad aY > 0.15g$$
-  The $aY > 0.15g$ gate confirms floor shear force (Newton's Third Law translational component) and suppresses unweighted swing-leg artefacts.
-* **Graded Feedback (holds 400 ms) — direction-dependent optimal threshold:**
+* **Detection — two complementary signals:**
+  * **Instantaneous peak:** $-\omega_{\text{pitch}} \ge 120^\circ/\text{s}$ AND $aY > 0.15g$ — catches short explosive pushes.
+  * **Energy integral:** $\Phi_{\text{push}} = \int -\omega_{\text{pitch}}\,dt$ while $aY > 0.15g$, accumulated since last landing, reset at each step trigger — catches sustained lower-amplitude drives that the peak detector alone would miss.
+  
+  The $aY > 0.15g$ gate confirms floor shear force (Newton's Third Law translational component) and suppresses unweighted swing-leg artefacts. The final push level is the maximum of both signals — either a high peak *or* a sufficient integral qualifies as POWER PUSH.
 
-| Trailing foot last step | Peak $-\omega_{\text{pitch}}$ | Badge | Meaning |
-| :---: | :---: | :---: | :--- |
-| BACKWARD (→ forward walk) | $\ge 200^\circ/\text{s}$ | `🚀 POWER PUSH` (Green) | Strong forward propulsion — target for walks and passes |
-| FORWARD (→ anchor / backward walk) | $\ge 160^\circ/\text{s}$ | `🚀 POWER PUSH` (Green) | Sufficient redistribution — lower drive expected at anchor |
-| Either direction | $120\text{–}159/199^\circ/\text{s}$ | `↗ PUSH` (Yellow) | Push-off detected but below directional optimum |
-| Either direction | $< 120^\circ/\text{s}$ | `— PUSH-OFF` (Grey) | No significant push-off detected |
+* **Graded Feedback (holds 400 ms) — direction-dependent optimal thresholds:**
 
-> **Note:** The $-\omega_{\text{pitch}}$ values are foot-segment angular velocities, not anatomical ankle-joint velocities. Literature values (~250°/s) are for barefoot/athletic gait; 200°/s and 160°/s are performance thresholds calibrated for dance shoes on studio floors.
+| Trailing foot last step | Peak $-\omega_{\text{pitch}}$ | Integral $\Phi_{\text{push}}$ | Badge | Meaning |
+| :---: | :---: | :---: | :---: | :--- |
+| BACKWARD (→ forward walk) | $\ge 200^\circ/\text{s}$ | $\ge 20°$ | `🚀 POWER PUSH` (Green) | Strong forward propulsion — target for walks and passes |
+| FORWARD (→ anchor / backward walk) | $\ge 160^\circ/\text{s}$ | $\ge 16°$ | `🚀 POWER PUSH` (Green) | Sufficient redistribution — lower drive expected at anchor |
+| Either direction | peak $120\text{–}199^\circ/\text{s}$ OR integral $\ge 12°$ | | `↗ PUSH` (Yellow) | Push-off detected but below directional optimum |
+| Either direction | peak $< 120^\circ/\text{s}$ AND integral $< 12°$ | | `— PUSH-OFF` (Grey) | No significant push-off detected |
+
+> **Note:** The $-\omega_{\text{pitch}}$ values are foot-segment angular velocities, not anatomical ankle-joint velocities. Literature values (~250°/s) are for barefoot/athletic gait; 200°/s and 160°/s are performance thresholds calibrated for dance shoes on studio floors. The integral thresholds (12°/16°/20°) approximate 100 ms of sustained push at the corresponding peak velocities.
 
 ---
 
@@ -236,7 +239,7 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Rigid Lever** | pronation $> 8°/\text{s}$ AND sign reversal in 200 ms | `RIGID LEVER` (Green) | None |
 | **Ankle Shock Absorption** | rollIntegral $> 4°$ (no reversal) | `ANKLE FLEX` (Green) | None |
 | **Ankle Stiffness** | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | None |
-| **Per-Foot Lockout Window**| $220\text{ ms}$ + Alternation Guard | Suppresses same-foot re-trigger | None |
+| **Per-Foot Lockout Window**| $180\text{–}320\text{ ms}$ (cadence-adaptive) + Alternation Guard | Suppresses same-foot re-trigger | None |
 
 ---
 
@@ -249,8 +252,9 @@ To prevent false secondary step triggers caused by micro-taps, foot unweighting,
    $$\text{signal}_{\text{foot}} = \bigl(|aZ| > 1.08\,g\bigr) \;\mathbf{OR}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{AND}\; \text{preJerk} > 8\bigr)$$
    The `preJerk` gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) on the gyro path suppresses liftoff rotation artefacts that would otherwise ghost as step triggers. When both feet signal in the same frame, the dominant foot is selected by peak ground reaction force: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
-2. **Per-Foot 220 ms Lockout & Alternation Guard:**
-   * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than $220\text{ ms}$.
+2. **Per-Foot Cadence-Adaptive Lockout & Alternation Guard:**
+   * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than the dynamic lockout window.
+   * **Cadence-Adaptive Window:** The lockout scales with the current step period: $t_{\text{lockout}} = \text{clamp}(t_{\text{step}} \times 0.55,\ 180\text{ ms},\ 320\text{ ms})$. At 120 BPM ($t_{\text{step}} = 500\text{ ms}$) this yields 275 ms; at 160 BPM (375 ms) → 206 ms; at 200 BPM (300 ms) → 180 ms (floor). This prevents both ghost triggers at slow tempos and missed steps at high tempos.
    * **Alternation Guard:** Steps must alternate (`Left -> Right -> Left`). If the same foot fires twice without the opposite foot making contact in between, it is discarded as a liftoff re-detection or vibration ghost.
 
 ---
