@@ -50,9 +50,9 @@ The **`👤 BEG`** button in the top-right corner of the header cycles through t
 
 | Button | Level | What is visible |
 | :--- | :--- | :--- |
-| `👤 BEG` (green) | **Beginner** | Step Badge card only — direction, angle, strike badge. Pelvis card shows Hip Activation if sensor is online. |
-| `🏃 INT` (orange) | **Intermediate** | Step Badge (full, with Jerk + Push-Off) + Double Stance. Pelvis card adds Slot Adherence, Hip-Foot Coupling, Vertical Bounce. |
-| `⭐ ADV` (purple) | **Advanced** | All cards — Step Badge, Double Stance, Roll-off Symmetry & Smoothness. Pelvis card adds Anchor Settle. |
+| `👤 BEG` (green) | **Beginner** | [Step Badge](#4-the-step-badge-card) card only — direction, angle, strike badge. [Pelvis card](#8-the-pelvis-card-optional-sensor) shows [Hip Activation](#hip-activation) if sensor is online. |
+| `🏃 INT` (orange) | **Intermediate** | [Step Badge](#4-the-step-badge-card) (full, with [Jerk](#impact-jerk-bar) + [Push-Off](#push-off-badge-int--adv)) + [Double Stance](#6-the-double-stance-card). [Pelvis card](#8-the-pelvis-card-optional-sensor) adds [Slot Adherence](#slot-adherence-int), [Hip-Foot Coupling](#hip-foot-coupling-int), [Vertical Bounce](#vertical-bounce-int). |
+| `⭐ ADV` (purple) | **Advanced** | All cards — [Step Badge](#4-the-step-badge-card), [Double Stance](#6-the-double-stance-card), [Roll-off Symmetry & Smoothness](#7-the-roll-off-symmetry--smoothness-card). [Pelvis card](#8-the-pelvis-card-optional-sensor) adds [Anchor Settle](#anchor-settle-adv). |
 
 Cards that are not relevant for your level are hidden, giving the camera maximum screen space.
 
@@ -62,19 +62,19 @@ Cards that are not relevant for your level are hidden, giving the camera maximum
 
 <table><tr><td><img src="Attachments/Screen-beg.png" width="100%" alt="Beginner level — Last Step card only, camera area open"></td></tr></table>
 
-One card, bottom-right. Everything else is camera. Look at the direction badge and the strike badge after each step. Nothing else.
+One card, bottom-right. Everything else is camera. Look at the [direction badge](#how-direction-is-determined) and the [strike badge](#4-the-step-badge-card) after each step. Nothing else.
 
 ### Intermediate view
 
 <table><tr><td><img src="Attachments/Screen-inter.png" width="100%" alt="Intermediate level — Last Step + Double Stance cards"></td></tr></table>
 
-Two cards at the bottom. Step technique on the right, timing quality on the left. The upper half of the screen remains camera.
+Two cards at the bottom. [Step technique](#4-the-step-badge-card) on the right, [timing quality (Double Stance)](#6-the-double-stance-card) on the left. The upper half of the screen remains camera.
 
 ### Advanced view
 
 <table><tr><td><img src="Attachments/Screen-adv.png" width="100%" alt="Advanced level — all cards: Step Badge, Double Stance, Roll-off Symmetry & Smoothness"></td></tr></table>
 
-All three metric cards plus the live graph. Use this level for detailed analysis sessions, not for learning new patterns.
+Three metric cards plus the live graph: [Step Badge](#4-the-step-badge-card), [Double Stance](#6-the-double-stance-card), and [Roll-off Symmetry & Smoothness](#7-the-roll-off-symmetry--smoothness-card). Use this level for detailed analysis sessions, not for learning new patterns.
 
 ---
 
