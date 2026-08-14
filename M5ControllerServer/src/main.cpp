@@ -48,13 +48,15 @@ const float ACCEL_MAX = 1.5f;    // g-force (maximum impact)
 // Live measurement values
 float leftGyro = 0, leftAccel = 0, leftAccelY = 0, leftGyroRoll = 0, leftAccelX = 0;
 float rightGyro = 0, rightAccel = 0, rightAccelY = 0, rightGyroRoll = 0, rightAccelX = 0;
+float pelvicGyro = 0, pelvicAccel = 0, pelvicAccelY = 0, pelvicYaw = 0, pelvicAccelX = 0;
 float handWeight = 0, handAx = 0, handAy = 0, handAz = 0;
 
 // --- TIMEOUT TRACKING FOR CONNECTED SENSORS ---
-uint32_t lastSeenLeft  = 0;
-uint32_t lastSeenRight = 0;
-uint32_t lastSeenHand  = 0;
-const uint32_t SENSOR_TIMEOUT_MS = 3500; // Erhöht auf 3.5s, um kurze Tarierpausen der Waage zu überbrücken
+uint32_t lastSeenLeft   = 0;
+uint32_t lastSeenRight  = 0;
+uint32_t lastSeenHand   = 0;
+uint32_t lastSeenPelvic = 0;
+const uint32_t SENSOR_TIMEOUT_MS = 3500;
 
 // Helper variables for Jerk calculation on M5
 float prevHandWeight = 0;
@@ -72,9 +74,10 @@ WebServer server(80);
 
 // Web server Endpoint: Send JSON data
 void handleData() {
-  bool leftOk  = (millis() - lastSeenLeft  < SENSOR_TIMEOUT_MS);
-  bool rightOk = (millis() - lastSeenRight < SENSOR_TIMEOUT_MS);
-  bool handOk  = (millis() - lastSeenHand  < SENSOR_TIMEOUT_MS);
+  bool leftOk   = (millis() - lastSeenLeft   < SENSOR_TIMEOUT_MS);
+  bool rightOk  = (millis() - lastSeenRight  < SENSOR_TIMEOUT_MS);
+  bool handOk   = (millis() - lastSeenHand   < SENSOR_TIMEOUT_MS);
+  bool pelvicOk = (millis() - lastSeenPelvic < SENSOR_TIMEOUT_MS);
 
     // Send zero/defaults if sensor is offline to prevent frozen "phantom" values on dashboard
     float sendLG   = leftOk  ? leftGyro      : 0.0f;
@@ -87,16 +90,23 @@ void handleData() {
     float sendRAy  = rightOk ? rightAccelY   : 0.0f;
     float sendRGr  = rightOk ? rightGyroRoll : 0.0f;
     float sendRAx  = rightOk ? rightAccelX   : 0.0f;
+    float sendPG   = pelvicOk ? pelvicGyro   : 0.0f;
+    float sendPA   = pelvicOk ? pelvicAccel  : 0.0f;
+    float sendPAy  = pelvicOk ? pelvicAccelY : 0.0f;
+    float sendPYaw = pelvicOk ? pelvicYaw    : 0.0f;
+    float sendPAx  = pelvicOk ? pelvicAccelX : 0.0f;
     float sendHW   = handOk  ? handWeight : 0.0f;
     float sendAx   = handOk  ? handAx     : 0.0f;
     float sendAy   = handOk  ? handAy     : 0.0f;
     float sendAz   = handOk  ? handAz     : 1.0f;
 
-    char buf[430];
+    char buf[550];
     snprintf(buf, sizeof(buf),
-      "{\"lG\":%.1f,\"lA\":%.2f,\"lAy\":%.2f,\"lGr\":%.1f,\"lAx\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"rAy\":%.2f,\"rGr\":%.1f,\"rAx\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
-      sendLG, sendLA, sendLAy, sendLGr, sendLAx, sendRG, sendRA, sendRAy, sendRGr, sendRAx, sendHW, sendAx, sendAy, sendAz,
-      leftOk ? "true" : "false", rightOk ? "true" : "false", handOk ? "true" : "false",
+      "{\"lG\":%.1f,\"lA\":%.2f,\"lAy\":%.2f,\"lGr\":%.1f,\"lAx\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"rAy\":%.2f,\"rGr\":%.1f,\"rAx\":%.2f,\"pG\":%.1f,\"pA\":%.2f,\"pAy\":%.2f,\"pYaw\":%.1f,\"pAx\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"pOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
+      sendLG, sendLA, sendLAy, sendLGr, sendLAx, sendRG, sendRA, sendRAy, sendRGr, sendRAx,
+      sendPG, sendPA, sendPAy, sendPYaw, sendPAx, sendHW, sendAx, sendAy, sendAz,
+      leftOk ? "true" : "false", rightOk ? "true" : "false",
+      pelvicOk ? "true" : "false", handOk ? "true" : "false",
       (int)currentError, isJerkAlert ? "true" : "false"
     );
     server.send(200, "application/json", buf);
@@ -128,6 +138,13 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       leftGyroRoll = footData.gyro_roll;
       leftAccelX   = footData.accel_x;
       lastSeenLeft = millis();
+    } else if (footData.foot_id == 4) {
+      pelvicGyro   = footData.gyro_x;
+      pelvicAccel  = footData.accel_z;
+      pelvicAccelY = footData.accel_y;
+      pelvicYaw    = footData.gyro_roll; // gz — transverse rotation
+      pelvicAccelX = footData.accel_x;
+      lastSeenPelvic = millis();
     } else {
       rightGyro     = footData.gyro_x;
       rightAccel    = footData.accel_z;
@@ -311,16 +328,17 @@ void loop() {
   uint16_t rightFg = (currentError == ERR_RIGHT || currentError == ERR_BOTH) ? (uint16_t)WHITE : (uint16_t)RED;
 
   uint32_t now = millis();
-  bool leftOnline  = (now - lastSeenLeft  < SENSOR_TIMEOUT_MS);
-  bool rightOnline = (now - lastSeenRight < SENSOR_TIMEOUT_MS);
-  bool handOnline  = (now - lastSeenHand  < SENSOR_TIMEOUT_MS);
+  bool leftOnline   = (now - lastSeenLeft   < SENSOR_TIMEOUT_MS);
+  bool rightOnline  = (now - lastSeenRight  < SENSOR_TIMEOUT_MS);
+  bool handOnline   = (now - lastSeenHand   < SENSOR_TIMEOUT_MS);
+  bool pelvicOnline = (now - lastSeenPelvic < SENSOR_TIMEOUT_MS);
 
   M5.Display.setTextSize(2);
 
   // Sentinel values (INT16_MIN / -999 / true) guarantee a render on the very first loop iteration.
-  static int16_t  dLG = INT16_MIN, dRG = INT16_MIN;
+  static int16_t  dLG = INT16_MIN, dRG = INT16_MIN, dPG = INT16_MIN;
   static float    dLA = -999.0f,   dRA = -999.0f,  dHW = -99999.0f;
-  static bool     dLOn = true,     dROn = true,     dHOn = true;
+  static bool     dLOn = true,     dROn = true,     dHOn = true,  dPOn = true;
   static uint16_t dLBg = 0xFFFF,   dRBg = 0xFFFF;
   static uint32_t lastBatUpdate = 0;
 
@@ -351,11 +369,20 @@ void loop() {
     else            M5.Display.printf("H: -- OFFLINE -- ");
   }
 
+  // --- DISPLAY PELVIS (only on change) ---
+  if ((int16_t)roundf(pelvicGyro) != dPG || pelvicOnline != dPOn) {
+    dPG = (int16_t)roundf(pelvicGyro); dPOn = pelvicOnline;
+    M5.Display.setCursor(5, 80);
+    M5.Display.setTextColor(PURPLE, BLACK);
+    if (pelvicOnline) M5.Display.printf("P: G:%4.0f Y:%4.0f  ", pelvicGyro, pelvicYaw);
+    else              M5.Display.printf("P: -- OFFLINE -- ");
+  }
+
   // --- BATTERY (every 10 s — level changes on the order of minutes) ---
   if (millis() - lastBatUpdate > 10000) {
     lastBatUpdate = millis();
     int batLevel = M5.Power.getBatteryLevel();
-    M5.Display.setCursor(5, 80);
+    M5.Display.setCursor(5, 105);
     M5.Display.setTextColor(YELLOW, BLACK);
     M5.Display.printf("BAT: %3d%%        ", batLevel);
   }

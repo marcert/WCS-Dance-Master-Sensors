@@ -27,16 +27,16 @@ In landscape mode the screen is divided into two columns:
 
 ```
 ┌─────────────────────────┬──────────────────┬──────────────────┐
-│                         │                  │  Double Stance   │
-│   📷  CAMERA            │  (empty)         │  Overlap         │
-│   visible here          │                  │                  │
+│                         │  Pelvis –        │  Double Stance   │
+│   📷  CAMERA            │  Hip Mechanics   │  Overlap         │
+│   visible here          │  (if sensor on)  │                  │
 ├─────────────────────────├──────────────────┼──────────────────┤
 │   Roll-off Dynamics     │  Roll-off        │  Last Step       │
 │   Graph                 │  Symmetry (ASI)  │  (Step Badge)    │
 └─────────────────────────┴──────────────────┴──────────────────┘
 ```
 
-- **Top-left area**: intentionally empty — the camera feed shows through here unobstructed.
+- **Top-left area**: shows the **Pelvis — Hip Mechanics** card when the pelvis sensor is clipped on and powered; otherwise empty so the camera shows through unobstructed.
 - **Bottom-left**: live roll-off dynamics graph (pitch angular velocity of both feet over time).
 - **Top-right**: Double Stance Overlap card.
 - **Bottom-right**: Last Step card (your primary real-time feedback).
@@ -50,9 +50,9 @@ The **`👤 BEG`** button in the top-right corner of the header cycles through t
 
 | Button | Level | What is visible |
 | :--- | :--- | :--- |
-| `👤 BEG` (green) | **Beginner** | Step Badge card only — direction, angle, strike badge |
-| `🏃 INT` (orange) | **Intermediate** | Step Badge (full, with Jerk + Push-Off) + Double Stance |
-| `⭐ ADV` (purple) | **Advanced** | All cards — Step Badge, Double Stance, Roll-off Symmetry & Smoothness |
+| `👤 BEG` (green) | **Beginner** | Step Badge card only — direction, angle, strike badge. Pelvis card shows Hip Activation if sensor is online. |
+| `🏃 INT` (orange) | **Intermediate** | Step Badge (full, with Jerk + Push-Off) + Double Stance. Pelvis card adds Slot Adherence, Hip-Foot Coupling, Vertical Bounce. |
+| `⭐ ADV` (purple) | **Advanced** | All cards — Step Badge, Double Stance, Roll-off Symmetry & Smoothness. Pelvis card adds Anchor Settle. |
 
 Cards that are not relevant for your level are hidden, giving the camera maximum screen space.
 
@@ -204,7 +204,100 @@ Visible at **Advanced** level only.
 
 ---
 
-## 8. Training by Skill Level
+## 8. The Pelvis Card (Optional Sensor)
+
+The pelvis card appears in the **top-left slot** of the dashboard whenever the pelvis sensor is powered on. When the sensor is offline, that slot remains empty and the camera shows through.
+
+### Mounting the sensor
+
+Clip the sensor to the **posterior waistband at the small of your back** (L5 / sacrum level), display facing away from your body. Centred on the spine is ideal, but left or right of centre by a few centimetres makes no practical difference. It should sit flat and snug — not dangling.
+
+### Badge overview
+
+| Badge row | Level | What is measured |
+| :--- | :--- | :--- |
+| **Hip Activation** | BEG+ | How much the pelvis is rotating during movement (yaw) |
+| **Slot Adherence** | INT+ | Lateral drift of the pelvis away from the slot line |
+| **Hip-Foot Coupling** | INT+ | Whether hips initiate each step or follow the feet |
+| **Vertical Bounce** | INT+ | How much vertical movement the pelvis generates |
+| **Anchor Settle** | ADV | Quality of the pelvis settle in the 500 ms after each anchor step |
+
+---
+
+### Hip Activation
+
+Measures peak transverse hip rotation (yaw rate) over a rolling 500 ms window.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `🌀 ACTIVE` ✅ | Strong hip rotation contributing to the movement | Maintain |
+| `MODERATE` ⚠️ | Some rotation but hip contribution is limited | Wind the hip up before each step — rotation should start in the pelvis, not the ankle |
+| `STIFF HIPS` ❌ | Pelvis barely rotating — movement driven by legs only | Drill isolated hip rotations first, then add feet. "Lead with the hip, not the heel." |
+
+> In WCS, hip rotation should accompany or precede each step. `STIFF HIPS` is one of the most common beginner patterns and is invisible to foot sensors alone.
+
+---
+
+### Slot Adherence (INT+)
+
+Measures lateral acceleration variance of the pelvis over 1 second. WCS movement is linear — the pelvis should travel forward and backward along the slot, not drift sideways.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `IN SLOT` ✅ | Pelvis tracking cleanly along the slot line | Good |
+| `SLIGHT DRIFT` ⚠️ | Minor lateral movement — common on turns or triple steps | Focus on keeping the hips facing parallel to the slot on straight walks |
+| `OUT OF SLOT` ❌ | Significant lateral deviation | Check for hip hike, side-stepping, or off-slot footwork |
+
+---
+
+### Hip-Foot Coupling (INT+)
+
+Compares when peak hip rotation occurred relative to the moment of foot contact. In good technique the hips initiate the movement before the foot lands.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `HIP LEADS` ✅ | Peak hip rotation occurred more than 100 ms before foot contact | Good initiation — hips are driving the step |
+| `IN SYNC` ⚠️ | Hip peak and foot contact within 40–100 ms of each other | Acceptable — try amplifying the pre-step hip "launch" |
+| `HIP LAGS` ❌ | Hips rotating at or after foot contact | Legs are moving independently of the core. Slow down and practise initiating each walk from the hip, letting the foot follow |
+
+---
+
+### Vertical Bounce (INT+)
+
+Measures the variance of vertical pelvis acceleration (gravity removed) over 1 second. WCS movement is horizontal — the pelvis COM should track at a stable height.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `GROUNDED` ✅ | Minimal vertical movement | Good |
+| `SLIGHT BOUNCE` ⚠️ | Some vertical oscillation | Maintain a light bend in the knees throughout; avoid extending to a straight leg during travel |
+| `BOUNCY` ❌ | Significant up-down movement | Stay in your knees. Think: "stay low, stay connected." |
+
+---
+
+### Anchor Settle (ADV)
+
+After every backward (anchor) step, the system opens a 500 ms measurement window and evaluates three signals from the pelvis:
+
+1. **Deceleration** — did the pelvis slow down in the anterior-posterior direction? A quality anchor redirects momentum rather than collapsing.
+2. **Yaw damping** — did hip rotation slow after the step? A settled anchor shows the pelvis "parking" over the feet.
+3. **Stability** — how still was the pelvis in the second half of the window? High stability = you held the position without wobbling.
+
+These three components are combined into a 0–100 score displayed in the badge.
+
+| Badge | Score | What it means | How to improve |
+| :--- | :--- | :--- | :--- |
+| `ANCHORED (n)` ✅ | ≥ 60 | Strong deceleration + yaw damping + stable hold | Good — work on consistency across every anchor step |
+| `SETTLING (n)` ⚠️ | 30–59 | Partial settle — one or two components weak | Identify the weak component using the tips below |
+| `UNSTABLE (n)` ❌ | < 30 | Pelvis still moving or wobbling after the anchor | Focus on "sticking" the anchor — reach the end of the slot and hold |
+
+**Diagnosing a low score:**
+- **Low score despite clean foot technique** → the issue is pelvis, not foot angle. The pelvis is still rotating or drifting after the foot plants. Work on the settle itself, not the step.
+- **`HECTIC` Double Stance + low Anchor Settle** → you are leaving the anchor before the pelvis has stabilised. Let the pelvis settle before initiating the next move.
+- **`🌀 ACTIVE` hip + `UNSTABLE` anchor** → hips rotate well during travel but do not dampen at the anchor. Practise a deliberate "soft stop": active hips during the walk, clear rotation-off at the anchor.
+
+---
+
+## 9. Training by Skill Level
 
 ### Beginner — use `👤 BEG`
 
@@ -214,6 +307,8 @@ Visible at **Advanced** level only.
 2. Walk backward. Does the badge say `OPTIMAL TOE`? If not — send your toe out first, like a probe, before the body weight follows. If you see ↔️ FLAT + `FLAT-FOOT!` on backward steps, your heel is contacting the floor before the toe.
 3. If you hear the **1200 Hz beep**, stop and slow down. That is a hard `FLAT-FOOT!` impact.
 4. Practise at a slow tempo until `OPTIMAL HEEL` and `OPTIMAL TOE` appear consistently. Only then increase speed.
+
+**With pelvis sensor:** Watch **Hip Activation** only. If `STIFF HIPS` appears consistently, your legs are moving without your core engaging. Slow right down and feel the hip rotation before each step.
 
 > **How to read the screen:** After each step, glance at the bottom-right card. The large coloured badge is the verdict. Green = correct. Red/yellow = adjust.
 
@@ -226,6 +321,8 @@ Visible at **Advanced** level only.
 3. Watch the **POWER PUSH badge**: is your trailing leg passive? Drive through the ball of the foot at the end of each walk.
 4. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triple steps. `HECTIC` during the anchor means you are rushing.
 
+**With pelvis sensor:** Add **Slot Adherence**, **Hip-Foot Coupling**, and **Vertical Bounce** to your checklist. The single most valuable metric at this level is Hip-Foot Coupling — consistent `HIP LAGS` means you are walking with your feet, not your body.
+
 ### Advanced — use `⭐ ADV`
 
 **Full biomechanical feedback loop.**
@@ -236,9 +333,11 @@ Visible at **Advanced** level only.
 4. Film with `📷 CAM` and replay during pauses. Watch for steps where ↔️ FLAT fires on what you believe is a clear forward or backward step — your body position at that moment usually reveals insufficient ankle articulation during the swing phase.
 5. Use the **Roll-off Dynamics graph** (bottom-left) to compare peak gyro values between your left and right foot over multiple steps — uneven peaks indicate asymmetric push-off.
 
+**With pelvis sensor:** Focus on **Anchor Settle** as your anchor quality KPI. Run a full 8-count basic and check the score after each anchor step. A score below 60 consistently means either the pelvis is still rotating at the anchor (fix: `HIP LEADS` on the way in, deliberate damping on arrival) or it is not decelerating cleanly (fix: actively resist at the end of the slot rather than letting momentum stop you).
+
 ---
 
-## 9. Common Problems and How to Fix Them
+## 10. Common Problems and How to Fix Them
 
 | What you see | Root cause | Fix |
 | :--- | :--- | :--- |
@@ -252,3 +351,8 @@ Visible at **Advanced** level only.
 | `INSTANT LOAD` on anchors | Dropping weight abruptly at anchor | Slow the settle. "Melt into the anchor" rather than "land on it". |
 | `↗ PUSH` but never `🚀 POWER PUSH` on walks | Forward drive below 200°/s push-off threshold | Increase hip extension range and actively drive the ball of the trailing foot into the floor. Think longer stride, not harder stomp. |
 | `↗ PUSH` but never `🚀 POWER PUSH` on anchors | Anchor redistribution below 160°/s threshold | The settle itself is passive — actively push the floor away as you redistribute weight at the end of the anchor. |
+| `STIFF HIPS` constantly | Legs moving without core engagement | Start each step with a deliberate hip rotation impulse before the foot moves. Drill in place: rotate hip, then step. |
+| `OUT OF SLOT` on walks | Hip hike or lateral stepping | Keep hips facing parallel to the slot; check that footwork stays on the line and avoid shifting weight sideways. |
+| `HIP LAGS` on every step | Legs and core disconnected — feet moving independently | Slow to a very slow tempo. Stand still, initiate a hip rotation, then let the foot follow. The hip must move first. |
+| `BOUNCY` continuously | Knee extension during travel — "posting" on a straight leg | Stay in a slight knee bend throughout the walk. The height of your head should not change between steps. |
+| `UNSTABLE` anchor always | Pelvis still rotating or drifting after the anchor step | Practise the anchor in isolation: step back, plant both feet, and consciously stop all hip movement. Hold for two counts before moving again. |
