@@ -213,9 +213,6 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | rollIntegral $> 4°$ | `ANKLE FLEX` (Green) | Foot roll impulse detected — proxy for shock-absorbing pronation |
 | rollIntegral $1°\text{–}4°$ | `MODERATE ROLL` (Yellow) | Some foot mobility, could be increased |
 | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — impact likely transmitted up the kinetic chain |
-
-> **Firmware requirement:** `gRoll` (`gx` axis) is transmitted as `lGr`/`rGr` in the JSON payload. Both foot sensors and the master must be flashed with the updated firmware for these badges to show non-zero values.
-
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
 | **Forward Heel — Optimal** | $10^\circ \le \theta \le 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
