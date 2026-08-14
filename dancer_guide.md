@@ -21,7 +21,7 @@
 
 ## 2. The Dashboard Layout
 
-<img src="Attachments/Screen-adv.png" width="100%" alt="Dashboard landscape — Advanced level, all cards visible">
+<table><tr><td><img src="Attachments/Screen-adv.png" width="100%" alt="Dashboard landscape — Advanced level, all cards visible"></td></tr></table>
 
 In landscape mode the screen is divided into two columns:
 
@@ -60,13 +60,13 @@ Cards that are not relevant for your level are hidden, giving the camera maximum
 
 ### Beginner view
 
-<img src="Attachments/Screen-beg.png" width="100%" alt="Beginner level — Last Step card only, camera area open">
+<table><tr><td><img src="Attachments/Screen-beg.png" width="100%" alt="Beginner level — Last Step card only, camera area open"></td></tr></table>
 
 One card, bottom-right. Everything else is camera. Look at the direction badge and the strike badge after each step. Nothing else.
 
 ### Intermediate view
 
-<img src="Attachments/Screen-inter.png" width="100%" alt="Intermediate level — Last Step + Double Stance cards">
+<table><tr><td><img src="Attachments/Screen-inter.png" width="100%" alt="Intermediate level — Last Step + Double Stance cards"></td></tr></table>
 
 Two cards at the bottom. Step technique on the right, timing quality on the left. The upper half of the screen remains camera.
 
