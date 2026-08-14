@@ -255,6 +255,20 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         main.level-intermediate #stepCard         { grid-column: 2; grid-row: 2; }
 
         /* ADVANCED: everything visible — no rules needed */
+
+        /* --- PELVIS CARD --- */
+        /* Hidden by default; JS sets display when sensor comes online */
+        #pelvicCard { display: none; }
+
+        /* Level gating for pelvis sub-sections */
+        main.level-beginner     .pelvis-int,
+        main.level-beginner     .pelvis-adv { display: none !important; }
+        main.level-intermediate .pelvis-adv { display: none !important; }
+
+        /* Lock pelvis card to top-left slot in landscape grid */
+        @media (orientation: landscape) {
+            #pelvicCard { grid-column: 1; grid-row: 1; }
+        }
     </style>
 </head>
 <body>
@@ -285,8 +299,33 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     <!-- METRICS GRID -->
     <div class="dashboard-grid">
 
-                                <!-- TOP-LEFT: empty — keeps camera HUD visible -->
-                <div class="hud-spacer"></div>
+                                <!-- TOP-LEFT: empty spacer keeps camera HUD visible when pelvis is offline -->
+                <div class="hud-spacer" id="pelvicSpacer"></div>
+
+                <!-- TOP-LEFT: PELVIS HIP MECHANICS (replaces spacer while sensor is online) -->
+                <div id="pelvicCard" class="card">
+                    <div class="card-title">Pelvis — Hip Mechanics</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                        <span style="font-size:0.78rem;color:#8b949e;">Hip Activation</span>
+                        <span id="hipActBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP</span>
+                    </div>
+                    <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                        <span style="font-size:0.78rem;color:#8b949e;">Slot Adherence</span>
+                        <span id="slotBadge" class="badge" style="background:#1e272e;color:#8b949e;">— SLOT</span>
+                    </div>
+                    <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                        <span style="font-size:0.78rem;color:#8b949e;">Hip-Foot Coupling</span>
+                        <span id="hipFootBadge" class="badge" style="background:#1e272e;color:#8b949e;">— COUPLING</span>
+                    </div>
+                    <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                        <span style="font-size:0.78rem;color:#8b949e;">Vertical Bounce</span>
+                        <span id="bounceBadge" class="badge" style="background:#1e272e;color:#8b949e;">— BOUNCE</span>
+                    </div>
+                    <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.78rem;color:#8b949e;">Anchor Settle</span>
+                        <span id="anchorSettleBadge" class="badge" style="background:#1e272e;color:#8b949e;">— ANCHOR</span>
+                    </div>
+                </div>
 
                                 <!-- TOP-RIGHT: BILATERAL OVERLAP (DOUBLE STANCE) -->
                 <div class="card" id="doubleStanceCard">
@@ -348,6 +387,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     <div id="debugRow" style="display:none; margin-top:5px; border-top:1px solid #2a2a3a; padding-top:4px; font-family:monospace; font-size:11px; color:#666;">
                         <span>dθ&nbsp;<strong id="dbgDirVal" style="color:#aaa;">—</strong>&nbsp;<span id="dbgDirSrc" style="color:#666;">[θ]</span></span>
                         <span style="margin-left:10px;">L&nbsp;<strong id="dbgAYL" style="color:#4fc3f7;">0.00</strong>&nbsp;R&nbsp;<strong id="dbgAYR" style="color:#ef5350;">0.00</strong></span>
+                        <span style="margin-left:10px;">P&nbsp;pitch&nbsp;<strong id="dbgPPitch" style="color:#ce93d8;">0.0</strong>&nbsp;yaw&nbsp;<strong id="dbgPYaw" style="color:#ce93d8;">0.0</strong></span>
                     </div>
                 </div>
 
@@ -527,6 +567,17 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let lastAccelAngleL = 0;
         let lastAccelAngleR = 0;
 
+        // --- PELVIS METRICS STATE ---
+        let gYawAbsHistory = new Array(25).fill(0);   // rolling |gYawP| — 25 frames = 500ms, for hip activation
+        let aXPHistory     = new Array(50).fill(0);   // rolling aXP — 50 frames = 1s, for slot adherence
+        let aZPDynHistory  = new Array(50).fill(0);   // rolling (aZP−1) — 1s, for vertical bounce
+        let gYawTimedBuf   = [];                      // {t, v} pairs — last 600ms, for hip-foot coupling
+        let hipActSmoothed = 0;                       // IIR-smoothed hip activation amplitude
+
+        let anchorSettleActive    = false;            // true while collecting post-anchor pelvis window
+        let anchorSettleStartTime = 0;
+        let anchorSettleSamples   = { aYP: [], gYawP: [] };
+
         function fetchStream() {
             fetch('/data')
                 .then(res => res.json())
@@ -544,8 +595,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let aYR     = data.rAy  ?? 0.0;
                     let gRollR  = data.rGr  ?? 0;
                     let aXR     = data.rAx  ?? 0.0;
-                    let leftOk  = data.lOk === true;
-                    let rightOk = data.rOk === true;
+                    let leftOk   = data.lOk === true;
+                    let rightOk  = data.rOk === true;
+                    let pelvicOk = data.pOk === true;
+                    let gPitchP  = data.pG   ?? 0;
+                    let aZP      = data.pA   ?? 1.0;
+                    let aYP      = data.pAy  ?? 0.0;
+                    let gYawP    = data.pYaw ?? 0;
+                    let aXP      = data.pAx  ?? 0.0;
 
                                         // 1. Live Pitch Curve Buffer — low-pass filtered (α=0.25) to suppress vibration noise
                     const LP_ALPHA = 0.25;
@@ -587,6 +644,92 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     // Gated by aY > 0.15g (floor contact); reset when foot lands (see step trigger block).
                     if (aYL > 0.15) pushIntegralL += Math.max(0, -gPitchL) * dt;
                     if (aYR > 0.15) pushIntegralR += Math.max(0, -gPitchR) * dt;
+
+                    // --- PELVIS METRICS (per frame) ---
+                    if (pelvicOk) {
+                        document.getElementById('pelvicCard').style.display = 'block';
+                        document.getElementById('pelvicSpacer').style.display = 'none';
+
+                        // Hip Activation — rolling max of |gYawP| over 500ms, IIR-smoothed
+                        gYawAbsHistory.shift(); gYawAbsHistory.push(Math.abs(gYawP));
+                        let gYawPeak = Math.max(...gYawAbsHistory);
+                        hipActSmoothed = hipActSmoothed * 0.9 + gYawPeak * 0.1;
+                        let hipBadge = document.getElementById('hipActBadge');
+                        if (hipBadge) {
+                            if      (hipActSmoothed >= 60)  { hipBadge.className = 'badge badge-green';  hipBadge.style.cssText = ''; hipBadge.innerText = '🌀 ACTIVE'; }
+                            else if (hipActSmoothed >= 25)  { hipBadge.className = 'badge badge-yellow'; hipBadge.style.cssText = ''; hipBadge.innerText = 'MODERATE'; }
+                            else                            { hipBadge.className = 'badge badge-red';    hipBadge.style.cssText = ''; hipBadge.innerText = 'STIFF HIPS'; }
+                        }
+
+                        // Slot Adherence — variance of aXP over 1s
+                        aXPHistory.shift(); aXPHistory.push(aXP);
+                        let aXMean = aXPHistory.reduce((a,b)=>a+b,0) / aXPHistory.length;
+                        let aXVar  = aXPHistory.reduce((a,b)=>a+(b-aXMean)**2,0) / aXPHistory.length;
+                        let slotBadge = document.getElementById('slotBadge');
+                        if (slotBadge) {
+                            if      (aXVar < 0.004)  { slotBadge.className = 'badge badge-green';  slotBadge.style.cssText = ''; slotBadge.innerText = 'IN SLOT'; }
+                            else if (aXVar < 0.015)  { slotBadge.className = 'badge badge-yellow'; slotBadge.style.cssText = ''; slotBadge.innerText = 'SLIGHT DRIFT'; }
+                            else                     { slotBadge.className = 'badge badge-red';    slotBadge.style.cssText = ''; slotBadge.innerText = 'OUT OF SLOT'; }
+                        }
+
+                        // Vertical Bounce — variance of dynamic aZP (gravity removed) over 1s
+                        aZPDynHistory.shift(); aZPDynHistory.push(aZP - 1.0);
+                        let aZMean = aZPDynHistory.reduce((a,b)=>a+b,0) / aZPDynHistory.length;
+                        let aZVar  = aZPDynHistory.reduce((a,b)=>a+(b-aZMean)**2,0) / aZPDynHistory.length;
+                        let bounceBadge = document.getElementById('bounceBadge');
+                        if (bounceBadge) {
+                            if      (aZVar < 0.006)  { bounceBadge.className = 'badge badge-green';  bounceBadge.style.cssText = ''; bounceBadge.innerText = 'GROUNDED'; }
+                            else if (aZVar < 0.020)  { bounceBadge.className = 'badge badge-yellow'; bounceBadge.style.cssText = ''; bounceBadge.innerText = 'SLIGHT BOUNCE'; }
+                            else                     { bounceBadge.className = 'badge badge-red';    bounceBadge.style.cssText = ''; bounceBadge.innerText = 'BOUNCY'; }
+                        }
+
+                        // Hip-Foot Coupling timed ring — {t, v} pairs, 600ms window
+                        gYawTimedBuf.push({ t: now, v: Math.abs(gYawP) });
+                        while (gYawTimedBuf.length > 0 && now - gYawTimedBuf[0].t > 600) gYawTimedBuf.shift();
+
+                        // Anchor Settle window — collect samples, evaluate after 500ms
+                        if (anchorSettleActive) {
+                            anchorSettleSamples.aYP.push(aYP);
+                            anchorSettleSamples.gYawP.push(Math.abs(gYawP));
+                            if (now - anchorSettleStartTime >= 500) {
+                                anchorSettleActive = false;
+                                let n = anchorSettleSamples.aYP.length;
+                                if (n >= 8) {
+                                    let half = Math.floor(n / 2);
+                                    let earlyAY  = anchorSettleSamples.aYP.slice(0, half);
+                                    let lateAY   = anchorSettleSamples.aYP.slice(half);
+                                    let earlyYaw = anchorSettleSamples.gYawP.slice(0, half);
+                                    let lateYaw  = anchorSettleSamples.gYawP.slice(half);
+
+                                    // Deceleration: high AP movement early → low late
+                                    let earlyAYMag = earlyAY.reduce((a,b)=>a+Math.abs(b),0) / earlyAY.length;
+                                    let lateAYMag  = lateAY.reduce((a,b)=>a+Math.abs(b),0)  / lateAY.length;
+                                    let decelScore = Math.min(1, Math.max(0, (earlyAYMag - lateAYMag + 0.05) / 0.25));
+
+                                    // Yaw damping: hip rotation slows after anchor step
+                                    let earlyYawM  = earlyYaw.reduce((a,b)=>a+b,0) / earlyYaw.length;
+                                    let lateYawM   = lateYaw.reduce((a,b)=>a+b,0)  / lateYaw.length;
+                                    let yawDampScore = Math.min(1, Math.max(0, (earlyYawM - lateYawM) / 25));
+
+                                    // Stability: low variance in late phase = pelvis held position
+                                    let lateYawVar  = lateYaw.reduce((a,b)=>a+(b-lateYawM)**2,0) / lateYaw.length;
+                                    let stabilScore = Math.max(0, 1 - lateYawVar / 400);
+
+                                    let anchorScore = Math.round((decelScore * 0.35 + yawDampScore * 0.35 + stabilScore * 0.30) * 100);
+                                    let ab = document.getElementById('anchorSettleBadge');
+                                    if (ab) {
+                                        if      (anchorScore >= 60) { ab.className = 'badge badge-green';  ab.style.cssText = ''; ab.innerText = 'ANCHORED (' + anchorScore + ')'; }
+                                        else if (anchorScore >= 30) { ab.className = 'badge badge-yellow'; ab.style.cssText = ''; ab.innerText = 'SETTLING (' + anchorScore + ')'; }
+                                        else                        { ab.className = 'badge badge-red';    ab.style.cssText = ''; ab.innerText = 'UNSTABLE (' + anchorScore + ')'; }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        document.getElementById('pelvicCard').style.display = 'none';
+                        document.getElementById('pelvicSpacer').style.display = '';
+                        anchorSettleActive = false;
+                    }
 
                     // 2. STEP & HEEL/TOE-STRIKE DETECTION
 
@@ -815,6 +958,28 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             brushPending = true; brushPendingTime = now; brushPendingFoot = activeFoot;
                         }
 
+                        // Hip-Foot Coupling — compare when pelvis gYaw peaked vs foot impact time
+                        // leadMs = ms since peak: large = hips moved well before foot landed (leads)
+                        if (pelvicOk && gYawTimedBuf.length >= 3) {
+                            let peak = gYawTimedBuf.reduce((a,b) => b.v > a.v ? b : a);
+                            let leadMs = now - peak.t;
+                            let hfBadge = document.getElementById('hipFootBadge');
+                            if (hfBadge) {
+                                if      (leadMs > 100) { hfBadge.className = 'badge badge-green';  hfBadge.style.cssText = ''; hfBadge.innerText = 'HIP LEADS'; }
+                                else if (leadMs > 40)  { hfBadge.className = 'badge badge-yellow'; hfBadge.style.cssText = ''; hfBadge.innerText = 'IN SYNC'; }
+                                else                   { hfBadge.className = 'badge badge-red';    hfBadge.style.cssText = ''; hfBadge.innerText = 'HIP LAGS'; }
+                            }
+                        }
+
+                        // Anchor Settle — start 500ms pelvis measurement window on every backward step
+                        if (pelvicOk && activeDirection === "BACKWARD") {
+                            anchorSettleActive    = true;
+                            anchorSettleStartTime = now;
+                            anchorSettleSamples   = { aYP: [], gYawP: [] };
+                            let ab = document.getElementById('anchorSettleBadge');
+                            if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = 'MEASURING...'; }
+                        }
+
                         // Visuelles Aufblinken der Kachel bei jedem erkannten Schritt
                         let stepCard = document.getElementById('stepCard');
                         stepCard.classList.remove('card-flash');
@@ -1004,8 +1169,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     if (debugMode) {
                         let elL = document.getElementById('dbgAYL');
                         let elR = document.getElementById('dbgAYR');
+                        let elP = document.getElementById('dbgPPitch');
+                        let elPY = document.getElementById('dbgPYaw');
                         if (elL) elL.innerText = aYL.toFixed(2);
                         if (elR) elR.innerText = aYR.toFixed(2);
+                        if (elP)  elP.innerText  = pelvicOk ? gPitchP.toFixed(1) : '—';
+                        if (elPY) elPY.innerText = pelvicOk ? gYawP.toFixed(1)   : '—';
                     }
 
                     drawPitchChart();
