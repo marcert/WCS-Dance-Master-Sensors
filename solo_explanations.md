@@ -61,10 +61,12 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 
 ---
 
-### B. Foot Strike Angle ($\theta$) & Landing Articulation
+### B. Foot Pitch Angle ($\theta$) & Landing Articulation
+
+> **Measurement note:** θ measures the sagittal inclination of the *foot segment* relative to gravity (Foot Inclination Angle), not the anatomical ankle (talocrural) joint angle. The anatomical ankle angle would require a second sensor on the tibia. Statements like "dorsiflexion" below refer to the foot-segment interpretation.
 
 1. **Complementary Filter Pitch Angle ($\theta_{\text{raw}}$):**
-   Gyro and accelerometer are fused at α = 0.94. The accelerometer reference angle differs per sensor due to physical mounting:
+   Gyro and accelerometer are fused at α = 0.94 (τ ≈ 78 ms). The T-1 snapshot (taken one frame *before* the impact trigger) already protects the θ estimate from impact corruption — higher α values were tested but caused dθ compression and gyro spike artifacts. The accelerometer reference angle differs per sensor due to physical mounting:
 
    | Sensor | Accelerometer reference | Reason |
    | :--- | :--- | :--- |
@@ -114,24 +116,30 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 ---
 
 ### C. Terminal Stance & Power Push Propulsion
-West Coast Swing propulsion requires an active toe push-off (*Windlass Mechanism*) from the trailing leg at the end of the stance phase. Biomechanical research identifies ~250°/s plantarflexion angular velocity as the target for efficient propulsion (Third Rocker, Terminal Stance).
+West Coast Swing propulsion requires an active toe push-off (*Windlass Mechanism*) from the trailing leg at the end of the stance phase. The optimal plantarflexion angular velocity depends on movement direction — forward propulsion demands more drive than the subtler redistribution at an anchor or backward walk.
 
 * **Detection Condition:**
   $$-\omega_{\text{pitch}} \ge 120^\circ/\text{s} \quad \text{AND} \quad aY > 0.15g$$
-* **Graded Feedback (holds 400 ms):**
+  The $aY > 0.15g$ gate confirms floor shear force (Newton's Third Law translational component) and suppresses unweighted swing-leg artefacts.
+* **Graded Feedback (holds 400 ms) — direction-dependent optimal threshold:**
 
-| Peak $-\omega_{\text{pitch}}$ | Badge | Meaning |
-| :---: | :---: | :--- |
-| $\ge 200^\circ/\text{s}$ | `🚀 POWER PUSH` (Green) | Scientifically optimal propulsion range |
-| $120\text{–}199^\circ/\text{s}$ | `↗ PUSH` (Yellow) | Push-off detected but below optimal — increase ankle extension drive |
-| $< 120^\circ/\text{s}$ | `— PUSH-OFF` (Grey) | No significant push-off detected |
+| Trailing foot last step | Peak $-\omega_{\text{pitch}}$ | Badge | Meaning |
+| :---: | :---: | :---: | :--- |
+| BACKWARD (→ forward walk) | $\ge 200^\circ/\text{s}$ | `🚀 POWER PUSH` (Green) | Strong forward propulsion — target for walks and passes |
+| FORWARD (→ anchor / backward walk) | $\ge 160^\circ/\text{s}$ | `🚀 POWER PUSH` (Green) | Sufficient redistribution — lower drive expected at anchor |
+| Either direction | $120\text{–}159/199^\circ/\text{s}$ | `↗ PUSH` (Yellow) | Push-off detected but below directional optimum |
+| Either direction | $< 120^\circ/\text{s}$ | `— PUSH-OFF` (Grey) | No significant push-off detected |
+
+> **Note:** The $-\omega_{\text{pitch}}$ values are foot-segment angular velocities, not anatomical ankle-joint velocities. Literature values (~250°/s) are for barefoot/athletic gait; 200°/s and 160°/s are performance thresholds calibrated for dance shoes on studio floors.
 
 ---
 
 ### D. Impact Jerk ($J_{\text{impact}}$) & Shock Absorption
-Impact Jerk quantifies the rate of change of vertical impact acceleration ($aZ$ in $g$) upon step landing. It measures how effectively the knee and ankle joints cushion foot placement:
+Impact Jerk quantifies the rate of change of vertical acceleration ($aZ$ in $g$) at step landing — a proxy for how abruptly the kinetic chain receives load:
 
 $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\Delta t} \right| \quad [\text{g/s}]$$
+
+> **Unit note:** This $J$ is in $g/\text{s}$, not in $N/\text{s}$ or $\text{BW/s}$ as used in ground-reaction-force literature. The thresholds below are device- and algorithm-specific heuristics, not direct equivalents of GRF loading rate studies.
 
 * **Soft Cushioning ($1\text{ to }15\text{ g/s}$):** Excellent joint absorption (`SOFT`).
 * **Moderate Impact ($15\text{ to }30\text{ g/s}$):** Acceptable step impact.
@@ -141,6 +149,8 @@ $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\
 
 ### E. Double Stance Overlap ($\Delta t_{\text{double-stance}}$) & Grounding Ratio
 West Coast Swing emphasizes a continuous, grounded "rolling" weight transfer rather than abrupt hopping or lifting off the floor prematurely. Ground contact is registered when vertical acceleration exceeds static gravity baseline ($|aZ| > 0.55g$).
+
+> **Signal note:** $|aZ| > 0.55g$ is a sensor heuristic for bilateral ground contact — not a direct force measurement. Dynamic foot rotations can shift $aZ$ independently of actual floor contact. The thresholds below are calibrated empirically for this constraint.
 
 $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{step}}} \right) \times 100\%$$
 
@@ -184,20 +194,22 @@ $$\text{loadRise} = \overline{aZ}_{[160\text{–}240\,\text{ms}]} - \overline{aZ
 | $-0.08\text{ to }+0.12\,g$ | `INSTANT LOAD` (Yellow) | Weight transferred immediately at impact — less joint protection |
 | $< -0.08\,g$ | `EARLY UNLOAD` (Yellow) | Weight already shifting to next foot before settling — rushed transfer |
 
-**Ankle Shock Absorption + Rigid Lever** (200 ms window, 10 samples of `gRoll`):
+**Ankle Shock Absorption + Roll Reversal** (200 ms window, 10 samples of `gRoll`):
 
-Pronation integral over first 100 ms (samples 0–4):
+> **Measurement note:** `gRoll` measures rotation of the *shoe segment* around the sensor's roll axis, not directly the subtalar joint eversion angle. `rollIntegral` is a foot-rotation proxy for pronatory shock absorption; the reversal check is a proxy for the pronation→supination cycle that pre-loads the Windlass Mechanism. Both are validated as training indicators, not anatomical joint measurements.
+
+Foot roll integral over first 100 ms (samples 0–4):
 $$\text{rollIntegral} = \left|\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\,\text{s}\right| \quad [\text{degrees}]$$
 
-Rigid Lever check — sign reversal between early (samples 0–3) and late (samples 6–9) phase with sufficient pronation magnitude:
-$$\text{rigidLever} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;\text{AND}\;\; \overline{\omega}_{[0\text{–}3]} \cdot \overline{\omega}_{[6\text{–}9]} < 0$$
+Roll reversal check — sign change between early (samples 0–3) and late (samples 6–9) phase with sufficient roll magnitude:
+$$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;\text{AND}\;\; \overline{\omega}_{[0\text{–}3]} \cdot \overline{\omega}_{[6\text{–}9]} < 0$$
 
-| Condition | Badge | Biomechanical Meaning |
+| Condition | Badge | Biomechanical Interpretation |
 | :---: | :---: | :--- |
-| rigidLever = true | `RIGID LEVER` (Green) | Full pronation → supination cycle: ankle absorbed impact AND locked for push-off (Windlass Mechanism) |
-| rollIntegral $> 4°$ | `ANKLE FLEX` (Green) | Pronation impulse detected — ankle joint absorbing impact energy |
-| rollIntegral $1°\text{–}4°$ | `MODERATE ROLL` (Yellow) | Some ankle mobility, could be increased |
-| rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — shock transmitted directly to knee/hip joints |
+| rollReversal = true | `RIGID LEVER` (Green) | Roll reversal detected — proxy for pronation→supination pre-loading (Windlass Mechanism) |
+| rollIntegral $> 4°$ | `ANKLE FLEX` (Green) | Foot roll impulse detected — proxy for shock-absorbing pronation |
+| rollIntegral $1°\text{–}4°$ | `MODERATE ROLL` (Yellow) | Some foot mobility, could be increased |
+| rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — impact likely transmitted up the kinetic chain |
 
 > **Firmware requirement:** `gRoll` (`gx` axis) is transmitted as `lGr`/`rGr` in the JSON payload. Both foot sensors and the master must be flashed with the updated firmware for these badges to show non-zero values.
 
@@ -209,10 +221,11 @@ $$\text{rigidLever} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;\t
 | **Ambiguous flat contact** | $-5° < \theta < 10°$ and $|d\theta| \le 2°$ (or buffer < 9 samples), no heel-set within 200 ms | ↔️ FLAT + `FLAT-FOOT!` (Red) — direction unresolvable by θ or dθ | 1200 Hz Click if Impact Jerk > 40 g/s |
 | **Backward Toe — Optimal** | Via [θ]: $-20° \le \theta < -5°$; or via [dθ]: any θ in $-5°$ to $+9°$ not matching ANCHOR SETTLE or HEEL DROP | `OPTIMAL TOE` (Green) | None |
 | **Backward Toe — Spike** | $\theta < -20°$ | `HEEL SPIKE` (Yellow) | None |
-| **Backward — Anchor Settle** | BACKWARD via [dθ] + $-2° \le \theta \le +5°$ + $aZ > 0.85g$ | `ANCHOR SETTLE` (Green) — full-weight settled contact on backward step | None |
+| **Backward — Anchor Settle** | BACKWARD via [dθ] + $-2° \le \theta \le +5°$ + $aZ > 0.85g$ (load indicator) | `ANCHOR SETTLE` (Green) — full-weight settled contact on backward step | None |
 | **Backward — Heel Drop** | BACKWARD via [dθ] + $+5° < \theta \le +9°$ | `HEEL DROP` (Yellow) — heel contacts early on backward step | None |
-| **Trailing Foot Push-off (optimal)**| $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
-| **Trailing Foot Push-off (weak)** | $120\text{–}199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
+| **Trailing Foot Push-off (forward, optimal)**| BACKWARD last step + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
+| **Trailing Foot Push-off (backward/anchor, optimal)**| FORWARD last step + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
+| **Trailing Foot Push-off (weak)** | Either direction, $120\text{–}159/199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
 | **Impact Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
 | **Double Stance Ratio** | 18% to 38% | `OPTIMAL ROLL` (Green) | None |
 | **Double Stance Hectic** | $< 18\%$ | `HECTIC` (Yellow) | None |

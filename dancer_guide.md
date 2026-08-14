@@ -150,8 +150,8 @@ These three badges appear below the Jerk bar and update after each step. Visible
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
-| `🚀 POWER PUSH` ✅ | Strong, biomechanically optimal push-off | Maintain — you are actively driving forward |
-| `↗ PUSH` ⚠️ | Push-off detected but below optimal force | Drive more actively through the ball of the trailing foot; think "push the floor away" |
+| `🚀 POWER PUSH` ✅ | Strong push-off from the trailing foot — optimal for both forward propulsion and anchor redistribution | Maintain — the system adjusts its target automatically: higher threshold for forward walks, lower for anchors and backward steps |
+| `↗ PUSH` ⚠️ | Push-off detected but below the directional target | Drive more actively through the ball of the trailing foot; think "push the floor away" |
 | `— PUSH-OFF` | No significant push-off detected | Trailing leg is passive. Actively extend the ankle at the end of each walk |
 
 ### Loading badge (ADV only)
@@ -236,7 +236,7 @@ Visible at **Advanced** level only.
 1. Use **SMOOTH LOAD vs INSTANT LOAD** to fine-tune how you receive weight — especially on syncopated patterns where COM timing is critical.
 2. Compare **ASI** between your left and right sides over a full practice session. A consistently worse side points to a compensation pattern worth isolating.
 3. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — ankle stiffness increases as muscles tire. This is a natural cue to take a break.
-4. Film with `📷 CAM` and replay during pauses. Find the exact frame where `HEEL LANDING!` fires — your body position at that moment reveals the root cause (usually upper body tension or early COM shift).
+4. Film with `📷 CAM` and replay during pauses. Watch for steps where ↔️ FLAT fires on what you believe is a clear forward or backward step — your body position at that moment usually reveals insufficient ankle articulation during the swing phase.
 5. Use the **Roll-off Dynamics graph** (bottom-left) to compare peak gyro values between your left and right foot over multiple steps — uneven peaks indicate asymmetric push-off.
 
 ---
@@ -253,4 +253,5 @@ Visible at **Advanced** level only.
 | `ASYMMETRIC` ASI | One foot stiffer or less articulated | Identify which foot and drill that foot in isolation with slow, deliberate rolls. |
 | `— PUSH-OFF` (no badge) | Trailing leg passive — no ankle drive | "Push the floor, don't just lift the foot." Add a conscious toe-extension at the end of each walk. |
 | `INSTANT LOAD` on anchors | Dropping weight abruptly at anchor | Slow the settle. "Melt into the anchor" rather than "land on it". |
-| `↗ PUSH` but never `🚀 POWER PUSH` | Drive force below 200°/s push-off threshold | Increase hip extension range and actively drive the ball of the trailing foot into the floor. Think longer stride, not harder stomp. |
+| `↗ PUSH` but never `🚀 POWER PUSH` on walks | Forward drive below 200°/s push-off threshold | Increase hip extension range and actively drive the ball of the trailing foot into the floor. Think longer stride, not harder stomp. |
+| `↗ PUSH` but never `🚀 POWER PUSH` on anchors | Anchor redistribution below 160°/s threshold | The settle itself is passive — actively push the floor away as you redistribute weight at the end of the anchor. |
