@@ -91,23 +91,40 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
         }
 
-        .graph-container { width: 100%; height: 36vh; display: flex; flex-direction: column; }
+        .graph-container { width: 100%; height: 30vh; display: flex; flex-direction: column; }
         .label { font-size: 13px; color: #ddd; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        canvas { 
-            background-color: rgba(0, 0, 0, 0.4); 
-            border: 2px solid rgba(255, 255, 255, 0.2); 
-            width: 100%; 
-            height: 100%; 
-            display: block; 
-            border-radius: 8px; 
+
+        canvas {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 8px;
         }
-        
+
         .legende { display: flex; gap: 15px; font-size: 11px; margin-top: 4px; color: #ddd; }
         .legende-item { display: flex; align-items: center; gap: 4px; }
         .box-left { width: 12px; height: 12px; background-color: #00ffff; border-radius: 2px; }
         .box-right { width: 12px; height: 12px; background-color: #ff00ff; border-radius: 2px; }
         .box-jerk { width: 12px; height: 12px; background-color: #ffff00; border-radius: 2px; }
+        .status-bar {
+            display: flex; flex-wrap: wrap; align-items: center;
+            gap: 5px 10px; padding: 5px 8px;
+            background: rgba(0,0,0,0.55); border-radius: 8px; min-height: 5vh;
+        }
+        .p-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: min(3vw, 14px); font-weight: bold;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            background: rgba(40,40,40,0.85); color: #888;
+        }
+        .p-green  { background: rgba(15,60,15,0.9)  !important; color: #66bb6a !important; }
+        .p-yellow { background: rgba(60,45,0,0.9)   !important; color: #ffa726 !important; }
+        .p-red    { background: rgba(60,15,15,0.9)  !important; color: #ef5350 !important; }
+        .p-blue   { background: rgba(10,20,70,0.9)  !important; color: #42a5f5 !important; }
+        .p-purple { background: rgba(40,10,70,0.9)  !important; color: #ba68c8 !important; }
+        #zero-btn { background-color: rgba(100,100,30,0.6); }
     </style>
 </head>
 <body>
@@ -121,6 +138,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <button id="flip-btn" class="action-btn" onclick="flipCamera()">FLIP CAM</button>
             <button id="full-btn" class="action-btn" onclick="toggleFullscreen()">FULL</button>
             <button id="freeze-btn" class="action-btn" onclick="toggleFreeze()">FREEZE</button>
+            <button id="zero-btn" class="action-btn" onclick="tareFootOffsets()">ZERO</button>
             <button id="rec-btn" class="action-btn" onclick="toggleRecording()">REC START</button>
         </div>
     </div>
@@ -137,6 +155,21 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <div class="legende-item"><div class="box-left"></div> Sound/Error Left</div>
             <div class="legende-item"><div class="box-right"></div> Sound/Error Right</div>
             <div class="legende-item"><div class="box-jerk"></div> Hand Jerk (Sound 1000 Hz)</div>
+        </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+        <span style="font-size:min(3vw,13px);color:#aaa;">STEP:</span>
+        <span id="p-dirBadge"    class="p-badge">—</span>
+        <span id="p-angleVal"    style="font-size:min(3vw,13px);color:#ddd;">—</span>
+        <span id="p-strikeBadge" class="p-badge">—</span>
+        <div id="pelvisInfoDiv" style="display:none;flex-wrap:wrap;align-items:center;gap:5px 10px;">
+            <span style="font-size:min(2.8vw,12px);color:#ba68c8;font-weight:bold;">PELVIS:</span>
+            <span id="p-hipActBadge"   class="p-badge">— HIP</span>
+            <span id="p-slotBadge"     class="p-badge">— LAT</span>
+            <span id="p-couplingBadge" class="p-badge">— COUP</span>
+            <span id="p-bounceBadge"   class="p-badge">— BOUNCE</span>
+            <span id="p-anchorBadge"   class="p-badge">— ANCHOR</span>
         </div>
     </div>
 
@@ -331,6 +364,31 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
     let isFrozen = false;
 
+    // -- new fields from /data --
+    let targetLAy = 0, targetRAy = 0, targetLGr = 0, targetRGr = 0, targetLAx = 0, targetRAx = 0;
+    let targetPOk = false, targetPG = 0, targetPA = 1.0, targetPAy = 0, targetPYaw = 0, targetPAx = 0;
+
+    // -- CF filter (same init as solo.h: left aY physically inverted → rest ≈ −28°) --
+    let pitchLeftAngleRaw  = -28.0, pitchRightAngleRaw =  0.0;
+    let prevPitchLeftAngle = -28.0, prevPitchRightAngle = 0.0;
+    let leftMountOffset    = -28.0, rightMountOffset    = 0.0;
+    let lastAccelAngleL = 0, lastAccelAngleR = 0;
+
+    // -- step detection state --
+    let lastStepTimeLeft = 0, lastStepTimeRight = 0;
+    let lastActiveFoot = "", stepDurationMs = 500, lastStepTimestamp = 0;
+    let thetaBufferL = [], thetaBufferR = [];
+    let prevAzLeft = 1.0, prevAzRight = 1.0;
+
+    // -- pelvis state (identical to solo.h) --
+    let gYawAbsHistory = new Array(25).fill(0);
+    let aXPHistory     = new Array(50).fill(0);
+    let aZPDynHistory  = new Array(50).fill(0);
+    let gYawTimedBuf   = [];
+    let hipActSmoothed = 0;
+    let anchorSettleActive = false, anchorSettleStartTime = 0;
+    let anchorSettleSamples = { aYP: [], gYawP: [] };
+
     function toggleFreeze() {
         isFrozen = !isFrozen;
         if (isFrozen) {
@@ -367,6 +425,18 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 targetROk = data.rOk;
                 serverError = data.err;
                 serverJerk  = data.jerk;
+                targetLAy  = data.lAy  ?? 0;
+                targetRAy  = data.rAy  ?? 0;
+                targetLGr  = data.lGr  ?? 0;
+                targetRGr  = data.rGr  ?? 0;
+                targetLAx  = data.lAx  ?? 0;
+                targetRAx  = data.rAx  ?? 0;
+                targetPOk  = data.pOk === true;
+                targetPG   = data.pG   ?? 0;
+                targetPA   = data.pA   ?? 1.0;
+                targetPAy  = data.pAy  ?? 0;
+                targetPYaw = data.pYaw ?? 0;
+                targetPAx  = data.pAx  ?? 0;
 
                 setTimeout(fetchSensorData, intervalMs);
             })
@@ -377,6 +447,13 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 targetROk = false;
                 setTimeout(fetchSensorData, 100);
             });
+    }
+
+    function tareFootOffsets() {
+        leftMountOffset  = lastAccelAngleL;
+        rightMountOffset = lastAccelAngleR;
+        pitchLeftAngleRaw  = leftMountOffset;
+        pitchRightAngleRaw = rightMountOffset;
     }
 
     fetchSensorData();
@@ -461,6 +538,192 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             rightFootPoints.shift(); rightFootPoints.push({ y: y_rg, isError: isRightErr });
         } else {
             rightFootPoints.shift(); rightFootPoints.push({ y: null, isError: false });
+        }
+
+        // === STEP DETECTION (same algorithm as solo.h) ===
+        const now = Date.now();
+        const dt  = intervalMs / 1000;
+        let gPitchL_s = targetLG, aZL_s = targetLA, aYL_s = targetLAy;
+        let gPitchR_s = targetRG, aZR_s = targetRA, aYR_s = targetRAy;
+
+        // CF update — left aY physically inverted (same as solo.h)
+        const CF_ALPHA = 0.94;
+        let accelAngleL = Math.atan2(-aYL_s, aZL_s) * (180 / Math.PI);
+        let accelAngleR = Math.atan2( aYR_s, aZR_s) * (180 / Math.PI);
+        lastAccelAngleL = accelAngleL; lastAccelAngleR = accelAngleR;
+        prevPitchLeftAngle  = pitchLeftAngleRaw;
+        prevPitchRightAngle = pitchRightAngleRaw;
+        if (targetLOk) pitchLeftAngleRaw  = CF_ALPHA*(pitchLeftAngleRaw  + gPitchL_s*dt) + (1-CF_ALPHA)*accelAngleL;
+        if (targetROk) pitchRightAngleRaw = CF_ALPHA*(pitchRightAngleRaw + gPitchR_s*dt) + (1-CF_ALPHA)*accelAngleR;
+
+        // Theta ring buffers (T-1 … T-8 window for ambiguous zone)
+        if (thetaBufferL.length >= 10) thetaBufferL.shift();
+        thetaBufferL.push(pitchLeftAngleRaw  - leftMountOffset);
+        if (thetaBufferR.length >= 10) thetaBufferR.shift();
+        thetaBufferR.push(pitchRightAngleRaw - rightMountOffset);
+
+        // Step trigger (same thresholds as solo.h)
+        let preJerkL_s = Math.abs(aZL_s - prevAzLeft)  / 0.005;
+        let preJerkR_s = Math.abs(aZR_s - prevAzRight) / 0.005;
+        let leftSig  = targetLOk && (Math.abs(aZL_s) > 1.08 || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
+        let rightSig = targetROk && (Math.abs(aZR_s) > 1.08 || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
+        let detFoot = null;
+        if      (leftSig && rightSig) detFoot = (Math.abs(aZL_s) >= Math.abs(aZR_s)) ? "L" : "R";
+        else if (leftSig)  detFoot = "L";
+        else if (rightSig) detFoot = "R";
+
+        // Lockout + alternation guard (same as solo.h)
+        let lockMs = Math.max(180, Math.min(320, stepDurationMs * 0.55));
+        if (detFoot === "L") {
+            if (now - lastStepTimeLeft < lockMs) detFoot = null;
+            else { lastStepTimeLeft = now; if (lastActiveFoot === "L") detFoot = null; }
+        } else if (detFoot === "R") {
+            if (now - lastStepTimeRight < lockMs) detFoot = null;
+            else { lastStepTimeRight = now; if (lastActiveFoot === "R") detFoot = null; }
+        }
+
+        if (detFoot) {
+            lastActiveFoot = detFoot;
+            let isLeft = detFoot === "L";
+            // T-1 snapshot (angle from frame before impact)
+            let activeTheta = Math.round((isLeft ? prevPitchLeftAngle : prevPitchRightAngle) - (isLeft ? leftMountOffset : rightMountOffset));
+            activeTheta = Math.max(-45, Math.min(45, activeTheta));
+            // Step duration tracking
+            let stepDur = Math.max(200, Math.min(1500, now - lastStepTimestamp));
+            lastStepTimestamp = now; stepDurationMs = stepDur;
+            // Direction: T-1 vs mount offset
+            let activeDir = (isLeft ? prevPitchLeftAngle < leftMountOffset : prevPitchRightAngle < rightMountOffset) ? "BACKWARD" : "FORWARD";
+            // Reset CF angle to offset on landing
+            if (isLeft) pitchLeftAngleRaw = leftMountOffset; else pitchRightAngleRaw = rightMountOffset;
+            // Ambiguous zone override (same as solo.h: T-1 minus T-8 trend)
+            if (activeTheta > -5 && activeTheta < 10) {
+                let tBuf = isLeft ? thetaBufferL : thetaBufferR;
+                if (tBuf.length >= 9) {
+                    let trend = tBuf[tBuf.length - 2] - tBuf[tBuf.length - 9];
+                    if      (trend >  2.0) activeDir = "FORWARD";
+                    else if (trend < -2.0) activeDir = "BACKWARD";
+                    else                   activeDir = "AMBIGUOUS";
+                } else { activeDir = "AMBIGUOUS"; }
+            }
+            // Hip-Foot Coupling badge (fires on each confirmed step)
+            if (targetPOk && gYawTimedBuf.length >= 3) {
+                let peak = gYawTimedBuf.reduce((a,b) => b.v > a.v ? b : a);
+                let leadMs = now - peak.t;
+                let hfEl = document.getElementById('p-couplingBadge');
+                if (hfEl) {
+                    if      (leadMs > 100) { hfEl.className='p-badge p-green';  hfEl.innerText='HIP LEADS'; }
+                    else if (leadMs > 40)  { hfEl.className='p-badge p-yellow'; hfEl.innerText='IN SYNC'; }
+                    else                   { hfEl.className='p-badge p-red';    hfEl.innerText='HIP LAGS'; }
+                }
+            }
+            // Anchor Settle trigger (fires on each backward step)
+            if (targetPOk && activeDir === "BACKWARD") {
+                anchorSettleActive = true; anchorSettleStartTime = now;
+                anchorSettleSamples = { aYP: [], gYawP: [] };
+                let ab = document.getElementById('p-anchorBadge');
+                if (ab) { ab.className='p-badge'; ab.innerText='MEASURING...'; }
+            }
+            // Direction badge
+            let dirEl = document.getElementById('p-dirBadge');
+            let angEl = document.getElementById('p-angleVal');
+            let strEl = document.getElementById('p-strikeBadge');
+            let fStr = isLeft ? ' L' : ' R';
+            if (dirEl) {
+                if      (activeDir === "FORWARD")  { dirEl.className='p-badge p-blue';   dirEl.innerText='➡ FWD'+fStr; }
+                else if (activeDir === "BACKWARD") { dirEl.className='p-badge p-purple'; dirEl.innerText='⬅ BWD'+fStr; }
+                else                               { dirEl.className='p-badge';          dirEl.innerText='↔ FLAT'+fStr; }
+            }
+            if (angEl) angEl.innerText = activeTheta + '°';
+            // Strike badge (beginner level — same thresholds as solo.h)
+            if (strEl) {
+                if (activeDir === "FORWARD") {
+                    if      (activeTheta > 35)  { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL SPIKE'; }
+                    else if (activeTheta >= 10) { strEl.className='p-badge p-green';  strEl.innerText='OPTIMAL HEEL'; }
+                    else if (activeTheta >= 5)  { strEl.className='p-badge p-yellow'; strEl.innerText='FLAT'; }
+                    else if (activeTheta < -5)  { strEl.className='p-badge p-blue';   strEl.innerText='BALL-STEP'; }
+                    else                        { strEl.className='p-badge p-red';    strEl.innerText='FLAT-FOOT!'; }
+                } else if (activeDir === "BACKWARD") {
+                    let aZact = isLeft ? aZL_s : aZR_s;
+                    let isAnchor = (activeTheta >= -2 && activeTheta <= 5 && aZact > 0.85);
+                    if (isAnchor)               { strEl.className='p-badge p-green';  strEl.innerText='ANCHOR SETTLE'; }
+                    else if (activeTheta >= 10) { strEl.className='p-badge p-red';    strEl.innerText='HEEL LANDING!'; }
+                    else if (activeTheta > 5)   { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL DROP'; }
+                    else if (activeTheta >= -20){ strEl.className='p-badge p-green';  strEl.innerText='OPTIMAL TOE'; }
+                    else                        { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL SPIKE'; }
+                } else { strEl.className='p-badge p-red'; strEl.innerText='FLAT-FOOT!'; }
+            }
+        }
+        prevAzLeft = aZL_s; prevAzRight = aZR_s;
+
+        // === PELVIS METRICS (all 5 — same thresholds as solo.h, no level gating) ===
+        let gYawP_p = targetPYaw, aZP_p = -targetPAy, aYP_p = targetPAx, aXP_p = targetPA;
+        if (targetPOk) {
+            document.getElementById('pelvisInfoDiv').style.display = 'flex';
+            // Hip Activation — rolling max of |gYawP| over 500ms, IIR-smoothed
+            gYawAbsHistory.shift(); gYawAbsHistory.push(Math.abs(gYawP_p));
+            let gYawPeak = Math.max(...gYawAbsHistory);
+            hipActSmoothed = hipActSmoothed * 0.9 + gYawPeak * 0.1;
+            let hipEl = document.getElementById('p-hipActBadge');
+            if (hipEl) {
+                if      (hipActSmoothed >= 60) { hipEl.className='p-badge p-green';  hipEl.innerText='🌀 ACTIVE'; }
+                else if (hipActSmoothed >= 25) { hipEl.className='p-badge p-yellow'; hipEl.innerText='MODERATE'; }
+                else                           { hipEl.className='p-badge p-red';    hipEl.innerText='STIFF HIPS'; }
+            }
+            // Lateral Stability — variance of aXP over 1s
+            aXPHistory.shift(); aXPHistory.push(aXP_p);
+            let aXMean = aXPHistory.reduce((a,b)=>a+b,0) / aXPHistory.length;
+            let aXVar  = aXPHistory.reduce((a,b)=>a+(b-aXMean)**2,0) / aXPHistory.length;
+            let latEl = document.getElementById('p-slotBadge');
+            if (latEl) {
+                if      (aXVar < 0.004) { latEl.className='p-badge p-green';  latEl.innerText='STABLE'; }
+                else if (aXVar < 0.015) { latEl.className='p-badge p-yellow'; latEl.innerText='SLIGHT SWAY'; }
+                else                    { latEl.className='p-badge p-red';    latEl.innerText='LATERAL SWAY'; }
+            }
+            // Vertical Bounce — variance of dynamic aZP (gravity removed) over 1s
+            aZPDynHistory.shift(); aZPDynHistory.push(aZP_p - 1.0);
+            let aZMean = aZPDynHistory.reduce((a,b)=>a+b,0) / aZPDynHistory.length;
+            let aZVar  = aZPDynHistory.reduce((a,b)=>a+(b-aZMean)**2,0) / aZPDynHistory.length;
+            let bncEl = document.getElementById('p-bounceBadge');
+            if (bncEl) {
+                if      (aZVar < 0.006) { bncEl.className='p-badge p-green';  bncEl.innerText='GROUNDED'; }
+                else if (aZVar < 0.020) { bncEl.className='p-badge p-yellow'; bncEl.innerText='SLIGHT BOUNCE'; }
+                else                    { bncEl.className='p-badge p-red';    bncEl.innerText='BOUNCY'; }
+            }
+            // gYaw timed ring — {t, v} pairs, 600ms window (for hip-foot coupling)
+            gYawTimedBuf.push({ t: now, v: Math.abs(gYawP_p) });
+            while (gYawTimedBuf.length > 0 && now - gYawTimedBuf[0].t > 600) gYawTimedBuf.shift();
+            // Anchor Settle — collect 500ms window, evaluate at end
+            if (anchorSettleActive) {
+                anchorSettleSamples.aYP.push(aYP_p);
+                anchorSettleSamples.gYawP.push(Math.abs(gYawP_p));
+                if (now - anchorSettleStartTime >= 500) {
+                    anchorSettleActive = false;
+                    let n = anchorSettleSamples.aYP.length;
+                    if (n >= 8) {
+                        let half = Math.floor(n/2);
+                        let earlyAY  = anchorSettleSamples.aYP.slice(0,half),  lateAY  = anchorSettleSamples.aYP.slice(half);
+                        let earlyYaw = anchorSettleSamples.gYawP.slice(0,half), lateYaw = anchorSettleSamples.gYawP.slice(half);
+                        let earlyAYMag = earlyAY.reduce((a,b)=>a+Math.abs(b),0)/earlyAY.length;
+                        let lateAYMag  = lateAY.reduce((a,b)=>a+Math.abs(b),0)/lateAY.length;
+                        let earlyYawM  = earlyYaw.reduce((a,b)=>a+b,0)/earlyYaw.length;
+                        let lateYawM   = lateYaw.reduce((a,b)=>a+b,0)/lateYaw.length;
+                        let decelScore   = Math.min(1,Math.max(0,(earlyAYMag-lateAYMag+0.05)/0.25));
+                        let yawDampScore = Math.min(1,Math.max(0,(earlyYawM-lateYawM)/25));
+                        let lateYawVar   = lateYaw.reduce((a,b)=>a+(b-lateYawM)**2,0)/lateYaw.length;
+                        let stabilScore  = Math.max(0, 1-lateYawVar/400);
+                        let score = Math.round((decelScore*0.35+yawDampScore*0.35+stabilScore*0.30)*100);
+                        let ab = document.getElementById('p-anchorBadge');
+                        if (ab) {
+                            if      (score >= 60) { ab.className='p-badge p-green';  ab.innerText='ANCHORED ('+score+')'; }
+                            else if (score >= 30) { ab.className='p-badge p-yellow'; ab.innerText='SETTLING ('+score+')'; }
+                            else                  { ab.className='p-badge p-red';    ab.innerText='UNSTABLE ('+score+')'; }
+                        }
+                    }
+                }
+            }
+        } else {
+            document.getElementById('pelvisInfoDiv').style.display = 'none';
+            anchorSettleActive = false;
         }
 
     }, intervalMs); 

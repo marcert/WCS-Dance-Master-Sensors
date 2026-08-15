@@ -1,6 +1,5 @@
 {
     "folders": [
-
         {
             "path": "ConnectionForceMeasurement"
         },
@@ -12,6 +11,9 @@
         },
         {
             "path": "M5Right"
+        },
+        {
+            "path": "M5Pelvic"
         }
     ],
     "settings": {}

@@ -1,4 +1,4 @@
-# WCS Solo-Training — Dancer's Guide
+# WCS Dance Master Sensors — Dancer's Guide
 
 > This guide is written for dancers, not engineers. You do not need to understand the math.  
 > Open the dashboard on your phone or tablet, follow the setup steps, and use the badge colour as your real-time coach.
@@ -19,7 +19,47 @@
 
 ---
 
-## 2. The Dashboard Layout
+## 2. The Two Dashboards
+
+The system provides two dashboards served from the same controller:
+
+| URL | Dashboard | Who uses it |
+| :--- | :--- | :--- |
+| `/solo` | **Solo Training Dashboard** | The dancer training alone — full level-gated feedback loop |
+| `/` | **Partner Dashboard** | A second device (phone/tablet) shown to the partner or coach during a session |
+
+Both dashboards receive the same live sensor data. The Solo Dashboard is described in detail throughout this guide. The Partner Dashboard is covered in [section 2a](#2a-the-partner-dashboard).
+
+---
+
+## 2a. The Partner Dashboard
+
+Open `http://192.168.4.1/` (root URL, no `/solo`) on a second device. The partner dashboard is designed to give a coach or dance partner a quick read of foot quality and hip mechanics **without the level-selection or training scaffolding** of the solo view.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Left foot force graph              Right foot force graph      │
+│  (connection / impact force)        (connection / impact force) │
+├─────────────────────────────────────────────────────────────────┤
+│  Status bar: STEP direction badge · angle · strike badge        │
+│             PELVIS: Hip · Lateral · Coupling · Bounce · Anchor  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Buttons:**
+- **`ZERO`** — tares the foot angle offset (same as `📐 ZERO` on the solo dashboard). Tap once while the dancer is standing in a neutral stance before the session.
+- **`FREEZE`** — pauses the graphs at the current moment for inspection.
+- **`REC`** — starts/stops a recording session.
+
+**Step badges** (status bar, bottom of screen):
+The same direction + strike classification as the solo dashboard Beginner level — direction arrow (➡️ FWD / ⬅️ BWD), angle in degrees, and strike quality badge (`OPTIMAL HEEL`, `OPTIMAL TOE`, etc.). Updates on each detected step.
+
+**Pelvis badges** (appear when pelvis sensor is online):
+All five pelvis metrics are shown simultaneously — no level selection required. Badges are identical to the solo dashboard descriptions in [section 8](#8-the-pelvis-card-optional-sensor).
+
+---
+
+
 
 <table><tr><td><img src="Attachments/Screen-adv.png" width="100%" alt="Dashboard landscape — Advanced level, all cards visible"></td></tr></table>
 
@@ -51,7 +91,7 @@ The **`👤 BEG`** button in the top-right corner of the header cycles through t
 | Button | Level | What is visible |
 | :--- | :--- | :--- |
 | `👤 BEG` (green) | **Beginner** | [Step Badge](#4-the-step-badge-card) card only — direction, angle, strike badge. [Pelvis card](#8-the-pelvis-card-optional-sensor) shows [Hip Activation](#hip-activation) if sensor is online. |
-| `🏃 INT` (orange) | **Intermediate** | [Step Badge](#4-the-step-badge-card) (full, with [Jerk](#impact-jerk-bar) + [Push-Off](#push-off-badge-int--adv)) + [Double Stance](#6-the-double-stance-card). [Pelvis card](#8-the-pelvis-card-optional-sensor) adds [Slot Adherence](#slot-adherence-int), [Hip-Foot Coupling](#hip-foot-coupling-int), [Vertical Bounce](#vertical-bounce-int). |
+| `🏃 INT` (orange) | **Intermediate** | [Step Badge](#4-the-step-badge-card) (full, with [Jerk](#impact-jerk-bar) + [Push-Off](#push-off-badge-int--adv)) + [Double Stance](#6-the-double-stance-card). [Pelvis card](#8-the-pelvis-card-optional-sensor) adds [Lateral Stability](#lateral-stability-int), [Hip-Foot Coupling](#hip-foot-coupling-int), [Vertical Bounce](#vertical-bounce-int). |
 | `⭐ ADV` (purple) | **Advanced** | All cards — [Step Badge](#4-the-step-badge-card), [Double Stance](#6-the-double-stance-card), [Roll-off Symmetry & Smoothness](#7-the-roll-off-symmetry--smoothness-card). [Pelvis card](#8-the-pelvis-card-optional-sensor) adds [Anchor Settle](#anchor-settle-adv). |
 
 Cards that are not relevant for your level are hidden, giving the camera maximum screen space.
@@ -212,12 +252,28 @@ The pelvis card appears in the **top-left slot** of the dashboard whenever the p
 
 Clip the sensor to the **posterior waistband at the small of your back** (L5 / sacrum level), display facing away from your body. Centred on the spine is ideal, but left or right of centre by a few centimetres makes no practical difference. It should sit flat and snug — not dangling.
 
+### Mounting verification
+
+At the top of the pelvis card a small grey data line shows three live raw values:
+
+```
+aZ:+0.95  aX:-0.20  gY:   0
+```
+
+| Value | What it shows | Expected at rest |
+| :--- | :--- | :--- |
+| `aZ` | Vertical acceleration | **+0.90 to +1.00** (gravity) |
+| `aX` | Lateral acceleration | −0.30 to +0.30 (small tilt offset is normal) |
+| `gY` | Hip yaw rate (°/s) | Near **0** |
+
+If `aZ` is far from +0.95 (e.g. near 0 or negative), the sensor is not mounted correctly — it may be rotated or facing the wrong way. Re-clip it flat against the back with the display facing outward.
+
 ### Badge overview
 
 | Badge row | Level | What is measured |
 | :--- | :--- | :--- |
 | **Hip Activation** | BEG+ | How much the pelvis is rotating during movement (yaw) |
-| **Slot Adherence** | INT+ | Lateral drift of the pelvis away from the slot line |
+| **Lateral Stability** | INT+ | Lateral sway of the pelvis during movement |
 | **Hip-Foot Coupling** | INT+ | Whether hips initiate each step or follow the feet |
 | **Vertical Bounce** | INT+ | How much vertical movement the pelvis generates |
 | **Anchor Settle** | ADV | Quality of the pelvis settle in the 500 ms after each anchor step |
@@ -238,15 +294,15 @@ Measures peak transverse hip rotation (yaw rate) over a rolling 500 ms window.
 
 ---
 
-### Slot Adherence (INT+)
+### Lateral Stability (INT+)
 
-Measures lateral acceleration variance of the pelvis over 1 second. WCS movement is linear — the pelvis should travel forward and backward along the slot, not drift sideways.
+Measures lateral acceleration variance of the pelvis over 1 second. Lateral sway — the pelvis shifting sideways during travel — often points to hip hike, uneven weight distribution, or compensatory movement patterns.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
-| `IN SLOT` ✅ | Pelvis tracking cleanly along the slot line | Good |
-| `SLIGHT DRIFT` ⚠️ | Minor lateral movement — common on turns or triple steps | Focus on keeping the hips facing parallel to the slot on straight walks |
-| `OUT OF SLOT` ❌ | Significant lateral deviation | Check for hip hike, side-stepping, or off-slot footwork |
+| `STABLE` ✅ | Minimal lateral pelvis movement — good horizontal control | Good |
+| `SLIGHT SWAY` ⚠️ | Some lateral oscillation — common on turns or transitions | Check for hip hike on the stepping side; keep the pelvis level |
+| `LATERAL SWAY` ❌ | Significant side-to-side movement | Look for compensatory hip push on each step; practise walks with a conscious level pelvis |
 
 ---
 
@@ -321,7 +377,7 @@ These three components are combined into a 0–100 score displayed in the badge.
 3. Watch the **POWER PUSH badge**: is your trailing leg passive? Drive through the ball of the foot at the end of each walk.
 4. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triple steps. `HECTIC` during the anchor means you are rushing.
 
-**With pelvis sensor:** Add **Slot Adherence**, **Hip-Foot Coupling**, and **Vertical Bounce** to your checklist. The single most valuable metric at this level is Hip-Foot Coupling — consistent `HIP LAGS` means you are walking with your feet, not your body.
+**With pelvis sensor:** Add **Lateral Stability**, **Hip-Foot Coupling**, and **Vertical Bounce** to your checklist. The single most valuable metric at this level is Hip-Foot Coupling — consistent `HIP LAGS` means you are walking with your feet, not your body.
 
 ### Advanced — use `⭐ ADV`
 
@@ -352,7 +408,7 @@ These three components are combined into a 0–100 score displayed in the badge.
 | `↗ PUSH` but never `🚀 POWER PUSH` on walks | Forward drive below 200°/s push-off threshold | Increase hip extension range and actively drive the ball of the trailing foot into the floor. Think longer stride, not harder stomp. |
 | `↗ PUSH` but never `🚀 POWER PUSH` on anchors | Anchor redistribution below 160°/s threshold | The settle itself is passive — actively push the floor away as you redistribute weight at the end of the anchor. |
 | `STIFF HIPS` constantly | Legs moving without core engagement | Start each step with a deliberate hip rotation impulse before the foot moves. Drill in place: rotate hip, then step. |
-| `OUT OF SLOT` on walks | Hip hike or lateral stepping | Keep hips facing parallel to the slot; check that footwork stays on the line and avoid shifting weight sideways. |
+| `LATERAL SWAY` continuously | Hip hike or lateral pelvis push on each step | Keep the pelvis level; check for asymmetric weight distribution and compensatory sideways movement. |
 | `HIP LAGS` on every step | Legs and core disconnected — feet moving independently | Slow to a very slow tempo. Stand still, initiate a hip rotation, then let the foot follow. The hip must move first. |
 | `BOUNCY` continuously | Knee extension during travel — "posting" on a straight leg | Stay in a slight knee bend throughout the walk. The height of your head should not change between steps. |
 | `UNSTABLE` anchor always | Pelvis still rotating or drifting after the anchor step | Practise the anchor in isolation: step back, plant both feet, and consciously stop all hip movement. Hold for two counts before moving again. |

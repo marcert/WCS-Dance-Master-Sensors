@@ -309,12 +309,13 @@ void loop() {
 
   sensorData.foot_id   = SENSOR_ID;
   sensorData.gyro_x    = gy;   // Sagittal pitch rate
-  sensorData.accel_z   = az;   // Vertical acceleration
-  sensorData.accel_y   = ay;   // Anterior-posterior acceleration
+  sensorData.accel_z   = az;   // Currently lateral (correct mounting)
+  sensorData.accel_y   = ay;   // Currently vertical (correct mounting)
   sensorData.gyro_roll = gz;   // Yaw rate (transverse rotation)
-  sensorData.accel_x   = ax;   // Lateral acceleration
+  sensorData.accel_x   = ax;   // Sagittal (A/P) axis — ~0g at rest when worn, small values during weight shifts
 
   esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
+
 
   delay(SAMPLE_RATE_MS);
 }
