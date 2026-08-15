@@ -335,47 +335,41 @@ void loop() {
 
   M5.Display.setTextSize(2);
 
-  // Sentinel values (INT16_MIN / -999 / true) guarantee a render on the very first loop iteration.
-  static int16_t  dLG = INT16_MIN, dRG = INT16_MIN, dPG = INT16_MIN;
-  static float    dLA = -999.0f,   dRA = -999.0f,  dHW = -99999.0f;
-  static bool     dLOn = true,     dROn = true,     dHOn = true,  dPOn = true;
-  static uint16_t dLBg = 0xFFFF,   dRBg = 0xFFFF;
+  // Sentinels — only track online/error state (no live values needed on display).
+  static bool     dLOn = true, dROn = true, dHOn = true, dPOn = true;
+  static uint16_t dLBg = 0xFFFF, dRBg = 0xFFFF;
   static uint32_t lastBatUpdate = 0;
 
-  // --- DISPLAY LEFT FOOT (only on change) ---
-  if ((int16_t)roundf(leftGyro) != dLG || fabsf(leftAccel - dLA) > 0.05f || leftOnline != dLOn || leftBg != dLBg) {
-    dLG = (int16_t)roundf(leftGyro); dLA = leftAccel; dLOn = leftOnline; dLBg = leftBg;
+  // --- DISPLAY LEFT FOOT (only on status change) ---
+  if (leftOnline != dLOn || leftBg != dLBg) {
+    dLOn = leftOnline; dLBg = leftBg;
     M5.Display.setCursor(5, 5);
     M5.Display.setTextColor(leftFg, leftBg);
-    if (leftOnline) M5.Display.printf("L: G:%4.0f A:%3.1f  ", leftGyro, leftAccel);
-    else            M5.Display.printf("L: -- OFFLINE -- ");
+    M5.Display.printf("L: %-14s", leftOnline ? "ONLINE" : "OFFLINE");
   }
 
-  // --- DISPLAY RIGHT FOOT (only on change) ---
-  if ((int16_t)roundf(rightGyro) != dRG || fabsf(rightAccel - dRA) > 0.05f || rightOnline != dROn || rightBg != dRBg) {
-    dRG = (int16_t)roundf(rightGyro); dRA = rightAccel; dROn = rightOnline; dRBg = rightBg;
+  // --- DISPLAY RIGHT FOOT (only on status change) ---
+  if (rightOnline != dROn || rightBg != dRBg) {
+    dROn = rightOnline; dRBg = rightBg;
     M5.Display.setCursor(5, 30);
     M5.Display.setTextColor(rightFg, rightBg);
-    if (rightOnline) M5.Display.printf("R: G:%4.0f A:%3.1f  ", rightGyro, rightAccel);
-    else             M5.Display.printf("R: -- OFFLINE -- ");
+    M5.Display.printf("R: %-14s", rightOnline ? "ONLINE" : "OFFLINE");
   }
 
-  // --- DISPLAY HAND (only on change) ---
-  if (fabsf(handWeight - dHW) >= 1.0f || handOnline != dHOn) {
-    dHW = handWeight; dHOn = handOnline;
+  // --- DISPLAY HAND (only on status change) ---
+  if (handOnline != dHOn) {
+    dHOn = handOnline;
     M5.Display.setCursor(5, 55);
     M5.Display.setTextColor(GREEN, BLACK);
-    if (handOnline) M5.Display.printf("H: %4.0f g        ", handWeight);
-    else            M5.Display.printf("H: -- OFFLINE -- ");
+    M5.Display.printf("H: %-14s", handOnline ? "ONLINE" : "OFFLINE");
   }
 
-  // --- DISPLAY PELVIS (only on change) ---
-  if ((int16_t)roundf(pelvicGyro) != dPG || pelvicOnline != dPOn) {
-    dPG = (int16_t)roundf(pelvicGyro); dPOn = pelvicOnline;
+  // --- DISPLAY PELVIS (only on status change) ---
+  if (pelvicOnline != dPOn) {
+    dPOn = pelvicOnline;
     M5.Display.setCursor(5, 80);
     M5.Display.setTextColor(PURPLE, BLACK);
-    if (pelvicOnline) M5.Display.printf("P: G:%4.0f Y:%4.0f  ", pelvicGyro, pelvicYaw);
-    else              M5.Display.printf("P: -- OFFLINE -- ");
+    M5.Display.printf("P: %-14s", pelvicOnline ? "ONLINE" : "OFFLINE");
   }
 
   // --- BATTERY (every 10 s — level changes on the order of minutes) ---

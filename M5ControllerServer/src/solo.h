@@ -79,6 +79,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             -webkit-backdrop-filter: none;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+            min-width: 0;
         }
 
                 .card-flash {
@@ -305,13 +306,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <!-- TOP-LEFT: PELVIS HIP MECHANICS (replaces spacer while sensor is online) -->
                 <div id="pelvicCard" class="card">
                     <div class="card-title">Pelvis — Hip Mechanics</div>
+                    <div id="pelvicRaw" style="font-size:0.68rem;color:#636e72;font-family:monospace;margin-bottom:4px;white-space:nowrap;overflow:hidden;letter-spacing:0.01em;"></div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                         <span style="font-size:0.78rem;color:#8b949e;">Hip Activation</span>
                         <span id="hipActBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP</span>
                     </div>
                     <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                        <span style="font-size:0.78rem;color:#8b949e;">Slot Adherence</span>
-                        <span id="slotBadge" class="badge" style="background:#1e272e;color:#8b949e;">— SLOT</span>
+                        <span style="font-size:0.78rem;color:#8b949e;">Lateral Stability</span>
+                        <span id="slotBadge" class="badge" style="background:#1e272e;color:#8b949e;">— LATERAL</span>
                     </div>
                     <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                         <span style="font-size:0.78rem;color:#8b949e;">Hip-Foot Coupling</span>
@@ -599,10 +601,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let rightOk  = data.rOk === true;
                     let pelvicOk = data.pOk === true;
                     let gPitchP  = data.pG   ?? 0;
-                    let aZP      = data.pA   ?? 1.0;
-                    let aYP      = data.pAy  ?? 0.0;
+                    let aZP      = -(data.pAy  ?? -1.0); // IMU Y-axis = vertical, inverted → +1.0g at rest
+                    let aYP      = data.pAx  ?? 0.0;   // IMU X-axis = sagittal (anterior-posterior)
                     let gYawP    = data.pYaw ?? 0;
-                    let aXP      = data.pAx  ?? 0.0;
+                    let aXP      = data.pA   ?? 0.0;   // IMU Z-axis = lateral
 
                                         // 1. Live Pitch Curve Buffer — low-pass filtered (α=0.25) to suppress vibration noise
                     const LP_ALPHA = 0.25;
@@ -650,6 +652,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         document.getElementById('pelvicCard').style.display = 'block';
                         document.getElementById('pelvicSpacer').style.display = 'none';
 
+                        // Live raw values — axis-assignment verification
+                        let rawEl = document.getElementById('pelvicRaw');
+                        if (rawEl) rawEl.innerText =
+                            'aZ:' + (aZP >= 0 ? '+' : '') + aZP.toFixed(2) +
+                            '  aX:' + (aXP >= 0 ? '+' : '') + aXP.toFixed(2) +
+                            '  gY:' + String(gYawP.toFixed(0)).padStart(4);
+
                         // Hip Activation — rolling max of |gYawP| over 500ms, IIR-smoothed
                         gYawAbsHistory.shift(); gYawAbsHistory.push(Math.abs(gYawP));
                         let gYawPeak = Math.max(...gYawAbsHistory);
@@ -661,15 +670,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             else                            { hipBadge.className = 'badge badge-red';    hipBadge.style.cssText = ''; hipBadge.innerText = 'STIFF HIPS'; }
                         }
 
-                        // Slot Adherence — variance of aXP over 1s
+                        // Lateral Stability — variance of aXP over 1s
                         aXPHistory.shift(); aXPHistory.push(aXP);
                         let aXMean = aXPHistory.reduce((a,b)=>a+b,0) / aXPHistory.length;
                         let aXVar  = aXPHistory.reduce((a,b)=>a+(b-aXMean)**2,0) / aXPHistory.length;
                         let slotBadge = document.getElementById('slotBadge');
                         if (slotBadge) {
-                            if      (aXVar < 0.004)  { slotBadge.className = 'badge badge-green';  slotBadge.style.cssText = ''; slotBadge.innerText = 'IN SLOT'; }
-                            else if (aXVar < 0.015)  { slotBadge.className = 'badge badge-yellow'; slotBadge.style.cssText = ''; slotBadge.innerText = 'SLIGHT DRIFT'; }
-                            else                     { slotBadge.className = 'badge badge-red';    slotBadge.style.cssText = ''; slotBadge.innerText = 'OUT OF SLOT'; }
+                            if      (aXVar < 0.004)  { slotBadge.className = 'badge badge-green';  slotBadge.style.cssText = ''; slotBadge.innerText = 'STABLE'; }
+                            else if (aXVar < 0.015)  { slotBadge.className = 'badge badge-yellow'; slotBadge.style.cssText = ''; slotBadge.innerText = 'SLIGHT SWAY'; }
+                            else                     { slotBadge.className = 'badge badge-red';    slotBadge.style.cssText = ''; slotBadge.innerText = 'LATERAL SWAY'; }
                         }
 
                         // Vertical Bounce — variance of dynamic aZP (gravity removed) over 1s
