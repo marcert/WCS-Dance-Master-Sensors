@@ -2,6 +2,8 @@
 
 A real-time wireless sensor network and video-overlay feedback system built for **West Coast Swing (WCS)** dancers and coaches. Sensors stream live biomechanical data to a web dashboard that overlays directly on the phone camera — giving instant physical telemetry while you dance.
 
+> 🇩🇪 **Deutsche Dokumentation:** [Documentation_german/README.md](Documentation_german/README.md)
+
 ![Dashboard Screenshot](Attachments/screenshot.png)
 
 ---
@@ -39,11 +41,11 @@ Three training levels hide or reveal cards depending on what is relevant:
 
 | Document | Audience | Contents |
 | :--- | :--- | :--- |
-| [**Dancer's Guide — Solo**](dancer_guide_solo.md) | Dancers | How to use the Solo Dashboard: setup, level selector, all badge cards, training progressions, common problems. Start here if you want to train — no technical knowledge required. |
-| [**Dancer's Guide — Partner**](dancer_guide_partner.md) | Coaches / Partners | How to use the Partner Dashboard: connection force graph, combined analysis graph, pelvis badges, coaching use cases. Open on a second device while the dancer uses the solo view. |
-| [**Solo Dashboard — Technical Reference**](solo_explanations.md) | Coaches / Developers | Architecture, sensor math, complementary filter, step detection algorithm, all metric formulas, threshold tables, firmware notes. |
-| [**Connection Dashboard — Explanations**](explanations.md) | All | Explanation of the main dashboard metrics (connection force, jerk, foot graphs). |
-| [**Parts List**](parts.md) | Builders | Bill of materials, wiring, and sourcing notes for building the hardware. |
+| [**Dancer's Guide — Solo**](Documentation_english/dancer_guide_solo.md) | Dancers | How to use the Solo Dashboard: setup, level selector, all badge cards, training progressions, common problems. Start here if you want to train — no technical knowledge required. |
+| [**Dancer's Guide — Partner**](Documentation_english/dancer_guide_partner.md) | Coaches / Partners | How to use the Partner Dashboard: connection force graph, combined analysis graph, pelvis badges, coaching use cases. Open on a second device while the dancer uses the solo view. |
+| [**Solo Dashboard — Technical Reference**](Documentation_english/solo_explanations.md) | Coaches / Developers | Architecture, sensor math, complementary filter, step detection algorithm, all metric formulas, threshold tables, firmware notes. |
+| [**Connection Dashboard — Explanations**](Documentation_english/explanations.md) | All | Explanation of the main dashboard metrics (connection force, jerk, foot graphs). |
+| [**Parts List**](Documentation_english/parts.md) | Builders | Bill of materials, wiring, and sourcing notes for building the hardware. |
 
 ---
 
