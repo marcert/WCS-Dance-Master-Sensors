@@ -72,6 +72,22 @@ volatile uint32_t errorStartTime = 0;
 // Web server on port 80
 WebServer server(80);
 
+// Web server Endpoint: Trigger hardware tare on scale sensor
+void handleTare() {
+    uint8_t tare_cmd = 0xA1;
+    uint8_t bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    esp_now_peer_info_t peerTemp;
+    memset(&peerTemp, 0, sizeof(peerTemp));
+    memcpy(peerTemp.peer_addr, bcast, 6);
+    peerTemp.channel = WiFi.channel();
+    peerTemp.encrypt = false;
+    if (!esp_now_is_peer_exist(bcast)) {
+        esp_now_add_peer(&peerTemp);
+    }
+    esp_now_send(bcast, &tare_cmd, 1);
+    server.send(200, "text/plain", "OK");
+}
+
 // Web server Endpoint: Send JSON data
 void handleData() {
   bool leftOk   = (millis() - lastSeenLeft   < SENSOR_TIMEOUT_MS);
@@ -122,49 +138,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
 #endif
 
       // --- DATA PROCESSING ---
-  if (len >= 12) { // Accept both 12-byte and 16-byte IMU packets
-    struct_imu_data footData;
-    memset(&footData, 0, sizeof(footData));
-    memcpy(&footData, data, std::min((size_t)len, sizeof(footData)));
-
-    bool isLeft = (footData.foot_id == 1);
-    float gyroVal  = fabsf(footData.gyro_x);
-    float accelVal = fabsf(footData.accel_z);
-
-    if (isLeft) {
-      leftGyro     = footData.gyro_x;
-      leftAccel    = footData.accel_z;
-      leftAccelY   = footData.accel_y;
-      leftGyroRoll = footData.gyro_roll;
-      leftAccelX   = footData.accel_x;
-      lastSeenLeft = millis();
-    } else if (footData.foot_id == 4) {
-      pelvicGyro   = footData.gyro_x;
-      pelvicAccel  = footData.accel_z;
-      pelvicAccelY = footData.accel_y;
-      pelvicYaw    = footData.gyro_roll; // gz — transverse rotation
-      pelvicAccelX = footData.accel_x;
-      lastSeenPelvic = millis();
-    } else {
-      rightGyro     = footData.gyro_x;
-      rightAccel    = footData.accel_z;
-      rightAccelY   = footData.accel_y;
-      rightGyroRoll = footData.gyro_roll;
-      rightAccelX   = footData.accel_x;
-      lastSeenRight = millis();
-    }
-
-        // WCS ERROR CONDITION (Stomping without roll-off)
-        if (accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
-          if (isLeft) {
-            currentError = (currentError == ERR_RIGHT) ? ERR_BOTH : ERR_LEFT;
-          } else {
-            currentError = (currentError == ERR_LEFT) ? ERR_BOTH : ERR_RIGHT;
-          }
-          errorStartTime = millis();
-        }
-  } 
-  else if (len == sizeof(struct_hand_data)) {
+  if (len == sizeof(struct_hand_data)) {
     struct_hand_data handData;
     memcpy(&handData, data, sizeof(handData));
 
@@ -189,11 +163,50 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     float accelJerk = sqrtf(dAx*dAx + dAy*dAy + dAz*dAz);
     float fuehrungshaerteRaw = (dWeight / 50.0f) + (accelJerk * 15.0f);
 
-        // Tone on Jerk (> 12.0)
     if (fuehrungshaerteRaw > 12.0) {
       isJerkAlert = true;
     } else {
       isJerkAlert = false;
+    }
+  } else if (len >= 12) {
+    struct_imu_data footData;
+    memset(&footData, 0, sizeof(footData));
+    memcpy(&footData, data, std::min((size_t)len, sizeof(footData)));
+
+    bool isLeft = (footData.foot_id == 1);
+    float gyroVal  = fabsf(footData.gyro_x);
+    float accelVal = fabsf(footData.accel_z);
+
+    if (isLeft) {
+      leftGyro     = footData.gyro_x;
+      leftAccel    = footData.accel_z;
+      leftAccelY   = footData.accel_y;
+      leftGyroRoll = footData.gyro_roll;
+      leftAccelX   = footData.accel_x;
+      lastSeenLeft = millis();
+    } else if (footData.foot_id == 4) {
+      pelvicGyro   = footData.gyro_x;
+      pelvicAccel  = footData.accel_z;
+      pelvicAccelY = footData.accel_y;
+      pelvicYaw    = footData.gyro_roll;
+      pelvicAccelX = footData.accel_x;
+      lastSeenPelvic = millis();
+    } else {
+      rightGyro     = footData.gyro_x;
+      rightAccel    = footData.accel_z;
+      rightAccelY   = footData.accel_y;
+      rightGyroRoll = footData.gyro_roll;
+      rightAccelX   = footData.accel_x;
+      lastSeenRight = millis();
+    }
+
+    if (accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
+      if (isLeft) {
+        currentError = (currentError == ERR_RIGHT) ? ERR_BOTH : ERR_LEFT;
+      } else {
+        currentError = (currentError == ERR_LEFT) ? ERR_BOTH : ERR_RIGHT;
+      }
+      errorStartTime = millis();
     }
   }
 
@@ -298,9 +311,10 @@ void setup() {
   delay(500);
 
     server.on("/", []() { server.send(200, "text/html", HTML_PAGE); });
-  server.on("/solo", []() { server.send(200, "text/html", HTML_SOLO_PAGE); });
-  server.on("/data", handleData);
-  server.begin();
+    server.on("/solo", []() { server.send(200, "text/html", HTML_SOLO_PAGE); });
+    server.on("/data", handleData);
+    server.on("/tare", handleTare);
+    server.begin();
   
   M5.Display.fillScreen(BLACK);
 }
