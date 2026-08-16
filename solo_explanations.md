@@ -275,9 +275,10 @@ The Solo Training Dashboard is optimized for mobile browser use (tablets/smartph
 
 ## 6. Dancer's Training Guide
 
-> **This chapter has been extracted into a standalone file: [`dancer_guide.md`](dancer_guide.md)**
+> **This chapter has been extracted into a standalone file: [`dancer_guide_solo.md`](dancer_guide_solo.md)**
 >
 > The dancer guide is self-contained — dancers can open it directly without reading the technical sections of this document. It covers dashboard layout, the level selector (BEG / INT / ADV), all badge cards, skill-level training progressions, and a common-problems reference.
+> For the partner/coach view see [`dancer_guide_partner.md`](dancer_guide_partner.md).
 >
 > The abbreviated section below is kept for quick cross-reference within this document.
 

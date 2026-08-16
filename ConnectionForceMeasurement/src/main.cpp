@@ -35,10 +35,11 @@ uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 // Status-Variablen für Handshake
 volatile bool masterAckReceived = false;
 volatile uint8_t masterConfirmedChannel = 0;
-volatile uint32_t lastMasterAckTime = 0; // Zeitstempel der letzten Master-Antwort
-const uint32_t MASTER_TIMEOUT_MS = 3000;   // Nach 3s ohne ACK gilt der Master als offline
+volatile uint32_t lastMasterAckTime = 0;
+const uint32_t MASTER_TIMEOUT_MS = 3000;
 
-volatile bool pendingUIUpdate = false; // Flag für entkoppeltes UI-Update
+volatile bool pendingUIUpdate = false;
+volatile bool pendingTare = false;
 
 uint8_t currentChannel = 1;
 bool masterConnected = false;
@@ -126,15 +127,16 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
     if (ack.confirmed == 1) {
       masterConfirmedChannel = ack.master_channel;
       masterAckReceived = true;
-      lastMasterAckTime = millis(); // Zeitstempel aktualisieren
+      lastMasterAckTime = millis();
 
-      // Wenn wir noch nicht connected waren, setzen wir nur das Flag und zeichnen das UI in loop()!
       if (!masterConnected) {
         masterConnected = true;
         currentChannel = (ack.master_channel > 0) ? ack.master_channel : currentChannel;
         pendingUIUpdate = true;
       }
     }
+  } else if (len == 1 && data[0] == 0xA1) {
+    pendingTare = true;
   }
 }
 
@@ -240,6 +242,24 @@ void loop() {
   if (pendingUIUpdate) {
     pendingUIUpdate = false;
     drawConnectionStatus();
+  }
+
+  if (pendingTare) {
+    pendingTare = false;
+    lastMasterAckTime = millis();
+    M5.Display.fillRect(0, 0, 240, 25, BLACK);
+    M5.Display.setTextColor(WHITE, BLACK);
+    M5.Display.drawString("TARE...", 10, 5);
+    if (scale.is_ready()) scale.read();
+    if (scale.is_ready()) scale.read();
+    long zero_offset = scale.read_average(5);
+    scale.set_offset(zero_offset);
+    lastSentWeight = -9999.0f;
+    lastMasterAckTime = millis();
+    M5.Display.fillRect(0, 0, 240, 25, BLACK);
+    M5.Display.drawString("TARE OK!", 10, 5);
+    delay(500);
+    M5.Display.fillRect(0, 0, 240, 25, BLACK);
   }
 
   // --- BUTTON B: AUSSCHALTEN PER LONG-PRESS ---

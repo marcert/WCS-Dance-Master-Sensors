@@ -62,23 +62,23 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         }
 
         .action-btn {
-            background-color: rgba(34, 34, 34, 0.6); 
+            background-color: rgba(34, 34, 34, 0.35);
             color: #fff;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            padding: 6px 10px;
-            font-size: 3vw;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 4px 8px;
+            font-size: 2.5vw;
             font-family: 'Arial Black', sans-serif;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px); 
+            -webkit-backdrop-filter: blur(4px);
         }
-        
-        #cam-btn { background-color: rgba(0, 122, 255, 0.6); }
-        #flip-btn { background-color: rgba(255, 149, 0, 0.6); display: none; }
-        #full-btn { background-color: rgba(80, 80, 80, 0.6); }
-        #rec-btn { background-color: rgba(220, 20, 60, 0.6); }
+
+        #cam-btn { background-color: rgba(0, 122, 255, 0.35); }
+        #flip-btn { background-color: rgba(255, 149, 0, 0.35); display: none; }
+        #full-btn { background-color: rgba(80, 80, 80, 0.35); }
+        #rec-btn { background-color: rgba(220, 20, 60, 0.35); }
 
         #freeze-btn.frozen {
             background-color: rgba(255, 59, 48, 0.8);
@@ -98,7 +98,8 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             background-color: rgba(0, 0, 0, 0.4);
             border: 2px solid rgba(255, 255, 255, 0.2);
             width: 100%;
-            height: 100%;
+            flex: 1 1 0;
+            min-height: 0;
             display: block;
             border-radius: 8px;
         }
@@ -124,7 +125,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         .p-red    { background: rgba(60,15,15,0.9)  !important; color: #ef5350 !important; }
         .p-blue   { background: rgba(10,20,70,0.9)  !important; color: #42a5f5 !important; }
         .p-purple { background: rgba(40,10,70,0.9)  !important; color: #ba68c8 !important; }
-        #zero-btn { background-color: rgba(100,100,30,0.6); }
+        #zero-btn { background-color: rgba(100,100,30,0.35); }
     </style>
 </head>
 <body>
@@ -138,13 +139,13 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <button id="flip-btn" class="action-btn" onclick="flipCamera()">FLIP CAM</button>
             <button id="full-btn" class="action-btn" onclick="toggleFullscreen()">FULL</button>
             <button id="freeze-btn" class="action-btn" onclick="toggleFreeze()">FREEZE</button>
-            <button id="zero-btn" class="action-btn" onclick="tareFootOffsets()">ZERO</button>
+            <button id="zero-btn" class="action-btn" onclick="onZeroBtn()">ZERO</button>
             <button id="rec-btn" class="action-btn" onclick="toggleRecording()">REC START</button>
         </div>
     </div>
 
     <div class="graph-container">
-        <div class="label">Connection Force (-3.5 kg to +3.5 kg)</div>
+        <div class="label">Connection Force (-4.0 kg to +4.0 kg)</div>
         <canvas id="graph_kraft" width="1000" height="250"></canvas>
     </div>
 
@@ -159,11 +160,13 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     </div>
 
     <div class="status-bar" id="statusBar">
-        <span style="font-size:min(3vw,13px);color:#aaa;">STEP:</span>
-        <span id="p-dirBadge"    class="p-badge">—</span>
-        <span id="p-angleVal"    style="font-size:min(3vw,13px);color:#ddd;">—</span>
-        <span id="p-strikeBadge" class="p-badge">—</span>
-        <div id="pelvisInfoDiv" style="display:none;flex-wrap:wrap;align-items:center;gap:5px 10px;">
+        <div style="width:100%;display:flex;align-items:center;gap:5px 10px;">
+            <span style="font-size:min(3vw,13px);color:#aaa;">STEP:</span>
+            <span id="p-dirBadge"    class="p-badge">—</span>
+            <span id="p-angleVal"    style="font-size:min(3vw,13px);color:#ddd;">—</span>
+            <span id="p-strikeBadge" class="p-badge">—</span>
+        </div>
+        <div id="pelvisInfoDiv" style="visibility:hidden;width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;">
             <span style="font-size:min(2.8vw,12px);color:#ba68c8;font-weight:bold;">PELVIS:</span>
             <span id="p-hipActBadge"   class="p-badge">— HIP</span>
             <span id="p-slotBadge"     class="p-badge">— LAT</span>
@@ -449,6 +452,11 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             });
     }
 
+    function onZeroBtn() {
+        fetch('/tare').catch(() => {});
+        tareFootOffsets();
+    }
+
     function tareFootOffsets() {
         leftMountOffset  = lastAccelAngleL;
         rightMountOffset = lastAccelAngleR;
@@ -478,7 +486,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             currentAy += (targetAy - currentAy) * 0.4;
             currentAz += (targetAz - currentAz) * 0.4;
 
-            let y_kraft = 125 - (currentW / 3500) * 125;
+            let y_kraft = 125 - (currentW / 4000) * 125;
             y_kraft = Math.max(0, Math.min(250, y_kraft));
             kraftPoints.shift(); kraftPoints.push(y_kraft);
 
@@ -658,7 +666,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         // === PELVIS METRICS (all 5 — same thresholds as solo.h, no level gating) ===
         let gYawP_p = targetPYaw, aZP_p = -targetPAy, aYP_p = targetPAx, aXP_p = targetPA;
         if (targetPOk) {
-            document.getElementById('pelvisInfoDiv').style.display = 'flex';
+            document.getElementById('pelvisInfoDiv').style.visibility = 'visible';
             // Hip Activation — rolling max of |gYawP| over 500ms, IIR-smoothed
             gYawAbsHistory.shift(); gYawAbsHistory.push(Math.abs(gYawP_p));
             let gYawPeak = Math.max(...gYawAbsHistory);
@@ -722,7 +730,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 }
             }
         } else {
-            document.getElementById('pelvisInfoDiv').style.display = 'none';
+            document.getElementById('pelvisInfoDiv').style.visibility = 'hidden';
             anchorSettleActive = false;
         }
 
