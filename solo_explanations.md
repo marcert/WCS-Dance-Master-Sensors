@@ -233,6 +233,12 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Weight Transfer — Progressive** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Green) | None |
 | **Weight Transfer — Instant** | $-0.08 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Yellow) | None |
 | **Weight Transfer — Early Unload** | loadRise $< -0.08\,g$ | `EARLY UNLOAD` (Yellow) | None |
+| **Delay Ramp — FWD delayed** | ratio 0.12–0.38 (FWD) | `DELAYED ✓` (Green) | None |
+| **Delay Ramp — FWD quick** | ratio $< 0.12$ (FWD) | `QUICK` (Yellow) | None |
+| **Delay Ramp — FWD late** | ratio $> 0.38$ (FWD) | `LATE` (Yellow) | ADV only |
+| **Delay Ramp — BWD delayed** | ratio 0.18–0.50 (BWD) | `DELAYED ✓` (Green) | None |
+| **Delay Ramp — BWD quick** | ratio $< 0.18$ (BWD) | `QUICK` (Yellow) | None |
+| **Delay Ramp — BWD late** | ratio $> 0.50$ (BWD) | `LATE` (Yellow) | ADV only |
 | **Rigid Lever** | pronation $> 8°/\text{s}$ AND sign reversal in 200 ms | `RIGID LEVER` (Green) | None |
 | **Ankle Shock Absorption** | rollIntegral $> 4°$ (no reversal) | `ANKLE FLEX` (Green) | None |
 | **Ankle Stiffness** | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | None |
@@ -350,6 +356,9 @@ These three badges appear below the Jerk bar and update together after each step
 | `SMOOTH LOAD` ✅ | Weight transferred progressively onto the landing foot | Good joint mechanics — keep it |
 | `INSTANT LOAD` ⚠️ | Full weight dropped onto the landing foot immediately at impact | Slow the COM down; think of "receiving" the floor rather than landing on it |
 | `EARLY UNLOAD` ⚠️ | Weight already shifting away before the landing foot is settled | You are rushing to the next step. Complete the current weight investment before moving |
+| `DELAYED ✓` ✅ | Weight committed 12–38% (FWD) or 18–50% (BWD) of beat after contact | WCS-characteristic hover — the body arrives after the foot |
+| `QUICK` ⚠️ | Weight committed in < 12% (FWD) or < 18% (BWD) of the beat interval | Immediate weight drop — mechanical, no musical "breath" in the transfer |
+| `LATE` ⚠️ | Weight committed in > 38% (FWD) or > 50% (BWD) of the beat interval | Over-hovering — weight never fully arrived (ADV only) |
 | `ANKLE FLEX` ✅ | Ankle rolling through impact (pronation impulse detected) | Good shock absorption — ankle acting as natural spring |
 | `MODERATE ROLL` ⚠️ | Some ankle mobility, could be more | Consciously relax the ankle at landing; avoid bracing the foot rigid |
 | `STIFF ANKLE` ⚠️ | Minimal ankle roll — impact transmitted directly up the chain | Focus on landing with a soft, unlocked ankle. Over time this reduces knee and hip load |

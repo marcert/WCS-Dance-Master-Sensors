@@ -122,7 +122,8 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 | **⬅ BWD L / R** | Backward step, left or right foot |
 | **↔ FLAT L / R** | Ambiguous landing — too flat to classify direction |
 | **θ angle** | Foot pitch at landing (positive = heel up, negative = toe down) |
-| **Strike badge** | See table below |
+| **Strike badge** | Classification of the landing — see table below |
+| **Delay badge** | Tempo-normalised weight transfer timing — see table below |
 
 ### Strike badge reference
 
@@ -140,9 +141,24 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 > 📷 **Screenshot placeholder — status bar: step badges**  
 > *(Replace with: close-up of the status bar row showing e.g. `⬅ BWD R  −7°  OPTIMAL TOE` with the pelvis row hidden)*
 
----
+### Delay badge reference
 
-## 6. Pelvis Badges (Status Bar — appears when sensor is online)
+The delay badge measures how quickly weight was committed after foot contact, expressed as a fraction of the step interval — so it is **automatically scaled to the music tempo**. A slow song and a fast song will show the same badge for the same quality of movement.
+
+Thresholds differ by direction because a backward (toe-first) landing naturally requires more settling time than a forward (heel-first) one.
+
+| Badge | Forward step | Backward step | Assessment |
+| :--- | :--- | :--- | :--- |
+| `DELAYED ✓` ✅ | 12–38% of beat | 18–50% of beat | Characteristic WCS "hover" — weight arrives after the foot |
+| `QUICK` ⚠️ | < 12% | < 18% | Weight committed immediately at impact — mechanical, not musical |
+| `LATE` ⚠️ | > 38% | > 50% | Weight never fully arrived — floating or incomplete transfer |
+
+> **Coaching tip:** `QUICK` on every anchor step is the most common finding at Newcomer/Intermediate level. The dancer steps back but immediately drops their weight, losing the stretch in the connection. Watch for `QUICK` in the status bar and cue: *"Step back and breathe before you land."*
+
+> 📷 **Screenshot placeholder — delay badge: DELAYED ✓ on anchor**
+> *(Replace with: status bar showing `⬅ BWD R  −12°  OPTIMAL TOE  DELAYED ✓` — all green, good technique)*
+
+--- (Status Bar — appears when sensor is online)
 
 All five pelvis metrics are shown simultaneously when the pelvis sensor is active — there is no level selector on the partner view.
 

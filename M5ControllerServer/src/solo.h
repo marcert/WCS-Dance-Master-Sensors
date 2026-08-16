@@ -385,6 +385,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         <span id="powerBadge" class="badge" style="background:#1e272e; color:#8b949e;">— PUSH-OFF</span>
                         <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
                         <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
+                        <span id="delayBadge" class="badge" style="background:#1e272e; color:#8b949e;">— DELAY</span>
                     </div>
                     <div id="debugRow" style="display:none; margin-top:5px; border-top:1px solid #2a2a3a; padding-top:4px; font-family:monospace; font-size:11px; color:#666;">
                         <span>dθ&nbsp;<strong id="dbgDirVal" style="color:#aaa;">—</strong>&nbsp;<span id="dbgDirSrc" style="color:#666;">[θ]</span></span>
@@ -514,6 +515,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let currentStepOverlap = 0;
         let lastStepTimestamp = Date.now();
         let stepDurationMs = 500; // Standard 500ms ~= 120 BPM
+        // -- delay ramp monitor (tempo-normalised weight transfer timing) --
+        let delayMonActive = false, delayMonFoot = null, delayMonDir = null;
+        let delayMonStartTime = 0, delayMonConsec = 0;
 
                 function tareFootAngles() {
                     // Use the live accel-snapshot angle (not the CF angle) so the offset is
@@ -1009,6 +1013,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         let rBadge = document.getElementById('rollBadge');
                         if (lBadge) { lBadge.className = "badge"; lBadge.style.cssText = "background:#1e272e;color:#8b949e;"; lBadge.innerText = "— LOADING"; }
                         if (rBadge) { rBadge.className = "badge"; rBadge.style.cssText = "background:#1e272e;color:#8b949e;"; rBadge.innerText = "— ANKLE ROLL"; }
+                        // Start delay ramp monitor
+                        delayMonActive = true; delayMonFoot = activeFoot; delayMonDir = activeDirection;
+                        delayMonStartTime = now; delayMonConsec = 0;
+                        let dBadge = document.getElementById('delayBadge');
+                        if (dBadge) { dBadge.className = "badge"; dBadge.style.cssText = "background:#1e272e;color:#8b949e;"; dBadge.innerText = "— DELAY"; }
                     
                         // Dynamic Tempo-Adaptive Doppelstand-Ratio (%)
                         let stanceRatio = Math.round((currentStepOverlap / currentStepDuration) * 100);
@@ -1081,7 +1090,37 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
                     }
 
-                    // C. Brush+Heel reclassification — 200 ms window after flat/ambiguous forward contact
+                    // C. Delay Ramp — tempo-normalised weight transfer timing
+                    if (delayMonActive) {
+                        let monAz = delayMonFoot === "L" ? aZL : aZR;
+                        let monGy = delayMonFoot === "L" ? gPitchL : gPitchR;
+                        if (Math.abs(monAz - 1.0) < 0.08 && Math.abs(monGy) < 15) {
+                            delayMonConsec++;
+                        } else {
+                            delayMonConsec = 0;
+                        }
+                        let elapsed = now - delayMonStartTime;
+                        if (delayMonConsec >= 2 || elapsed >= 500) {
+                            delayMonActive = false;
+                            let rampMs   = delayMonConsec >= 2 ? elapsed : 500;
+                            let ratio    = rampMs / stepDurationMs;
+                            let isFwd    = (delayMonDir === "FORWARD");
+                            let quickThr = isFwd ? 0.12 : 0.18;
+                            let lateThr  = isFwd ? 0.38 : 0.50;
+                            let dBadge = document.getElementById('delayBadge');
+                            if (dBadge) {
+                                if (ratio < quickThr) {
+                                    dBadge.className = "badge badge-yellow"; dBadge.style.cssText = ""; dBadge.innerText = "QUICK";
+                                } else if (currentLevel === 'intermediate' || ratio <= lateThr) {
+                                    dBadge.className = "badge badge-green";  dBadge.style.cssText = ""; dBadge.innerText = "DELAYED ✓";
+                                } else {
+                                    dBadge.className = "badge badge-yellow"; dBadge.style.cssText = ""; dBadge.innerText = "LATE";
+                                }
+                            }
+                        }
+                    }
+
+                    // D. Brush+Heel reclassification — 200 ms window after flat/ambiguous forward contact
                     // If a second aZ peak (>1.05g) with positive accel angle (>8°) is detected on the
                     // same foot, the initial flat contact was the brush phase → reclassify to BRUSH+HEEL.
                     if (brushPending) {

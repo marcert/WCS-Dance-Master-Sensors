@@ -165,6 +165,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <span id="p-dirBadge"    class="p-badge">—</span>
             <span id="p-angleVal"    style="font-size:min(3vw,13px);color:#ddd;">—</span>
             <span id="p-strikeBadge" class="p-badge">—</span>
+            <span id="p-loadBadge"   class="p-badge">—</span>
         </div>
         <div id="pelvisInfoDiv" style="visibility:hidden;width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;">
             <span style="font-size:min(2.8vw,12px);color:#ba68c8;font-weight:bold;">PELVIS:</span>
@@ -382,6 +383,9 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let lastActiveFoot = "", stepDurationMs = 500, lastStepTimestamp = 0;
     let thetaBufferL = [], thetaBufferR = [];
     let prevAzLeft = 1.0, prevAzRight = 1.0;
+    // -- delay ramp monitor (tempo-normalised weight transfer timing) --
+    let delayMonActive = false, delayMonFoot = null, delayMonDir = null;
+    let delayMonStartTime = 0, delayMonConsec = 0;
 
     // -- pelvis state (identical to solo.h) --
     let gYawAbsHistory = new Array(25).fill(0);
@@ -660,8 +664,39 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                     else                        { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL SPIKE'; }
                 } else { strEl.className='p-badge p-red'; strEl.innerText='FLAT-FOOT!'; }
             }
+            // Start delay ramp monitor
+            delayMonActive = true; delayMonFoot = detFoot; delayMonDir = activeDir;
+            delayMonStartTime = now; delayMonConsec = 0;
+            let dlEl = document.getElementById('p-loadBadge');
+            if (dlEl) { dlEl.className='p-badge'; dlEl.innerText='…'; }
         }
         prevAzLeft = aZL_s; prevAzRight = aZR_s;
+
+        // === DELAY RAMP MONITOR — tempo-normalised weight transfer timing ===
+        if (delayMonActive) {
+            let monAz = delayMonFoot === "L" ? aZL_s : aZR_s;
+            let monGy = delayMonFoot === "L" ? gPitchL_s : gPitchR_s;
+            if (Math.abs(monAz - 1.0) < 0.08 && Math.abs(monGy) < 15) {
+                delayMonConsec++;
+            } else {
+                delayMonConsec = 0;
+            }
+            let elapsed = now - delayMonStartTime;
+            if (delayMonConsec >= 2 || elapsed >= 500) {
+                delayMonActive = false;
+                let rampMs   = delayMonConsec >= 2 ? elapsed : 500;
+                let ratio    = rampMs / stepDurationMs;
+                let isFwd    = (delayMonDir === "FORWARD");
+                let quickThr = isFwd ? 0.12 : 0.18;
+                let lateThr  = isFwd ? 0.38 : 0.50;
+                let dlEl = document.getElementById('p-loadBadge');
+                if (dlEl) {
+                    if      (ratio < quickThr) { dlEl.className='p-badge p-yellow'; dlEl.innerText='QUICK'; }
+                    else if (ratio <= lateThr) { dlEl.className='p-badge p-green';  dlEl.innerText='DELAYED ✓'; }
+                    else                       { dlEl.className='p-badge p-yellow'; dlEl.innerText='LATE'; }
+                }
+            }
+        }
 
         // === PELVIS METRICS (all 5 — same thresholds as solo.h, no level gating) ===
         let gYawP_p = targetPYaw, aZP_p = -targetPAy, aYP_p = targetPAx, aXP_p = targetPA;

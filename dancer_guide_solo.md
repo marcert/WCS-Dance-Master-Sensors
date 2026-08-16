@@ -86,7 +86,8 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 | **Strike badge** (large coloured label) | Classification of that landing — see tables below |
 | **Jerk bar** | Rate of impact force — how hard your foot hit the floor |
 | **PUSH-OFF badge** | Push-off power of your trailing foot (Beginner: hidden) |
-| **LOADING badge** | How smoothly you transferred weight onto the landing foot (Advanced only) |
+| **LOADING badge** | How smoothly (gradient) weight loaded onto the landing foot — see section below (Advanced only) |
+| **DELAY badge** | How quickly weight committed relative to the beat tempo — see section below (Intermediate + Advanced) |
 | **ANKLE ROLL badge** | Ankle shock absorption at landing (Advanced only) |
 
 ### How direction is determined
@@ -151,6 +152,24 @@ These three badges appear below the Jerk bar and update after each step. Visible
 | `SMOOTH LOAD` ✅ | Weight transferred progressively onto the landing foot | Good joint mechanics — keep it |
 | `INSTANT LOAD` ⚠️ | Full weight dropped at impact | Slow the COM; think of "receiving" the floor rather than landing on it |
 | `EARLY UNLOAD` ⚠️ | Weight shifting away before foot is settled | You are rushing to the next step. Complete the current weight investment before moving |
+
+### Delay badge (INT + ADV)
+
+Measures how quickly you committed your weight after foot contact, expressed as a **fraction of your current step interval** — so it adjusts automatically to the music tempo. The same physical movement reads identically at 90 BPM and 160 BPM.
+
+Thresholds differ by direction: a backward (toe-first) step naturally needs more settling time than a forward (heel-first) one.
+
+| Badge | Forward step | Backward step | What it means |
+| :--- | :--- | :--- | :--- |
+| `DELAYED ✓` ✅ | 12–38% of beat | 18–50% of beat | WCS-characteristic hover — weight arrives after the foot contacts |
+| `QUICK` ⚠️ | < 12% | < 18% | Weight dropped immediately at contact — mechanical, not musical |
+| `LATE` ⚠️ | > 38% | > 50% | Weight never fully committed — floating or incomplete transfer (ADV only) |
+
+At **INT** level only `DELAYED ✓` / `QUICK` are shown — every delayed transfer is already progress. `LATE` is added at **ADV** level where over-hovering also becomes a problem.
+
+> The **LOADING badge** (`SMOOTH LOAD` / `INSTANT LOAD`) and the **DELAY badge** answer different questions:
+> - LOADING: *Was the ramp gradual?* (quality of how you arrived)
+> - DELAY: *Did you arrive in time?* (timing relative to the beat)
 
 ### Ankle Roll badge (ADV only)
 
@@ -321,6 +340,7 @@ These three components are combined into a 0–100 score displayed in the badge.
 2. Backward walks → aim for `OPTIMAL TOE`. ↔️ FLAT on a backward step means the foot is landing too flat.
 3. Watch the **POWER PUSH badge**: is your trailing leg passive?
 4. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triple steps.
+5. Watch the new **DELAY badge**: aim for `DELAYED ✓` on anchor steps. Consistent `QUICK` means you are dropping weight immediately — no musical breath in the connection.
 
 **With pelvis sensor:** Add **Lateral Stability**, **Hip-Foot Coupling**, and **Vertical Bounce**. The single most valuable metric at this level is Hip-Foot Coupling — consistent `HIP LAGS` means you are walking with your feet, not your body.
 
@@ -329,9 +349,10 @@ These three components are combined into a 0–100 score displayed in the badge.
 **Full biomechanical feedback loop.**
 
 1. Use **SMOOTH LOAD vs INSTANT LOAD** to fine-tune weight reception — especially on syncopated patterns.
-2. Compare **ASI** between left and right over a full practice session. A consistently worse side points to a compensation pattern.
-3. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — ankle stiffness increases as muscles tire.
-4. Film with `📷 CAM` and replay during pauses.
+2. Cross-read **DELAY badge** with **SMOOTH LOAD**: `DELAYED ✓` + `SMOOTH LOAD` is the ideal combination — both the timing and the ramp quality are right. `DELAYED ✓` + `INSTANT LOAD` means you waited but then dropped; `QUICK` + `SMOOTH LOAD` means the gradient was good but the hover was too short.
+3. Compare **ASI** between left and right over a full practice session. A consistently worse side points to a compensation pattern.
+4. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — ankle stiffness increases as muscles tire.
+5. Film with `📷 CAM` and replay during pauses.
 5. Use the **Roll-off Dynamics graph** to compare peak gyro values between feet.
 
 **With pelvis sensor:** Focus on **Anchor Settle** as your anchor quality KPI. Run a full 8-count basic and check the score after each anchor step.
@@ -350,6 +371,8 @@ These three components are combined into a 0–100 score displayed in the badge.
 | `ASYMMETRIC` ASI | One foot stiffer or less articulated | Identify which foot and drill that foot in isolation. |
 | `— PUSH-OFF` (no badge) | Trailing leg passive | "Push the floor, don't just lift the foot." |
 | `INSTANT LOAD` on anchors | Dropping weight abruptly | "Melt into the anchor" rather than "land on it". |
+| `QUICK` on anchor steps | No hover before weight commitment | "Step back, breathe, then settle." Cue a deliberate pause between foot contact and weight arrival. |
+| `LATE` on forward walks | Weight never fully arriving | Trust the transfer — commit fully before initiating the next step. |
 | `STIFF HIPS` constantly | Legs moving without core engagement | Start each step with a deliberate hip rotation impulse before the foot moves. |
 | `LATERAL SWAY` continuously | Hip hike or lateral pelvis push | Keep the pelvis level; check for asymmetric weight distribution. |
 | `HIP LAGS` on every step | Legs and core disconnected | Slow to very slow tempo. Initiate hip rotation, then let the foot follow. |
