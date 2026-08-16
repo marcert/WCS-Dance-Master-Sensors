@@ -86,8 +86,8 @@ Dies ist die **primäre Echtzeit-Feedback-Karte**. Sie wird bei jedem erkannten 
 | **Strike-Badge** (großes farbiges Label) | Klassifizierung dieser Landung — siehe Tabellen unten |
 | **Jerk-Leiste** | Aufprallkraftrate — wie hart dein Fuß den Boden getroffen hat |
 | **PUSH-OFF-Badge** | Push-off-Kraft deines hinteren Fußes (Anfänger: ausgeblendet) |
-| **LOADING-Badge** | Wie gleichmäßig (Gradient) das Gewicht auf den Landefuß geladen wurde — siehe Abschnitt unten (nur Experte) |
-| **DELAY-Badge** | Wie schnell das Gewicht relativ zum Beat-Tempo übertragen wurde — siehe Abschnitt unten (Fortgeschritten + Experte) |
+| **LOADING-Badge** | Wie gleichmäßig (Gradient) das Gewicht auf den Landefuß geladen wurde — [siehe Abschnitt unten](#lade-badge-nur-adv) (nur Experte) |
+| **DELAY-Badge** | Wie schnell das Gewicht relativ zum Beat-Tempo übertragen wurde — [siehe Abschnitt unten](#verzögerungs-badge-int--adv) (Fortgeschritten + Experte) |
 | **ANKLE ROLL-Badge** | Sprunggelenksdämpfung beim Aufsetzen (nur Experte) |
 
 ### Wie die Richtung bestimmt wird
