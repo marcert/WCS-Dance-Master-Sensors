@@ -179,6 +179,24 @@ For full descriptions of each badge see [dancer_guide_solo.md — Section 8](dan
 
 ---
 
+## 6. Audio Alerts
+
+The partner dashboard plays synthesised tones when critical technique errors are detected — so the coach does not need to watch the screen while observing the dancer directly.
+
+Tap **`🔇 Audio: OFF`** in the header to enable alerts. Tap again to mute.
+
+| Event | Tone | Condition |
+| :--- | :--- | :--- |
+| **`FLAT-FOOT!`** | 1200 Hz click (80 ms) | Flat or toe-first landing on a forward step |
+| **`HEEL LANDING!`** | 1200 Hz click (80 ms) | Definitive heel-first contact on a backward step |
+| **`LATERAL SWAY`** | 400 Hz sustained (250 ms) | Pelvis lateral variance exceeds threshold — fires once on entry into error state |
+| **`BOUNCY`** | 600 Hz double click | Vertical oscillation variance too high — fires once on entry into error state |
+| **`UNSTABLE` anchor** | 800 → 350 Hz descending sweep (300 ms) | Anchor settle score < 30 after each backward step |
+
+> **Transition-based alerts:** `LATERAL SWAY` and `BOUNCY` fire only when the badge first enters the red state — not on every frame. The alert re-arms once the badge returns to yellow or green.
+
+---
+
 ## 7. Buttons
 
 | Button | Function |
@@ -187,6 +205,7 @@ For full descriptions of each badge see [dancer_guide_solo.md — Section 8](dan
 | **EXIT** | Exits fullscreen mode |
 | **FREEZE** | Pauses both graphs for inspection — useful for discussing a moment after a run |
 | **ZERO** | Tares foot angle offsets (resets the direction/angle baseline) AND triggers hardware tare on the force scale. Tap while the dancer stands in neutral stance. |
+| **🔇 Audio: OFF / 🔊 Audio: ON** | Toggles synthesised audio alerts for technique errors — see [Section 6](#6-audio-alerts) |
 | **REC START / STOP** | Records the full screen (graphs + camera overlay + audio) to a `.webm` file downloaded automatically on stop |
 
 ---

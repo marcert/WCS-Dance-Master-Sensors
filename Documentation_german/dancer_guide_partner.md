@@ -162,7 +162,7 @@ Die Schwellenwerte unterscheiden sich je nach Richtung, da eine Rückwärtslandu
 
 Alle fünf Becken-Metriken werden gleichzeitig angezeigt, wenn der Becken-Sensor aktiv ist — es gibt keine Stufenauswahl in der Partner-Ansicht.
 
-Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.md — Abschnitt 8](dancer_guide_solo.md#8-the-pelvis-card-optional-sensor) zu finden.
+Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.md — Abschnitt 8](dancer_guide_solo.md#8-die-beckenkarte-optionaler-sensor) zu finden.
 
 ### Kurzübersicht
 
@@ -179,6 +179,24 @@ Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.
 
 ---
 
+## 6. Akustische Alarme
+
+Das Partner-Dashboard gibt synthetische Töne aus, wenn kritische Technikfehler erkannt werden — so muss der Coach nicht auf den Bildschirm schauen, während er den Tänzer direkt beobachtet.
+
+**`🔇 Audio: OFF`** in der Kopfleiste antippen, um Alarme zu aktivieren. Erneutes Tippen stummt die Ausgabe.
+
+| Ereignis | Ton | Bedingung |
+| :--- | :--- | :--- |
+| **`FLAT-FOOT!`** | 1200-Hz-Klick (80 ms) | Flache oder Zehenerstkontakt-Landung bei einem Vorwärtsschritt |
+| **`HEEL LANDING!`** | 1200-Hz-Klick (80 ms) | Eindeutiger Fersenerstkontakt bei einem Rückwärtsschritt |
+| **`LATERAL SWAY`** | 400-Hz-Ton, gehalten (250 ms) | Laterale Beckenvarianz überschreitet Schwellenwert — feuert einmalig beim Eintritt in den Fehlerzustand |
+| **`BOUNCY`** | 600-Hz-Doppelklick | Vertikale Schwingungsvarianz zu hoch — feuert einmalig beim Eintritt in den Fehlerzustand |
+| **`UNSTABLE`-Anker** | 800 → 350-Hz-Absteigsweep (300 ms) | Anchor-Settle-Score < 30 nach jedem Rückwärtsschritt |
+
+> **Zustandsübergangsbasierte Alarme:** `LATERAL SWAY` und `BOUNCY` feuern nur einmal, wenn das Badge erstmals rot wird — nicht bei jedem Frame. Der Alarm wird zurückgesetzt, sobald das Badge wieder gelb oder grün wird.
+
+---
+
 ## 7. Schaltflächen
 
 | Schaltfläche | Funktion |
@@ -187,6 +205,7 @@ Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.
 | **EXIT** | Beendet den Vollbildmodus |
 | **FREEZE** | Pausiert beide Diagramme zur Inspektion — nützlich, um einen Moment nach einem Durchlauf zu besprechen |
 | **ZERO** | Tariert Fußwinkel-Offsets (setzt die Richtungs-/Winkel-Basislinie zurück) UND löst Hardware-Tarierung der Kraftwaage aus. Tippen, während der Tänzer in neutraler Haltung steht. |
+| **🔇 Audio: OFF / 🔊 Audio: ON** | Schaltet synthetische Akustik-Alarme für Technikfehler EIN/AUS — siehe [Abschnitt 6](#6-akustische-alarme) |
 | **REC START / STOP** | Nimmt den vollständigen Bildschirm auf (Diagramme + Kamera-Einblendung + Audio) und speichert ihn als `.webm`-Datei, die beim Stoppen automatisch heruntergeladen wird |
 
 ---

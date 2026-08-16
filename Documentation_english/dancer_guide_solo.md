@@ -86,8 +86,8 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 | **Strike badge** (large coloured label) | Classification of that landing — see tables below |
 | **Jerk bar** | Rate of impact force — how hard your foot hit the floor |
 | **PUSH-OFF badge** | Push-off power of your trailing foot (Beginner: hidden) |
-| **LOADING badge** | How smoothly (gradient) weight loaded onto the landing foot — see section below (Advanced only) |
-| **DELAY badge** | How quickly weight committed relative to the beat tempo — see section below (Intermediate + Advanced) |
+| **LOADING badge** | How smoothly (gradient) weight loaded onto the landing foot — [see section below](#loading-badge-adv-only) (Advanced only) |
+| **DELAY badge** | How quickly weight committed relative to the beat tempo — [see section below](#delay-badge-int--adv) (Intermediate + Advanced) |
 | **ANKLE ROLL badge** | Ankle shock absorption at landing (Advanced only) |
 
 ### How direction is determined

@@ -65,8 +65,8 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             background-color: rgba(34, 34, 34, 0.35);
             color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 4px 8px;
-            font-size: 2.5vw;
+            padding: 6px 12px;
+            font-size: min(3.5vw, 14px);
             font-family: 'Arial Black', sans-serif;
             font-weight: bold;
             border-radius: 8px;
@@ -140,6 +140,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <button id="full-btn" class="action-btn" onclick="toggleFullscreen()">FULL</button>
             <button id="freeze-btn" class="action-btn" onclick="toggleFreeze()">FREEZE</button>
             <button id="zero-btn" class="action-btn" onclick="onZeroBtn()">ZERO</button>
+            <button id="p-audioBtn" class="action-btn" onclick="togglePartnerAudio()">🔇 Audio: OFF</button>
             <button id="rec-btn" class="action-btn" onclick="toggleRecording()">REC START</button>
         </div>
     </div>
@@ -395,6 +396,41 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let hipActSmoothed = 0;
     let anchorSettleActive = false, anchorSettleStartTime = 0;
     let anchorSettleSamples = { aYP: [], gYawP: [] };
+
+    // -- audio --
+    let audioCtxP = null, audioEnabledP = false;
+    let prevLatBadge = '', prevBncBadge = '';
+
+    function togglePartnerAudio() {
+        if (!audioCtxP) audioCtxP = new (window.AudioContext || window.webkitAudioContext)();
+        audioEnabledP = !audioEnabledP;
+        document.getElementById('p-audioBtn').innerText = audioEnabledP ? '🔊 Audio: ON' : '🔇 Audio: OFF';
+    }
+
+    function playPartnerBeep(freq, dur = 0.08) {
+        if (!audioEnabledP || !audioCtxP) return;
+        let osc = audioCtxP.createOscillator();
+        let gain = audioCtxP.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtxP.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtxP.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtxP.currentTime + dur);
+        osc.connect(gain); gain.connect(audioCtxP.destination);
+        osc.start(); osc.stop(audioCtxP.currentTime + dur);
+    }
+
+    function playDescendingSweep() {
+        if (!audioEnabledP || !audioCtxP) return;
+        let osc = audioCtxP.createOscillator();
+        let gain = audioCtxP.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtxP.currentTime);
+        osc.frequency.linearRampToValueAtTime(350, audioCtxP.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.3, audioCtxP.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtxP.currentTime + 0.3);
+        osc.connect(gain); gain.connect(audioCtxP.destination);
+        osc.start(); osc.stop(audioCtxP.currentTime + 0.3);
+    }
 
     function toggleFreeze() {
         isFrozen = !isFrozen;
@@ -653,16 +689,16 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                     else if (activeTheta >= 10) { strEl.className='p-badge p-green';  strEl.innerText='OPTIMAL HEEL'; }
                     else if (activeTheta >= 5)  { strEl.className='p-badge p-yellow'; strEl.innerText='FLAT'; }
                     else if (activeTheta < -5)  { strEl.className='p-badge p-blue';   strEl.innerText='BALL-STEP'; }
-                    else                        { strEl.className='p-badge p-red';    strEl.innerText='FLAT-FOOT!'; }
+                    else                        { strEl.className='p-badge p-red';    strEl.innerText='FLAT-FOOT!'; playPartnerBeep(1200); }
                 } else if (activeDir === "BACKWARD") {
                     let aZact = isLeft ? aZL_s : aZR_s;
                     let isAnchor = (activeTheta >= -2 && activeTheta <= 5 && aZact > 0.85);
                     if (isAnchor)               { strEl.className='p-badge p-green';  strEl.innerText='ANCHOR SETTLE'; }
-                    else if (activeTheta >= 10) { strEl.className='p-badge p-red';    strEl.innerText='HEEL LANDING!'; }
+                    else if (activeTheta >= 10) { strEl.className='p-badge p-red';    strEl.innerText='HEEL LANDING!'; playPartnerBeep(1200); }
                     else if (activeTheta > 5)   { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL DROP'; }
                     else if (activeTheta >= -20){ strEl.className='p-badge p-green';  strEl.innerText='OPTIMAL TOE'; }
                     else                        { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL SPIKE'; }
-                } else { strEl.className='p-badge p-red'; strEl.innerText='FLAT-FOOT!'; }
+                } else { strEl.className='p-badge p-red'; strEl.innerText='FLAT-FOOT!'; playPartnerBeep(1200); }
             }
             // Start delay ramp monitor
             delayMonActive = true; delayMonFoot = detFoot; delayMonDir = activeDir;
@@ -720,7 +756,10 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             if (latEl) {
                 if      (aXVar < 0.004) { latEl.className='p-badge p-green';  latEl.innerText='STABLE'; }
                 else if (aXVar < 0.015) { latEl.className='p-badge p-yellow'; latEl.innerText='SLIGHT SWAY'; }
-                else                    { latEl.className='p-badge p-red';    latEl.innerText='LATERAL SWAY'; }
+                else                    { latEl.className='p-badge p-red';    latEl.innerText='LATERAL SWAY';
+                    if (prevLatBadge !== 'LATERAL SWAY') playPartnerBeep(400, 0.25);
+                }
+                prevLatBadge = latEl.innerText;
             }
             // Vertical Bounce — variance of dynamic aZP (gravity removed) over 1s
             aZPDynHistory.shift(); aZPDynHistory.push(aZP_p - 1.0);
@@ -730,7 +769,10 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             if (bncEl) {
                 if      (aZVar < 0.006) { bncEl.className='p-badge p-green';  bncEl.innerText='GROUNDED'; }
                 else if (aZVar < 0.020) { bncEl.className='p-badge p-yellow'; bncEl.innerText='SLIGHT BOUNCE'; }
-                else                    { bncEl.className='p-badge p-red';    bncEl.innerText='BOUNCY'; }
+                else                    { bncEl.className='p-badge p-red';    bncEl.innerText='BOUNCY';
+                    if (prevBncBadge !== 'BOUNCY') { playPartnerBeep(600, 0.08); setTimeout(()=>playPartnerBeep(600, 0.08), 130); }
+                }
+                prevBncBadge = bncEl.innerText;
             }
             // gYaw timed ring — {t, v} pairs, 600ms window (for hip-foot coupling)
             gYawTimedBuf.push({ t: now, v: Math.abs(gYawP_p) });
@@ -759,7 +801,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                         if (ab) {
                             if      (score >= 60) { ab.className='p-badge p-green';  ab.innerText='ANCHORED ('+score+')'; }
                             else if (score >= 30) { ab.className='p-badge p-yellow'; ab.innerText='SETTLING ('+score+')'; }
-                            else                  { ab.className='p-badge p-red';    ab.innerText='UNSTABLE ('+score+')'; }
+                            else                  { ab.className='p-badge p-red';    ab.innerText='UNSTABLE ('+score+')'; playDescendingSweep(); }
                         }
                     }
                 }
