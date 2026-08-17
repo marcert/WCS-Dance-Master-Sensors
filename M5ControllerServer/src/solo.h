@@ -240,8 +240,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         main.level-beginner #doubleStanceCard,
         main.level-beginner #asiCard,
         main.level-beginner .jerk-section,
-        main.level-beginner .bar-container,
-        main.level-beginner .step-lower-badges { display: none !important; }
+        main.level-beginner .bar-container { display: none !important; }
+        .step-lower-badges { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:5px; }
+        .step-lower-badges .badge { display:block; text-align:center; margin-left:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; font-size:min(2.9vw,11px); }
 
         /* BEGINNER: push sole visible card to bottom-right */
         main.level-beginner #stepCard { grid-column: 2; grid-row: 2; }
@@ -285,7 +286,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
                 <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
-                <button id="dbgBtn"   class="audio-toggle" style="display:none; background: rgba(80,80,80,0.5);" onclick="toggleDebug()">🔍 DBG</button>
+                <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5);" onclick="toggleDebug()">🔍 DBG</button>
             </div>
         </header>
 
@@ -368,29 +369,41 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div class="card-title" style="margin: 0;">Last Step (Heel/Toe-Strike & Jerk)</div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <div id="debugRow" style="display:none; margin-bottom:5px; border-bottom:1px solid #2a2a3a; padding-bottom:4px; font-family:monospace; font-size:11px; color:#666;">
                         <div>
-                            <span id="dirBadge" class="badge" style="background:#30363d; font-size:0.85rem;">➡️ FORWARD</span>
-                            <span id="strikeAngleVal" class="metric-value">0°</span>
-                            <span id="strikeBadge" class="badge badge-green">OPTIMAL</span>
+                            <span>dθ&nbsp;<strong id="dbgDirVal" style="color:#aaa;">—</strong>&nbsp;<span id="dbgDirSrc" style="color:#666;">[θ]</span></span>
+                            <span style="margin-left:10px;">L&nbsp;<strong id="dbgAYL" style="color:#4fc3f7;">0.00</strong>&nbsp;R&nbsp;<strong id="dbgAYR" style="color:#ef5350;">0.00</strong></span>
+                            <span style="margin-left:10px;">P&nbsp;gPitch&nbsp;<strong id="dbgPPitch" style="color:#ce93d8;">0.0</strong>&nbsp;gYaw&nbsp;<strong id="dbgPYaw" style="color:#ce93d8;">0.0</strong></span>
                         </div>
+                        <div style="margin-top:3px; color:#555;">
+                            <span>L&nbsp;z:<strong id="dbgLOff" style="color:#888;">0.0</strong>°&nbsp;θ:<strong id="dbgLTheta" style="color:#4fc3f7;">0.0</strong>°&nbsp;a:<strong id="dbgAccL" style="color:#4fc3f7;">0.0</strong>°</span>
+                            <span style="margin-left:12px;">R&nbsp;z:<strong id="dbgROff" style="color:#888;">0.0</strong>°&nbsp;θ:<strong id="dbgRTheta" style="color:#ef5350;">0.0</strong>°&nbsp;a:<strong id="dbgAccR" style="color:#ef5350;">0.0</strong>°</span>
+                        </div>
+                        <div id="dbgPelvisRow" style="margin-top:3px; color:#555; display:none;">
+                            <span style="color:#ce93d8;">P&nbsp;</span>
+                            <span>sag:<strong id="dbgPAY" style="color:#ce93d8;">0.00</strong>g</span>
+                            <span style="margin-left:8px;">lat:<strong id="dbgPAX" style="color:#ce93d8;">0.00</strong>g</span>
+                            <span style="margin-left:8px;">vert:<strong id="dbgPAZ" style="color:#ce93d8;">0.00</strong>g</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span id="dirBadge" class="badge" style="background:#30363d; font-size:0.85rem;">➡️ FORWARD</span>
                         <div class="jerk-section" style="text-align: right; font-size: 0.9rem; color: #8b949e;">
                             Impact Jerk: <strong id="jerkVal" style="color:#fff;">0</strong> g/s
                         </div>
                     </div>
+                    <div>
+                        <span id="strikeAngleVal" class="metric-value">0°</span>
+                        <span id="strikeBadge" class="badge badge-green" style="min-width:7.5rem; text-align:center; display:inline-block;">OPTIMAL</span>
+                    </div>
                     <div class="bar-container">
                         <div id="jerkBar" class="bar-fill" style="background: var(--accent-left);"></div>
                     </div>
-                    <div class="step-lower-badges" style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap; min-height:22px;">
+                    <div class="step-lower-badges">
                         <span id="powerBadge" class="badge" style="background:#1e272e; color:#8b949e;">— PUSH-OFF</span>
                         <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
                         <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
                         <span id="delayBadge" class="badge" style="background:#1e272e; color:#8b949e;">— DELAY</span>
-                    </div>
-                    <div id="debugRow" style="display:none; margin-top:5px; border-top:1px solid #2a2a3a; padding-top:4px; font-family:monospace; font-size:11px; color:#666;">
-                        <span>dθ&nbsp;<strong id="dbgDirVal" style="color:#aaa;">—</strong>&nbsp;<span id="dbgDirSrc" style="color:#666;">[θ]</span></span>
-                        <span style="margin-left:10px;">L&nbsp;<strong id="dbgAYL" style="color:#4fc3f7;">0.00</strong>&nbsp;R&nbsp;<strong id="dbgAYR" style="color:#ef5350;">0.00</strong></span>
-                        <span style="margin-left:10px;">P&nbsp;pitch&nbsp;<strong id="dbgPPitch" style="color:#ce93d8;">0.0</strong>&nbsp;yaw&nbsp;<strong id="dbgPYaw" style="color:#ce93d8;">0.0</strong></span>
                     </div>
                 </div>
 
@@ -553,6 +566,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let thetaBufferL = [];
         let thetaBufferR = [];
 
+        // CF filter warmup — suppress step detection for first 250 frames (~5 s at 50 Hz)
+        // while the complementary filter converges to the physical mount angle.
+        let cfWarmupFrames = 250;
+
         // Debug mode state
         let lastDirVal  = null;   // most recent direction decision value shown in debug row
         let lastDirSrc  = "θ";
@@ -582,7 +599,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
         let anchorSettleActive    = false;            // true while collecting post-anchor pelvis window
         let anchorSettleStartTime = 0;
-        let anchorSettleSamples   = { aYP: [], gYawP: [] };
+        let anchorSettleSamples   = { aSagP: [], gYawP: [] };
 
         function fetchStream() {
             fetch('/data')
@@ -605,10 +622,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let rightOk  = data.rOk === true;
                     let pelvicOk = data.pOk === true;
                     let gPitchP  = data.pG   ?? 0;
-                    let aZP      = -(data.pAy  ?? -1.0); // IMU Y-axis = vertical, inverted → +1.0g at rest
-                    let aYP      = data.pAx  ?? 0.0;   // IMU X-axis = sagittal (anterior-posterior)
+                    let aVertP   = data.pA   ?? 1.0;   // accel_z = vertical  (+1.0g at rest)
+                    let aSagP    = data.pAy  ?? 0.0;   // accel_y = sagittal  (anterior-posterior)
                     let gYawP    = data.pYaw ?? 0;
-                    let aXP      = data.pA   ?? 0.0;   // IMU Z-axis = lateral
+                    let aLatP    = data.pAx  ?? 0.0;   // accel_x = lateral
 
                                         // 1. Live Pitch Curve Buffer — low-pass filtered (α=0.25) to suppress vibration noise
                     const LP_ALPHA = 0.25;
@@ -623,6 +640,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     thetaBufferL.push(pitchLeftAngleRaw  - leftMountOffset);
                     if (thetaBufferR.length >= 10) thetaBufferR.shift();
                     thetaBufferR.push(pitchRightAngleRaw - rightMountOffset);
+                    if (cfWarmupFrames > 0) cfWarmupFrames--;
 
                     // Complementary filter: gyro integration for short-term dynamics,
                     // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction).
@@ -659,9 +677,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         // Live raw values — axis-assignment verification
                         let rawEl = document.getElementById('pelvicRaw');
                         if (rawEl) rawEl.innerText =
-                            'aZ:' + (aZP >= 0 ? '+' : '') + aZP.toFixed(2) +
-                            '  aX:' + (aXP >= 0 ? '+' : '') + aXP.toFixed(2) +
-                            '  gY:' + String(gYawP.toFixed(0)).padStart(4);
+                            'aS:' + (aSagP  >= 0 ? '+' : '') + aSagP.toFixed(2) +
+                            ' aL:' + (aLatP  >= 0 ? '+' : '') + aLatP.toFixed(2) +
+                            ' aV:' + (aVertP >= 0 ? '+' : '') + aVertP.toFixed(2) +
+                            ' gP:' + String(gPitchP.toFixed(0)).padStart(4) +
+                            ' gY:' + String(gYawP.toFixed(0)).padStart(4);
 
                         // Hip Activation — rolling max of |gYawP| over 500ms, IIR-smoothed
                         gYawAbsHistory.shift(); gYawAbsHistory.push(Math.abs(gYawP));
@@ -675,7 +695,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
 
                         // Lateral Stability — variance of aXP over 1s
-                        aXPHistory.shift(); aXPHistory.push(aXP);
+                        aXPHistory.shift(); aXPHistory.push(aLatP);
                         let aXMean = aXPHistory.reduce((a,b)=>a+b,0) / aXPHistory.length;
                         let aXVar  = aXPHistory.reduce((a,b)=>a+(b-aXMean)**2,0) / aXPHistory.length;
                         let slotBadge = document.getElementById('slotBadge');
@@ -686,7 +706,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
 
                         // Vertical Bounce — variance of dynamic aZP (gravity removed) over 1s
-                        aZPDynHistory.shift(); aZPDynHistory.push(aZP - 1.0);
+                        aZPDynHistory.shift(); aZPDynHistory.push(aVertP - 1.0);
                         let aZMean = aZPDynHistory.reduce((a,b)=>a+b,0) / aZPDynHistory.length;
                         let aZVar  = aZPDynHistory.reduce((a,b)=>a+(b-aZMean)**2,0) / aZPDynHistory.length;
                         let bounceBadge = document.getElementById('bounceBadge');
@@ -702,15 +722,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                         // Anchor Settle window — collect samples, evaluate after 500ms
                         if (anchorSettleActive) {
-                            anchorSettleSamples.aYP.push(aYP);
+                            anchorSettleSamples.aSagP.push(aSagP);
                             anchorSettleSamples.gYawP.push(Math.abs(gYawP));
                             if (now - anchorSettleStartTime >= 500) {
                                 anchorSettleActive = false;
-                                let n = anchorSettleSamples.aYP.length;
+                                let n = anchorSettleSamples.aSagP.length;
                                 if (n >= 8) {
                                     let half = Math.floor(n / 2);
-                                    let earlyAY  = anchorSettleSamples.aYP.slice(0, half);
-                                    let lateAY   = anchorSettleSamples.aYP.slice(half);
+                                    let earlyAY  = anchorSettleSamples.aSagP.slice(0, half);
+                                    let lateAY   = anchorSettleSamples.aSagP.slice(half);
                                     let earlyYaw = anchorSettleSamples.gYawP.slice(0, half);
                                     let lateYaw  = anchorSettleSamples.gYawP.slice(half);
 
@@ -759,6 +779,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 let preJerkR = Math.abs(aZR - prevAccelZRight) / 0.005;
                                                                                 let leftSignal  = leftOk  && (Math.abs(aZL) > 1.08 || (Math.abs(gPitchL) > 80 && preJerkL > 8));
                                                                                 let rightSignal = rightOk && (Math.abs(aZR) > 1.08 || (Math.abs(gPitchR) > 80 && preJerkR > 8));
+                                                                                if (cfWarmupFrames > 0) { leftSignal = false; rightSignal = false; }
 
                                                                                 let detectedFoot = null;
 
@@ -812,7 +833,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     let is_backward = (prevPitchLeftAngle < leftMountOffset);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     lastDirectionL = activeDirection;
-                                                                                    pitchLeftAngleRaw = leftMountOffset;
                                                                                     pushIntegralL = 0; // L just landed — reset its push-off accumulator
                                                                                 }
                                                                                 else if (detectedFoot === "R") {
@@ -827,7 +847,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     let is_backward = (prevPitchRightAngle < rightMountOffset);
                                                                                     activeDirection = is_backward ? "BACKWARD" : "FORWARD";
                                                                                     lastDirectionR = activeDirection;
-                                                                                    pitchRightAngleRaw = rightMountOffset;
                                                                                     pushIntegralR = 0; // R just landed — reset its push-off accumulator
                                                                                 }
 
@@ -899,12 +918,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         // Forward step: foot dorsiflexes during swing → θ rises → positive trend.
                         // Backward step: foot plantarflexes during swing → θ falls → negative trend.
                         // No left/right sign inversion required — both use same calibrated θ convention.
-                        if (activeTheta > -5 && activeTheta < 10) {
+                        if (activeTheta > -12 && activeTheta < 10) {
                             let tBuf = (activeFoot === "L") ? thetaBufferL : thetaBufferR;
                             if (tBuf.length >= 9) {
                                 let thetaTrend = tBuf[tBuf.length - 2] - tBuf[tBuf.length - 9]; // T-1 minus T-8
-                                if      (thetaTrend >  2.0) activeDirection = "FORWARD";
-                                else if (thetaTrend < -2.0) activeDirection = "BACKWARD";
+                                let trendThr = activeTheta > 5 ? 0.5 : (activeTheta > 0 ? 0.8 : 1.5);
+                                if      (thetaTrend >  trendThr) activeDirection = "FORWARD";
+                                else if (thetaTrend < -trendThr) activeDirection = "BACKWARD";
                                 else                        activeDirection = "AMBIGUOUS";
                                 lastDirVal = thetaTrend;  lastDirSrc = "dθ";
                             } else {
@@ -922,54 +942,46 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         document.getElementById('strikeAngleVal').innerText = activeTheta + "° (" + activeFoot + ")";
                         document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
 
-                                                if (activeDirection === "FORWARD") {
-                            dirBadge.innerText = "➡️ FORWARD";
-                            dirBadge.style.background = "#1f6beb";
-
-                            // Forward Rating (Heel-Strike / Ball-Step / Brush+Heel)
-                            if (activeTheta > 35) {
-                                badge.className = "badge badge-yellow"; badge.style.cssText = ""; badge.innerText = "HEEL SPIKE";
-                            } else if (activeTheta >= 10) {
-                                badge.className = "badge badge-green";  badge.style.cssText = ""; badge.innerText = "OPTIMAL HEEL";
-                            } else if (activeTheta >= 5) {
-                                badge.className = "badge badge-yellow"; badge.style.cssText = ""; badge.innerText = "FLAT";
-                            } else if (activeTheta < -5) {
-                                // Ball-first: intentional technique, not flagged as error
-                                badge.className = "badge"; badge.style.cssText = "background:#0d6efd; color:#fff;"; badge.innerText = "BALL-STEP";
-                            } else {
-                                // Flat contact (−5° to +5°): show FLAT-FOOT! but open brush+heel reclassification window
-                                badge.className = "badge badge-red"; badge.style.cssText = ""; badge.innerText = "FLAT-FOOT!";
-                                if (activeJerk > 160) playImpactClick(1200);
-                                brushPending = true; brushPendingTime = now; brushPendingFoot = activeFoot;
-                            }
-                        } else if (activeDirection === "BACKWARD") {
-                            dirBadge.innerText = "⬅️ BACKWARD";
-                            dirBadge.style.background = "#a371f7";
-
-                                                                            // Check for ANCHOR SETTLE (Full Weight Investment on Backward/Anchor Step)
-                                                // Heel touches or "kisses" floor (theta approx -2° to 5°) with settled weight (aZ > 0.85g)
-                                                let isAnchorSettle = (activeTheta >= -2 && activeTheta <= 5 && (activeFoot === "L" ? aZL : aZR) > 0.85);
-
-                                                if (isAnchorSettle) {
-                                                    badge.className = "badge badge-green"; badge.innerText = "ANCHOR SETTLE";
-                                                } else if (activeTheta >= 10) {
-                                                    badge.className = "badge badge-red"; badge.innerText = "HEEL LANDING!";
-                                                    playImpactClick(1200);
-                                                } else if (activeTheta > 5) {
-                                                    badge.className = "badge badge-yellow"; badge.innerText = "HEEL DROP";
-                                                } else if (activeTheta >= -20) {
-                                                    badge.className = "badge badge-green"; badge.innerText = "OPTIMAL TOE";
+                                                // Direction badge: reliable only at θ-zone extremes
+                                                if (activeTheta >= 8) {
+                                                    dirBadge.innerText = "➡️ FORWARD";
+                                                    dirBadge.style.background = "#1f6beb";
+                                                } else if (activeTheta < -8) {
+                                                    dirBadge.innerText = "⬅️ BACK";
+                                                    dirBadge.style.background = "#a371f7";
                                                 } else {
-                                                    badge.className = "badge badge-yellow"; badge.innerText = "HEEL SPIKE";
+                                                    dirBadge.innerText = "—";
+                                                    dirBadge.style.background = "#555";
                                                 }
-                        } else {
-                            // AMBIGUOUS: |θ| < 5° — foot landed flat, direction unreliable; open brush+heel window
-                            dirBadge.innerText = "↔️ FLAT";
-                            dirBadge.style.background = "#555";
-                            badge.className = "badge badge-red"; badge.style.cssText = ""; badge.innerText = "FLAT-FOOT!";
-                            if (activeJerk > 160) playImpactClick(1200);
-                            brushPending = true; brushPendingTime = now; brushPendingFoot = activeFoot;
-                        }
+
+                                                // Strike badge: landing quality, direction-agnostic
+                                                badge.style.cssText = "";
+                                                if (activeTheta >= 8) {
+                                                    if (activeJerk > 88) {
+                                                        badge.className = "badge badge-red";    badge.innerText = "HEEL SLAM ⚠";
+                                                        playImpactClick(1200);
+                                                    } else {
+                                                        badge.className = "badge badge-green";  badge.innerText = "HEEL STRIKE ✓";
+                                                    }
+                                                } else if (activeTheta < -8) {
+                                                    if (activeJerk > 88) {
+                                                        badge.className = "badge badge-red";    badge.innerText = "TOE JAM ⚠";
+                                                        playImpactClick(1200);
+                                                    } else {
+                                                        badge.className = "badge badge-green";  badge.innerText = "TOE-FIRST ✓";
+                                                    }
+                                                } else {
+                                                    // Ambiguous zone: quality only (all backward steps + flat forward steps)
+                                                    if (activeJerk > 88) {
+                                                        badge.className = "badge badge-red";    badge.innerText = "HARD IMPACT ⚠";
+                                                        playImpactClick(1200);
+                                                    } else if (activeJerk > 80) {
+                                                        badge.className = "badge badge-yellow"; badge.innerText = "MODERATE";
+                                                    } else {
+                                                        badge.className = "badge badge-green";  badge.innerText = "SOFT ✓";
+                                                    }
+                                                    brushPending = true; brushPendingTime = now; brushPendingFoot = activeFoot;
+                                                }
 
                         // Hip-Foot Coupling — compare when pelvis gYaw peaked vs foot impact time
                         // leadMs = ms since peak: large = hips moved well before foot landed (leads)
@@ -988,7 +1000,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         if (pelvicOk && activeDirection === "BACKWARD") {
                             anchorSettleActive    = true;
                             anchorSettleStartTime = now;
-                            anchorSettleSamples   = { aYP: [], gYawP: [] };
+                            anchorSettleSamples   = { aSagP: [], gYawP: [] };
                             let ab = document.getElementById('anchorSettleBadge');
                             if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = 'MEASURING...'; }
                         }
@@ -1137,7 +1149,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 if (dirBdg) { dirBdg.innerText = "➡️ FORWARD"; dirBdg.style.background = "#1f6beb"; }
                             }
                         } else {
-                            brushPending = false; // window expired — keep current badge (FLAT-FOOT!)
+                            brushPending = false; // window expired — keep current quality badge
                         }
                     }
 
@@ -1213,16 +1225,35 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     prevGyroPitchLeft  = gPitchL;
                     prevGyroPitchRight = gPitchR;
 
-                    // Live aY debug values — update every poll when debug mode active
+                    // Live debug values — update every poll when debug mode active
                     if (debugMode) {
                         let elL = document.getElementById('dbgAYL');
                         let elR = document.getElementById('dbgAYR');
-                        let elP = document.getElementById('dbgPPitch');
+                        let elP  = document.getElementById('dbgPPitch');
                         let elPY = document.getElementById('dbgPYaw');
                         if (elL) elL.innerText = aYL.toFixed(2);
                         if (elR) elR.innerText = aYR.toFixed(2);
                         if (elP)  elP.innerText  = pelvicOk ? gPitchP.toFixed(1) : '—';
                         if (elPY) elPY.innerText = pelvicOk ? gYawP.toFixed(1)   : '—';
+                        // Calibration row
+                        let lOff = leftMountOffset,  lTh = pitchLeftAngleRaw  - lOff;
+                        let rOff = rightMountOffset, rTh = pitchRightAngleRaw - rOff;
+                        let elLO = document.getElementById('dbgLOff');   if (elLO) elLO.innerText = lOff.toFixed(1);
+                        let elLT = document.getElementById('dbgLTheta'); if (elLT) elLT.innerText = lTh.toFixed(1);
+                        let elRO = document.getElementById('dbgROff');   if (elRO) elRO.innerText = rOff.toFixed(1);
+                        let elRT = document.getElementById('dbgRTheta'); if (elRT) elRT.innerText = rTh.toFixed(1);
+                        let elAL = document.getElementById('dbgAccL');   if (elAL) elAL.innerText = lastAccelAngleL.toFixed(1);
+                        let elAR = document.getElementById('dbgAccR');   if (elAR) elAR.innerText = lastAccelAngleR.toFixed(1);
+                        // Pelvis row — show only when sensor connected
+                        let pelRow = document.getElementById('dbgPelvisRow');
+                        if (pelRow) {
+                            pelRow.style.display = pelvicOk ? 'block' : 'none';
+                            if (pelvicOk) {
+                                let ep = document.getElementById('dbgPAY'); if (ep) ep.innerText = aSagP.toFixed(2);
+                                let ex = document.getElementById('dbgPAX'); if (ex) ex.innerText = aLatP.toFixed(2);
+                                let ez = document.getElementById('dbgPAZ'); if (ez) ez.innerText = aVertP.toFixed(2);
+                            }
+                        }
                     }
 
                     drawPitchChart();
