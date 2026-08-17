@@ -82,37 +82,36 @@ Rückwärtsschritt (Zehenlandung / Zehe-Ballen-Ferse):
    Zur Anpassung individueller Schuhabsatz-Neigungen erfasst der `📐 ZERO`-Button statische Montageversätze ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
    $$\theta = \theta_{\text{raw}} - \text{mountOffset}$$
 
-3. **Richtungsklassifikation & Aufprallwinkel-Bewertung:**
+3. **Richtungsanzeige & Landungsqualitäts-Badge:**
 
-   Die Richtung wird in zwei Stufen bestimmt. Stufe 1 nutzt den kalibrierten T-1-Neigungswinkel zur Auflösung der eindeutigen Extreme; Stufe 2 wendet einen 160-ms-Neigungswinkeltrend (dθ) zur Auflösung der mehrdeutigen Zone an.
+   **Validierte Einschränkung:** Empirische Tests (n=15 Rückwärtsschritte im Flat-Walk, inklusive Beckensensor) bestätigten, dass WCS-Rückwärtsschritte im Flat-Walk konsistent bei θ = +2° bis +9° landen — identisch mit der mehrdeutigen Zone. Weder der dθ-Neigungstrend noch die sagittale Beckenbeschleunigung (durchschnittlicher Richtungsunterschied < 0,03 g über alle Achsen) können in diesem Bereich zuverlässig zwischen Rückwärts und Vorwärts unterscheiden. Das Richtungs-Badge wird daher nur angezeigt, wenn θ eindeutige physikalische Evidenz liefert:
 
-   **Stufe 1 — θ-Zonenklassifikation:**
+   | θ bei T-1 | Richtungs-Badge |
+   | :---: | :--- |
+   | θ ≥ +8° | ➡️ FORWARD (blau) — zuverlässiger Fersenerstkontakt |
+   | θ < −8° | ⬅️ BACK (lila) — zuverlässiger Zehenerstkontakt |
+   | −8° ≤ θ < +8° | — (grau) — mehrdeutig; Richtung nicht angezeigt |
 
-   $$\text{activeDirection} = \begin{cases} \text{BACKWARD} & \theta \le -5° \\ \text{AMBIGUOUS} & -5° < \theta < 10° \\ \text{FORWARD} & \theta \ge 10° \end{cases}$$
+   **Landungsqualitäts-Badge — richtungsunabhängig, basierend auf θ-Zone + Jerk:**
 
-   **Warum asymmetrisch:** Negatives θ zeigt zuverlässig Zehenerstkontakt an (eindeutig rückwärts); positives θ unter +10° ist tatsächlich mehrdeutig — ein flacher Vorwärtsschritt und ein Rückwärtsschritt mit frühem Fersenabsatz landen beide im gleichen Winkelbereich (+5° bis +9°).
+   Das Strike-Badge bewertet *wie* der Fuß gelandet ist, unabhängig von der Richtung. Dies ist für Vorwärts- und Rückwärtsschritte gleichermaßen nützlich: `SOFT ✓` bei θ ≈ 0° zeigt einen kontrollierten Rückwärtsschritt an; `HARD IMPACT ⚠` bei θ ≈ 0° bedeutet, dass der Tänzer auf den Fuß gefallen ist.
 
-   **Stufe 2 — dθ-Neigungstrend (nur mehrdeutige Zone):**
+   Jerk-Schwellenwerte (gleiche Skalierung wie die angezeigte Aufprall-Jerk-Anzeige ÷ 4):
+   - **HART:** J > 22 g/s (intern > 88)
+   - **MODERAT:** 20 g/s < J ≤ 22 g/s (intern 80–88)
+   - **WEICH:** J ≤ 20 g/s (intern ≤ 80)
 
-   Wenn Stufe 1 AMBIGUOUS ergibt ($-5° < \theta < 10°$), berechnet das System einen 160-ms-Neigungswinkeltrend aus dem Vorkontakt-Ringpuffer (10 kalibrierte θ-Samples bei 50 Hz):
-   $$d\theta = \theta_{\text{calibrated}}[T{-1}] - \theta_{\text{calibrated}}[T{-8}]$$
+   | θ-Zone | Jerk | Badge | Bedeutung |
+   | :---: | :---: | :--- | :--- |
+   | ≥ +8° (Ferse) | ≤ 22 g/s | `HEEL STRIKE ✓` (Grün) | Saubere Fersenlandung — korrekte Vorwärtstechnik |
+   | ≥ +8° (Ferse) | > 22 g/s | `HEEL SLAM ⚠` (Rot) | Fersenkontakt, aber zu abrupt — mit Knie/Knöchel abfedern |
+   | < −8° (Zehe) | ≤ 22 g/s | `TOE-FIRST ✓` (Grün) | Kontrollierter Zehenerstkontakt — korrekt für tiefe Rückwärtsschritte oder Ball-Steps |
+   | < −8° (Zehe) | > 22 g/s | `TOE JAM ⚠` (Rot) | Zehenkontakt zu hart |
+   | −8° bis +7° (mehrdeutig) | ≤ 20 g/s | `SOFT ✓` (Grün) | Kontrollierte Landung — gute Qualität unabhängig von der Richtung |
+   | −8° bis +7° (mehrdeutig) | 20–22 g/s | `MODERATE` (Gelb) | Akzeptabel; Aufprall reduzieren |
+   | −8° bis +7° (mehrdeutig) | > 22 g/s | `HARD IMPACT ⚠` (Rot) | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
 
-   $$\text{activeDirection} = \begin{cases} \text{FORWARD} & d\theta > +2° \\ \text{BACKWARD} & d\theta < -2° \\ \text{AMBIGUOUS} & |d\theta| \le 2° \end{cases}$$
-
-   Vorwärtsschwung = Dorsalflexion → θ steigt → positives dθ. Rückwärtsschwung = Plantarflexion → θ fällt → negatives dθ. Validierter Schwellenwert: Vorwärts dθ +2,6° bis +7,9°, Rückwärts dθ −2,3° bis −3,1°, neutral/Anker −0,4° bis +1,9°.
-
-   * **Vorwärtsschritt (FORWARD via $[\theta]$ oder $[d\theta]$):**
-     * $\theta > 35° \longrightarrow$ `HEEL SPIKE` (extreme Dorsalflexion)
-     * $10° \le \theta \le 35° \longrightarrow$ `OPTIMAL HEEL` (saubere Fersenartikulierung)
-     * BRUSH+HEEL-Neuklassifikationsfenster (200 ms) kann vorheriges `FLAT-FOOT!` zu `BRUSH+HEEL` aufwerten, wenn ein zweiter aZ > 1,05 g-Peak mit accelAngle > 8° am gleichen Fuß erkannt wird.
-   * **Rückwärtsschritt (BACKWARD via $[\theta]$ oder $[d\theta]$):**
-     * Via $[\theta]$: $-5° > \theta \ge -20° \longrightarrow$ `OPTIMAL TOE`; $\theta < -20° \longrightarrow$ `HEEL SPIKE`
-     * Via $[d\theta]$: `OPTIMAL TOE` für jedes θ, das die Unterbedingungen unten nicht erfüllt
-     * $-2° \le \theta \le +5°$ via $[d\theta]$ UND $aZ > 0.85g$ → `ANCHOR SETTLE` (voller Gewichtseinsatz, stabilisierter Kontakt)
-     * $+5° < \theta \le +9°$ via $[d\theta]$ → `HEEL DROP` (Ferse kontaktiert früh beim Rückwärtsschritt)
-   * **Mehrdeutig ($|d\theta| \le 2°$ oder Ringpuffer < 9 Samples):**
-     * ↔️ FLAT + `FLAT-FOOT!` (Rot) — Richtung durch θ oder dθ nicht auflösbar; öffnet auch das 200-ms-Brush+Heel-Neuklassifikationsfenster.
-     * Erfasst: flache Vorwärtsschritte, Rückwärtsschritte ohne ausreichenden Neigungstrend und tatsächlich flache Landungen.
+   * **BRUSH+HEEL-Neuklassifikation (200-ms-Fenster):** Wenn eine Landung in der mehrdeutigen Zone innerhalb von 200 ms von einem zweiten aZ > 1,05 g-Peak mit accelAngle > 8° am gleichen Fuß gefolgt wird, wird das Badge zu `BRUSH+HEEL` (grün) aufgewertet und das Richtungs-Badge zeigt ➡️ FORWARD.
 
 ---
 
@@ -243,14 +242,14 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 
 | Metrik / Parameter | Wert / Bereich | Visuelles Badge / Zustand | Audio-Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Vorwärts Ferse — Optimal** | $10^\circ \le \theta \le 35^\circ$ | `OPTIMAL HEEL` (Grün) | Kein |
-| **Vorwärts Ferse — Spike** | $\theta > 35^\circ$ | `HEEL SPIKE` (Gelb) | Kein |
-| **Vorwärts Brush+Heel** | flach → accelAngle $> 8^\circ$ innerhalb 200 ms | `BRUSH+HEEL` (Grün) — neuklassifiziert von FLAT-FOOT! | Kein |
-| **Mehrdeutiger Flachkontakt** | $-5° < \theta < 10°$ und $|d\theta| \le 2°$ (oder Puffer < 9 Samples) | ↔️ FLAT + `FLAT-FOOT!` (Rot) | 1200-Hz-Klick bei Aufprall-Jerk > 40 g/s |
-| **Rückwärts Zehe — Optimal** | Via [θ]: $-20° \le \theta < -5°$; oder via [dθ]: θ in $-5°$ bis $+9°$, nicht ANCHOR SETTLE/HEEL DROP | `OPTIMAL TOE` (Grün) | Kein |
-| **Rückwärts Zehe — Spike** | $\theta < -20°$ | `HEEL SPIKE` (Gelb) | Kein |
-| **Rückwärts — Anchor Settle** | BACKWARD via [dθ] + $-2° \le \theta \le +5°$ + $aZ > 0.85g$ | `ANCHOR SETTLE` (Grün) | Kein |
-| **Rückwärts — Heel Drop** | BACKWARD via [dθ] + $+5° < \theta \le +9°$ | `HEEL DROP` (Gelb) | Kein |
+| **Fersenzone — kontrolliert** | $\theta \ge +8°$, Jerk $\le 30$ g/s | `HEEL STRIKE ✓` (Grün) | Kein |
+| **Fersenzone — abrupt** | $\theta \ge +8°$, Jerk $> 30$ g/s | `HEEL SLAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Zehenzone — kontrolliert** | $\theta < -8°$, Jerk $\le 30$ g/s | `TOE-FIRST ✓` (Grün) | Kein |
+| **Zehenzone — abrupt** | $\theta < -8°$, Jerk $> 30$ g/s | `TOE JAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Mehrdeutig — weich** | $-8° \le \theta < +8°$, Jerk $\le 20$ g/s | `SOFT ✓` (Grün) | Kein |
+| **Mehrdeutig — moderat** | $-8° \le \theta < +8°$, Jerk $20\text{–}22$ g/s | `MODERATE` (Gelb) | Kein |
+| **Mehrdeutig — hart** | $-8° \le \theta < +8°$, Jerk $> 30$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
+| **BRUSH+HEEL-Neuklassifikation** | mehrdeutig → zweites aZ $> 1{,}05\,g$ + accelAngle $> 8°$ innerhalb 200 ms | `BRUSH+HEEL` (Grün) → ➡️ FORWARD | Kein |
 | **Standbein-Abstoß (vorwärts, optimal)** | BACKWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (rückwärts/Anker, optimal)** | FORWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (schwach)** | Beide Richtungen, $120\text{–}159/199^\circ/\text{s}$ UND $aY > 0.15g$ | `↗ PUSH` (Gelb) — hält 400 ms | Kein |
@@ -337,36 +336,32 @@ Aktualisiert sich bei jedem erkannten Fußkontakt.
 
 | Anzeigelement | Bedeutung |
 | :--- | :--- |
-| **➡️ FORWARD** | Gerade gelandeter Vorwärtsschritt |
-| **⬅️ BACKWARD** | Gerade gelandeter Rückwärtsschritt |
-| **↔️ FLAT** | Fuß zu flach gelandet — Richtung nicht klassifizierbar, als Flachfuß-Warnung behandeln |
+| **➡️ FORWARD** | θ ≥ +8° — zuverlässiger Fersenerstkontakt |
+| **⬅️ BACK** | θ < −8° — zuverlässiger Zehenerstkontakt |
+| **—** (grau) | −8° ≤ θ < +8° — mehrdeutig; Richtung nicht angezeigt |
 | **θ (vorzeichenbehafteter Winkel)** | Fußneigung zum Landezeitpunkt. Positiv = Ferse höher; negativ = Zehe höher. |
-| **Badge** | Klassifikation dieser Landung |
+| **Badge** | Landungsqualität dieser Landung (richtungsunabhängig) |
 | **Jerk (g/s)** | Rate der Aufprallkraft |
 
-#### Vorwärtsschritt-Badges
+#### Landungsqualitäts-Badges
 
-| Badge | θ | Was getan | Ziel |
+| Badge | θ-Zone | Jerk | Bedeutung |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL HEEL` ✅ | +10° bis +35° | Sauberer Fersenaufsatz | Ziel für alle Vorwärtsläufe |
-| `FLAT` ⚠️ | +5° bis +10° | Leichter Fersenvorsprung, fast flach | Fersenartikulierung erhöhen |
-| `FLAT-FOOT!` ❌ | < +5° | Flach oder Zehenerstkontakt | Häufige Ursache: zu eilig, angespannte Knöchel |
-| `HEEL SPIKE` ⚠️ | > +35° | Extrem steiler Fersenwinkel | Antriebskraft reduzieren oder Knöchel entspannen |
+| `HEEL STRIKE ✓` ✅ | ≥ +8° (Ferse) | ≤ 22 g/s | Sauberer Fersenaufsatz — korrekte Vorwärtstechnik |
+| `HEEL SLAM ⚠` ❌ | ≥ +8° (Ferse) | > 22 g/s | Fersenkontakt zu abrupt — mit Knie/Knöchel abfedern |
+| `TOE-FIRST ✓` ✅ | < −8° (Zehe) | ≤ 22 g/s | Kontrollierter Zehenerstkontakt — korrekt für tiefe Rückwärtsschritte |
+| `TOE JAM ⚠` ❌ | < −8° (Zehe) | > 22 g/s | Zehenkontakt zu hart |
+| `SOFT ✓` ✅ | −8° bis +7° (mehrdeutig) | ≤ 20 g/s | Kontrollierte Landung — gut für Vor- und Rückwärtsschritte |
+| `MODERATE` ⚠️ | −8° bis +7° (mehrdeutig) | 20–22 g/s | Akzeptabel; Aufprall reduzieren |
+| `HARD IMPACT ⚠` ❌ | −8° bis +7° (mehrdeutig) | > 22 g/s | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
+| `BRUSH+HEEL` ✅ | mehrdeutig → Ferse | 200-ms-Fenster | Brush-Schritt mit Fersenfolge erkannt — ➡️ FORWARD |
 
-#### Rückwärtsschritt-Badges
-
-| Badge | θ | Was getan | Ziel |
-| :--- | :--- | :--- | :--- |
-| `OPTIMAL TOE` ✅ | −20° bis +5° | Saubere Zehen-Ballen-Landung | Ziel für alle Rückwärtsläufe und Anker |
-| `ANCHOR SETTLE` ✅ | −2° bis +5° + volles Gewicht | Ferse berührt Boden mit vollem Gewichtseinsatz | Ideale Anker-Vollendung |
-| `HEEL DROP` ⚠️ | +5° bis +9° | Ferse sinkt vor vollständigem Gewichtstransfer | Knöchel länger dorsiflektiert halten |
-| `HEEL LANDING!` ❌ | ≥ +10° | Ferse schlug zuerst auf | Häufigster WCS-Technikfehler |
-| `HEEL SPIKE` ⚠️ | < −20° | Übermäßig gespitzter Fuß | Ausdehnung leicht modulieren |
+> **Hinweis:** `SOFT ✓` bei θ ≈ 0° bedeutet einen kontrollierten Rückwärtsschritt. `HARD IMPACT ⚠` bei θ ≈ 0° bedeutet, auf den Fuß gefallen — dieselbe Anzeige macht den Unterschied sichtbar.
 
 #### Aufprall-Jerk-Balken
 
 - **Kurzer Balken, kein Klick** → weiche, kontrollierte Landung. Ideal.
-- **Voller roter Balken + 500-Hz-Klick** → hartes Stampfen. Knie beim Bodenkontakt beugen und mit dem Knöchel absorbieren.
+- **Voller roter Balken + 1200-Hz-Klick** → hartes Stampfen. Knie beim Bodenkontakt beugen und mit dem Knöchel absorbieren.
 
 ---
 
@@ -411,11 +406,11 @@ Aktualisiert sich bei jedem erkannten Fußkontakt.
 ### 6.6 Fokus je nach Fertigkeitslevel
 
 #### Anfänger
-Nur auf die **Schritt-Badge Richtung + Badge** konzentrieren.
+Nur auf die **Schritt-Badge θ-Zone + Qualitäts-Badge** konzentrieren.
 
-1. Vorwärts gehen → `OPTIMAL HEEL`? Falls nicht: Ferse anheben.
-2. Rückwärts gehen → `OPTIMAL TOE` oder `ANCHOR SETTLE`? Falls nicht: Zehe zuerst schicken.
-3. **1200-Hz-Piep** = stoppen und verlangsamen (`HEEL LANDING!` oder hartes `FLAT-FOOT!`).
+1. Vorwärts gehen → `HEEL STRIKE ✓`? Falls nicht: Ferse anheben (θ muss ≥ +8° sein).
+2. Rückwärts gehen → `SOFT ✓`? Falls nicht: Verlangsamen und Zehe zuerst schicken.
+3. **1200-Hz-Piep** = stoppen und verlangsamen (`HEEL SLAM ⚠`, `TOE JAM ⚠` oder `HARD IMPACT ⚠` — zu abrupt gelandet).
 
 #### Mittelstufe
 1. Konsistentes `OPTIMAL HEEL` — Jerk-Balken unter 50%.
@@ -435,8 +430,10 @@ Nur auf die **Schritt-Badge Richtung + Badge** konzentrieren.
 
 | Was zu sehen | Grundursache | Lösung |
 | :--- | :--- | :--- |
-| `FLAT-FOOT!` bei jedem Vorwärtslauf | Knöchel starr; keine Fersenartikulierung | Verlangsamen. Fersen-Erstkontakt bewusst übertreiben. |
-| `HEEL LANDING!` bei Rückwärtsschritten | Körpergewicht bewegt sich zu früh rückwärts | COM verzögern — erst Fuß schicken, Körper folgt. |
+| `HEEL SLAM ⚠` bei Vorwärtsläufen | Ferse korrekt, aber Knie/Knöchel absorbieren nicht | Knie beim Aufsetzen weich halten; Landung abfedern statt stampfen. |
+| `HARD IMPACT ⚠` bei Vorwärtsläufen | Knöchel starr; keine Fersenartikulierung (θ bleibt nahe 0°) | Verlangsamen. Fersen-Erstkontakt bewusst übertreiben. |
+| `HARD IMPACT ⚠` bei Rückwärtsschritten | Körpergewicht bewegt sich zu früh rückwärts — auf den Fuß gefallen | COM verzögern — erst Fuß schicken, Körper folgt. Ziel: `SOFT ✓`. |
+| `MODERATE` konstant | Aufprall zu groß, aber Richtung/Zone korrekt | Knie beim Kontakt mehr beugen; Gewicht senken, nicht fallen lassen. |
 | `HECTIC` Doppelstand | Transfer gehetzt; Fuß hebt zu früh ab | „Letzter, der den Boden verlässt" — ganzen Fuß abschälen. |
 | `SLUGGISH` Doppelstand | Zögern vor Gewichts-Commitment | Dem Boden vertrauen. Körper bewegen, nicht nur Fuß. |
 | `STIFF ANKLE` konstant | Gebremstes Sprunggelenk | Vorstellen, auf einem Schwamm zu landen. |

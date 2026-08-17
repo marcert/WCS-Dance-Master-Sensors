@@ -81,37 +81,36 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
    $$\theta = \theta_{\text{raw}} - \text{mountOffset}$$
 
-3. **Direction Classification & Strike Angle Evaluation:**
+3. **Direction Display & Landing Quality Badge:**
 
-   Direction is determined in two stages. Stage 1 uses the T-1 calibrated pitch angle to resolve the unambiguous extremes; Stage 2 applies a 160 ms pitch-angle trend (dθ) to resolve the ambiguous zone.
+   **Validated limitation:** Empirical testing (n=15 backward flat-walk steps, pelvis sensor included) confirmed that WCS flat-walk backward steps land consistently at θ = +2° to +9° — the same range as ambiguous or flat forward steps. Neither the dθ pitch trend nor pelvis sagittal acceleration (average directional difference < 0.03 g across all axes) can reliably distinguish backward from forward within this range. The direction badge is therefore shown only where θ gives unambiguous physical evidence:
 
-   **Stage 1 — θ zone classification:**
+   | θ at T-1 | Direction badge |
+   | :---: | :--- |
+   | θ ≥ +8° | ➡️ FORWARD (blue) — reliable heel-first contact |
+   | θ < −8° | ⬅️ BACK (purple) — reliable toe-first contact |
+   | −8° ≤ θ < +8° | — (grey) — ambiguous; direction not shown |
 
-   $$\text{activeDirection} = \begin{cases} \text{BACKWARD} & \theta \le -5° \\ \text{AMBIGUOUS} & -5° < \theta < 10° \\ \text{FORWARD} & \theta \ge 10° \end{cases}$$
+   **Landing quality badge — direction-agnostic, based on θ zone + jerk:**
 
-   **Why asymmetric:** Negative θ reliably indicates toe-first contact (unambiguously backward); positive θ below +10° is genuinely ambiguous — a flat forward step and a backward step with an early heel drop both land in the same angle range (+5° to +9°).
+   The strike badge evaluates *how* the foot landed, independent of direction. This is useful for both forward and backward steps: `SOFT ✓` at θ ≈ 0° indicates a controlled backward flat step; `HARD IMPACT ⚠` at θ ≈ 0° means the dancer fell onto the foot.
 
-   **Stage 2 — dθ pitch trend (Ambiguous Zone only):**
+   Jerk thresholds (same scaling as the Impact Jerk display value ÷ 4):
+   - **HARD:** J > 22 g/s (internal > 88)
+   - **MODERATE:** 20 g/s < J ≤ 22 g/s (internal 80–88)
+   - **SOFT:** J ≤ 20 g/s (internal ≤ 80)
 
-   When Stage 1 yields AMBIGUOUS ($-5° < \theta < 10°$), the system computes a 160 ms pitch-angle trend from the pre-contact ring buffer (10 calibrated-θ samples at 50 Hz):
-   $$d\theta = \theta_{\text{calibrated}}[T{-1}] - \theta_{\text{calibrated}}[T{-8}]$$
+   | θ zone | Jerk | Badge | Meaning |
+   | :---: | :---: | :--- | :--- |
+   | ≥ +8° (heel) | ≤ 22 g/s | `HEEL STRIKE ✓` (Green) | Clean heel-first landing — correct forward technique |
+   | ≥ +8° (heel) | > 22 g/s | `HEEL SLAM ⚠` (Red) | Heel contact but impact too abrupt — absorb with knee/ankle |
+   | < −8° (toe) | ≤ 22 g/s | `TOE-FIRST ✓` (Green) | Controlled toe-first landing — correct for deep backward steps or ball-steps |
+   | < −8° (toe) | > 22 g/s | `TOE JAM ⚠` (Red) | Toe contact too hard |
+   | −8° to +7° (ambiguous) | ≤ 20 g/s | `SOFT ✓` (Green) | Controlled landing — good quality regardless of direction |
+   | −8° to +7° (ambiguous) | 20–22 g/s | `MODERATE` (Yellow) | Acceptable; reduce impact |
+   | −8° to +7° (ambiguous) | > 22 g/s | `HARD IMPACT ⚠` (Red) | Fell onto foot — triggers 1200 Hz click |
 
-   $$\text{activeDirection} = \begin{cases} \text{FORWARD} & d\theta > +2° \\ \text{BACKWARD} & d\theta < -2° \\ \text{AMBIGUOUS} & |d\theta| \le 2° \end{cases}$$
-
-   Forward swing = dorsiflexion → θ rises → positive dθ. Backward swing = plantarflexion → θ falls → negative dθ. Validated threshold: forward dθ +2.6° to +7.9°, backward dθ −2.3° to −3.1°, neutral/anchor −0.4° to +1.9°.
-
-   * **Forward Step (FORWARD via $[\theta]$ or $[d\theta]$):**
-     * $\theta > 35° \longrightarrow$ `HEEL SPIKE` (extreme dorsiflexion)
-     * $10° \le \theta \le 35° \longrightarrow$ `OPTIMAL HEEL` (clean heel articulation)
-     * BRUSH+HEEL reclassification window (200 ms) can upgrade any prior `FLAT-FOOT!` to `BRUSH+HEEL` if a second aZ > 1.05g peak with accelAngle > 8° is detected on the same foot.
-   * **Backward Step (BACKWARD via $[\theta]$ or $[d\theta]$):**
-     * Via $[\theta]$: $-5° > \theta \ge -20° \longrightarrow$ `OPTIMAL TOE`; $\theta < -20° \longrightarrow$ `HEEL SPIKE`
-     * Via $[d\theta]$: `OPTIMAL TOE` for any θ not matching the sub-conditions below
-     * $-2° \le \theta \le +5°$ via $[d\theta]$ AND $aZ > 0.85g$ → `ANCHOR SETTLE` (full weight, settled contact)
-     * $+5° < \theta \le +9°$ via $[d\theta]$ → `HEEL DROP` (heel contacts early on backward step)
-   * **Ambiguous ($|d\theta| \le 2°$, or ring buffer < 9 samples):**
-     * ↔️ FLAT + `FLAT-FOOT!` (Red) — direction unresolvable by θ or dθ; also opens the 200 ms brush+heel reclassification window.
-     * Covers: flat forward steps, backward steps without sufficient pitch trend, and genuinely flat landings.
+   * **BRUSH+HEEL reclassification (200 ms window):** if a landing in the ambiguous zone is followed within 200 ms by a second aZ > 1.05 g peak with accelAngle > 8° on the same foot, the badge upgrades to `BRUSH+HEEL` (green) and the direction badge shows ➡️ FORWARD.
 
 ---
 
@@ -215,14 +214,14 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — impact likely transmitted up the kinetic chain |
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Forward Heel — Optimal** | $10^\circ \le \theta \le 35^\circ$ | `OPTIMAL HEEL` (Green) | None |
-| **Forward Heel — Spike** | $\theta > 35^\circ$ | `HEEL SPIKE` (Yellow) | None |
-| **Forward Brush+Heel** | flat → accelAngle $> 8^\circ$ within 200 ms | `BRUSH+HEEL` (Green) — reclassified from FLAT-FOOT! | None |
-| **Ambiguous flat contact** | $-5° < \theta < 10°$ and $|d\theta| \le 2°$ (or buffer < 9 samples), no heel-set within 200 ms | ↔️ FLAT + `FLAT-FOOT!` (Red) — direction unresolvable by θ or dθ | 1200 Hz Click if Impact Jerk > 40 g/s |
-| **Backward Toe — Optimal** | Via [θ]: $-20° \le \theta < -5°$; or via [dθ]: any θ in $-5°$ to $+9°$ not matching ANCHOR SETTLE or HEEL DROP | `OPTIMAL TOE` (Green) | None |
-| **Backward Toe — Spike** | $\theta < -20°$ | `HEEL SPIKE` (Yellow) | None |
-| **Backward — Anchor Settle** | BACKWARD via [dθ] + $-2° \le \theta \le +5°$ + $aZ > 0.85g$ (load indicator) | `ANCHOR SETTLE` (Green) — full-weight settled contact on backward step | None |
-| **Backward — Heel Drop** | BACKWARD via [dθ] + $+5° < \theta \le +9°$ | `HEEL DROP` (Yellow) — heel contacts early on backward step | None |
+| **Heel zone — clean** | θ ≥ +8°, Jerk ≤ 22 g/s | `HEEL STRIKE ✓` (Green) | None |
+| **Heel zone — slam** | θ ≥ +8°, Jerk > 22 g/s | `HEEL SLAM ⚠` (Red) | 1200 Hz Click |
+| **Toe zone — clean** | θ < −8°, Jerk ≤ 22 g/s | `TOE-FIRST ✓` (Green) | None |
+| **Toe zone — jam** | θ < −8°, Jerk > 22 g/s | `TOE JAM ⚠` (Red) | 1200 Hz Click |
+| **Ambiguous zone — soft** | −8° ≤ θ < +8°, Jerk ≤ 20 g/s | `SOFT ✓` (Green) | None |
+| **Ambiguous zone — moderate** | −8° ≤ θ < +8°, 20 < Jerk ≤ 22 g/s | `MODERATE` (Yellow) | None |
+| **Ambiguous zone — hard** | −8° ≤ θ < +8°, Jerk > 22 g/s | `HARD IMPACT ⚠` (Red) | 1200 Hz Click |
+| **Brush+Heel reclassification** | Ambiguous landing + second aZ > 1.05g, accelAngle > 8° within 200 ms | `BRUSH+HEEL` (Green) — upgrades from any ambiguous badge | None |
 | **Trailing Foot Push-off (forward, optimal)**| BACKWARD last step + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
 | **Trailing Foot Push-off (backward/anchor, optimal)**| FORWARD last step + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
 | **Trailing Foot Push-off (weak)** | Either direction, $120\text{–}159/199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
@@ -311,31 +310,25 @@ This is the primary real-time feedback card. It updates on every detected foot c
 
 | Display element | What it tells you |
 | :--- | :--- |
-| **➡️ FORWARD** | The step that just landed was a forward step |
-| **⬅️ BACKWARD** | The step that just landed was a backward step |
-| **↔️ FLAT** | Foot landed too flat to classify direction — treat as a flat-foot warning |
+| **➡️ FORWARD** | θ ≥ +8°: reliable heel-first contact (forward step) |
+| **⬅️ BACK** | θ < −8°: reliable toe-first contact (deep backward or ball-step) |
+| **—** | −12° to +9°: ambiguous zone; direction not shown |
 | **θ (signed angle)** | Pitch of your foot at the moment of landing, relative to flat. Positive = heel higher than toe; negative = toe higher than heel. |
-| **Badge** | Classification of that landing (see table below) |
+| **Badge** | Landing quality (see table below) — applies to all steps regardless of direction |
 | **Jerk (g/s)** | Rate of impact force — how hard your foot hit the floor |
 
-#### Forward step badges
+#### Landing quality badges (all steps — direction-agnostic)
 
-| Badge | θ | What you did | What to aim for |
-| :--- | :--- | :--- | :--- |
-| `OPTIMAL HEEL` ✅ | +10° to +35° | Clean heel strike — forefoot lifted, heel contacts first | This is the target for all forward walks and breaks |
-| `FLAT` ⚠️ | +5° to +10° | Slight heel lead, foot nearly flat | Acceptable but increase heel articulation |
-| `FLAT-FOOT!` ❌ | < +5° | Foot landed flat or toe-first on a forward step | Common cause: rushing the step, tense ankles, or insufficient hip extension |
-| `HEEL SPIKE` ⚠️ | > +35° | Extremely steep heel angle | Usually a fast, aggressive step; reduce drive force or relax the ankle |
-
-#### Backward step badges
-
-| Badge | θ | What you did | What to aim for |
-| :--- | :--- | :--- | :--- |
-| `OPTIMAL TOE` ✅ | −20° to +5° | Clean toe-ball landing — foot rolled onto the floor from the toe | Target for all backward walks, anchors, and extensions |
-| `ANCHOR SETTLE` ✅ | −2° to +5° AND full weight | Heel just kissed the floor with full weight investment | The ideal anchor completion — leverage is built here |
-| `HEEL DROP` ⚠️ | +5° to +9° | Heel beginning to drop before full weight transfer | Keep the ankle dorsiflexed a moment longer |
-| `HEEL LANDING!` ❌ | ≥ +10° | Heel struck first on a backward step | The most common WCS technique error — pulls partner off-axis and kills momentum |
-| `HEEL SPIKE` ⚠️ | < −20° | Over-pointed foot at contact | Moderate the extension slightly |
+| Badge | θ | Jerk | What happened | Leader interpretation |
+| :--- | :--- | :--- | :--- | :--- |
+| `HEEL STRIKE ✓` ✅ | ≥ +8° | ≤ 22 g/s | Clean heel-first contact | Good forward step |
+| `HEEL SLAM ⚠` ❌ | ≥ +8° | > 22 g/s | Heel landed too hard | Forward step: reduce impact; absorb with knee/ankle |
+| `TOE-FIRST ✓` ✅ | < −8° | ≤ 22 g/s | Controlled toe-first contact | Good deep backward step or intentional ball-step |
+| `TOE JAM ⚠` ❌ | < −8° | > 22 g/s | Toe landed too hard | Soften the toe placement |
+| `SOFT ✓` ✅ | −8° to +7° | ≤ 20 g/s | Flat zone, controlled landing | Backward step quality: good — foot placed gently |
+| `MODERATE` ⚠️ | −8° to +7° | 20–22 g/s | Flat zone, medium impact | Acceptable; aim for softer placement |
+| `HARD IMPACT ⚠` ❌ | −8° to +7° | > 22 g/s | Flat zone, hard landing | Backward step: foot was dropped, not placed |
+| `BRUSH+HEEL` ✅ | ambiguous | — | Brush contact → heel-set within 200 ms | Confirmed forward step with brush technique |
 
 #### Impact Jerk bar
 
@@ -394,11 +387,11 @@ This card tells you how long both feet are on the floor at the same time during 
 ### 6.6 What to Focus on — by Skill Level
 
 #### Beginner (just starting out)
-Ignore all other cards. Focus on one thing only: **Step Badge direction + badge**.
+Ignore all other cards. Focus on one thing only: **θ angle + badge**.
 
-1. Walk forward. Does the badge say `OPTIMAL HEEL`? If not, lift your heel slightly more before the step lands.
-2. Walk backward. Does the badge say `OPTIMAL TOE` or `ANCHOR SETTLE`? If not, send your toe out first like a probe — before the body weight follows.
-3. If you hear the **1200 Hz beep**, stop and slow down. That sound means `HEEL LANDING!` or hard `FLAT-FOOT!`.
+1. Walk forward. Does the badge say `HEEL STRIKE ✓`? If not, lift your heel slightly more before the step lands. θ should reach at least +10°.
+2. Walk backward. Does the badge say `SOFT ✓`? That means you placed the foot gently — correct. If you see `HARD IMPACT ⚠`, you are dropping your foot rather than placing it.
+3. If you hear the **1200 Hz beep**, stop and slow down. That sound means a hard landing (`HEEL SLAM ⚠` or `HARD IMPACT ⚠`).
 
 #### Intermediate (technique refinement)
 1. Forward walks → aim for consistent `OPTIMAL HEEL` with Jerk bar under 50%.
@@ -418,8 +411,10 @@ Ignore all other cards. Focus on one thing only: **Step Badge direction + badge*
 
 | What you see | Root cause | Fix |
 | :--- | :--- | :--- |
-| `FLAT-FOOT!` on every forward walk | Ankle held rigid; no heel articulation | Slow down. Exaggerate the heel-first contact consciously. Drill: walk in place, touching heel then ball in sequence. |
-| `HEEL LANDING!` on backward steps | Body weight moving backward too fast before foot scouts | Delay the COM — send the foot first, body follows. Drill: backward walks holding a wall for balance, exaggerating toe-first contact. |
+| `HEEL STRIKE ✓` never fires on forward walks | Ankle held rigid; no heel articulation | Slow down. Exaggerate the heel-first contact consciously. Drill: walk in place, touching heel then ball in sequence. |
+| `HEEL SLAM ⚠` on forward steps | Heel contact correct, but landing too abrupt | Bend the knee as the foot meets the floor; absorb with the ankle. |
+| `HARD IMPACT ⚠` on backward steps | Body weight moving backward too fast before foot scouts — foot is dropped, not placed | Delay the COM — send the foot first, body follows. Drill: backward walks holding a wall for balance. |
+| `SOFT ✓` on backward steps | Controlled placement | This is correct — backward steps land in the ambiguous θ zone, and SOFT ✓ is the quality target. |
 | `HECTIC` Double Stance | Rushing the transfer; foot lifts too early | Think "leave the floor last" — let the whole foot peel up from toe. |
 | `SLUGGISH` Double Stance | Hesitating before committing weight | Trust the floor. Move the body, not just the foot. Drill: metronome walks, landing on the beat. |
 | `STIFF ANKLE` consistently | Braced ankle at landing | Visualise landing on a sponge. Consciously unlock the ankle joint before contact. |

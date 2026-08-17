@@ -383,6 +383,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let lastStepTimeLeft = 0, lastStepTimeRight = 0;
     let lastActiveFoot = "", stepDurationMs = 500, lastStepTimestamp = 0;
     let thetaBufferL = [], thetaBufferR = [];
+    let cfWarmupFrames = 250;
     let prevAzLeft = 1.0, prevAzRight = 1.0;
     // -- delay ramp monitor (tempo-normalised weight transfer timing) --
     let delayMonActive = false, delayMonFoot = null, delayMonDir = null;
@@ -609,12 +610,14 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         thetaBufferL.push(pitchLeftAngleRaw  - leftMountOffset);
         if (thetaBufferR.length >= 10) thetaBufferR.shift();
         thetaBufferR.push(pitchRightAngleRaw - rightMountOffset);
+        if (cfWarmupFrames > 0) cfWarmupFrames--;
 
         // Step trigger (same thresholds as solo.h)
         let preJerkL_s = Math.abs(aZL_s - prevAzLeft)  / 0.005;
         let preJerkR_s = Math.abs(aZR_s - prevAzRight) / 0.005;
         let leftSig  = targetLOk && (Math.abs(aZL_s) > 1.08 || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
         let rightSig = targetROk && (Math.abs(aZR_s) > 1.08 || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
+        if (cfWarmupFrames > 0) { leftSig = false; rightSig = false; }
         let detFoot = null;
         if      (leftSig && rightSig) detFoot = (Math.abs(aZL_s) >= Math.abs(aZR_s)) ? "L" : "R";
         else if (leftSig)  detFoot = "L";
@@ -641,15 +644,14 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             lastStepTimestamp = now; stepDurationMs = stepDur;
             // Direction: T-1 vs mount offset
             let activeDir = (isLeft ? prevPitchLeftAngle < leftMountOffset : prevPitchRightAngle < rightMountOffset) ? "BACKWARD" : "FORWARD";
-            // Reset CF angle to offset on landing
-            if (isLeft) pitchLeftAngleRaw = leftMountOffset; else pitchRightAngleRaw = rightMountOffset;
             // Ambiguous zone override (same as solo.h: T-1 minus T-8 trend)
-            if (activeTheta > -5 && activeTheta < 10) {
+            if (activeTheta > -12 && activeTheta < 10) {
                 let tBuf = isLeft ? thetaBufferL : thetaBufferR;
                 if (tBuf.length >= 9) {
                     let trend = tBuf[tBuf.length - 2] - tBuf[tBuf.length - 9];
-                    if      (trend >  2.0) activeDir = "FORWARD";
-                    else if (trend < -2.0) activeDir = "BACKWARD";
+                    let trendThr = activeTheta > 5 ? 0.5 : (activeTheta > 0 ? 0.8 : 1.5);
+                    if      (trend >  trendThr) activeDir = "FORWARD";
+                    else if (trend < -trendThr) activeDir = "BACKWARD";
                     else                   activeDir = "AMBIGUOUS";
                 } else { activeDir = "AMBIGUOUS"; }
             }
@@ -671,34 +673,32 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 let ab = document.getElementById('p-anchorBadge');
                 if (ab) { ab.className='p-badge'; ab.innerText='MEASURING...'; }
             }
-            // Direction badge
+            // Capture jerk at trigger moment (same scaling as solo.h)
+            let activeJerk_p = isLeft ? preJerkL_s : preJerkR_s;
+            // Direction badge: reliable only at θ-zone extremes
             let dirEl = document.getElementById('p-dirBadge');
             let angEl = document.getElementById('p-angleVal');
             let strEl = document.getElementById('p-strikeBadge');
             let fStr = isLeft ? ' L' : ' R';
             if (dirEl) {
-                if      (activeDir === "FORWARD")  { dirEl.className='p-badge p-blue';   dirEl.innerText='➡ FWD'+fStr; }
-                else if (activeDir === "BACKWARD") { dirEl.className='p-badge p-purple'; dirEl.innerText='⬅ BWD'+fStr; }
-                else                               { dirEl.className='p-badge';          dirEl.innerText='↔ FLAT'+fStr; }
+                if      (activeTheta >= 8)  { dirEl.className='p-badge p-blue';   dirEl.innerText='➡ FWD'+fStr; }
+                else if (activeTheta < -8)  { dirEl.className='p-badge p-purple'; dirEl.innerText='⬅ BACK'+fStr; }
+                else                        { dirEl.className='p-badge';          dirEl.innerText='—'+fStr; }
             }
             if (angEl) angEl.innerText = activeTheta + '°';
-            // Strike badge (beginner level — same thresholds as solo.h)
+            // Strike badge: landing quality, direction-agnostic
             if (strEl) {
-                if (activeDir === "FORWARD") {
-                    if      (activeTheta > 35)  { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL SPIKE'; }
-                    else if (activeTheta >= 10) { strEl.className='p-badge p-green';  strEl.innerText='OPTIMAL HEEL'; }
-                    else if (activeTheta >= 5)  { strEl.className='p-badge p-yellow'; strEl.innerText='FLAT'; }
-                    else if (activeTheta < -5)  { strEl.className='p-badge p-blue';   strEl.innerText='BALL-STEP'; }
-                    else                        { strEl.className='p-badge p-red';    strEl.innerText='FLAT-FOOT!'; playPartnerBeep(1200); }
-                } else if (activeDir === "BACKWARD") {
-                    let aZact = isLeft ? aZL_s : aZR_s;
-                    let isAnchor = (activeTheta >= -2 && activeTheta <= 5 && aZact > 0.85);
-                    if (isAnchor)               { strEl.className='p-badge p-green';  strEl.innerText='ANCHOR SETTLE'; }
-                    else if (activeTheta >= 10) { strEl.className='p-badge p-red';    strEl.innerText='HEEL LANDING!'; playPartnerBeep(1200); }
-                    else if (activeTheta > 5)   { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL DROP'; }
-                    else if (activeTheta >= -20){ strEl.className='p-badge p-green';  strEl.innerText='OPTIMAL TOE'; }
-                    else                        { strEl.className='p-badge p-yellow'; strEl.innerText='HEEL SPIKE'; }
-                } else { strEl.className='p-badge p-red'; strEl.innerText='FLAT-FOOT!'; playPartnerBeep(1200); }
+                if (activeTheta >= 8) {
+                    if (activeJerk_p > 88) { strEl.className='p-badge p-red';    strEl.innerText='HEEL SLAM ⚠'; playPartnerBeep(1200); }
+                    else                   { strEl.className='p-badge p-green';  strEl.innerText='HEEL STRIKE ✓'; }
+                } else if (activeTheta < -8) {
+                    if (activeJerk_p > 88) { strEl.className='p-badge p-red';    strEl.innerText='TOE JAM ⚠'; playPartnerBeep(1200); }
+                    else                   { strEl.className='p-badge p-green';  strEl.innerText='TOE-FIRST ✓'; }
+                } else {
+                    if      (activeJerk_p > 88)  { strEl.className='p-badge p-red';    strEl.innerText='HARD IMPACT ⚠'; playPartnerBeep(1200); }
+                    else if (activeJerk_p > 80)  { strEl.className='p-badge p-yellow'; strEl.innerText='MODERATE'; }
+                    else                         { strEl.className='p-badge p-green';  strEl.innerText='SOFT ✓'; }
+                }
             }
             // Start delay ramp monitor
             delayMonActive = true; delayMonFoot = detFoot; delayMonDir = activeDir;
