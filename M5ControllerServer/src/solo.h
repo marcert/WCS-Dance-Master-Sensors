@@ -286,7 +286,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
                 <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
-                <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5);" onclick="toggleDebug()">🔍 DBG</button>
+                <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5); display:none;" onclick="toggleDebug()">🔍 DBG</button>
             </div>
         </header>
 
