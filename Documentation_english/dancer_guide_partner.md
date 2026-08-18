@@ -32,7 +32,7 @@
 │   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
 │   ■ Sound/Error Left   ■ Sound/Error Right   ■ Hand Jerk     │
 ├──────────────────────────────────────────────────────────────┤
-│  STEP:  ⬅ BWD R   −7°   OPTIMAL TOE                         │
+│  STEP:  ⬅ BWD R   −7°   TOE-FIRST ✓                         │
 │  PELVIS: 🌀 ACTIVE  STABLE  HIP LEADS  GROUNDED  ANCHORED   │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -118,28 +118,28 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 
 | Element | Meaning |
 | :--- | :--- |
-| **➡ FWD L / R** | Forward step, left or right foot |
-| **⬅ BWD L / R** | Backward step, left or right foot |
-| **↔ FLAT L / R** | Ambiguous landing — too flat to classify direction |
+| **➡ FWD L / R** | Forward step (θ ≥ +8°), left or right foot |
+| **⬅ BWD L / R** | Backward step (θ < −8°), left or right foot |
+| **— L / R** | Ambiguous zone (−8° to +7°) — direction not classifiable from angle alone |
 | **θ angle** | Foot pitch at landing (positive = heel up, negative = toe down) |
 | **Strike badge** | Classification of the landing — see table below |
 | **Delay badge** | Tempo-normalised weight transfer timing — see table below |
 
 ### Strike badge reference
 
-| Badge | Direction | Angle | Assessment |
+| Badge | Zone | Jerk | Assessment |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL HEEL` ✅ | Forward | +10° to +35° | Correct heel-first contact |
-| `HEEL SPIKE` ⚠️ | Forward | > +35° | Excessive heel angle |
-| `OPTIMAL TOE` ✅ | Backward | −5° to −20° | Correct toe-ball contact |
-| `ANCHOR SETTLE` ✅ | Backward | near flat + low impact | Foot settling into anchor — weight redistributing |
-| `HEEL DROP` ⚠️ | Backward | > +5° | Heel contacting before toe on a backward step |
-| `HEEL LANDING!` ❌ | Backward | > +10° | Definitive heel-first on a backward step |
-| `FLAT-FOOT!` ❌ | Ambiguous | −5° to +5° | Flat landing without classification |
-| `BALL-STEP` | Forward | < −5° | Ball-first on a forward step |
+| `HEEL STRIKE ✓` | HEEL (θ ≥ +8°) | ≤ 22 g/s | Correct heel-first contact |
+| `HEEL SLAM ⚠` | HEEL (θ ≥ +8°) | > 22 g/s | Hard heel impact — too much landing force |
+| `TOE-FIRST ✓` | TOE (θ < −8°) | ≤ 22 g/s | Correct toe-ball contact |
+| `TOE JAM ⚠` | TOE (θ < −8°) | > 22 g/s | Hard toe impact — over-extended or forced contact |
+| `SOFT ✓` | Ambiguous (−8° to +7°) | ≤ 20 g/s | Light, controlled landing — use camera to check direction |
+| `MODERATE` | Ambiguous (−8° to +7°) | 20–22 g/s | Moderate impact in flat zone |
+| `HARD IMPACT ⚠` | Ambiguous (−8° to +7°) | > 22 g/s | Hard flat-foot landing — stomping pattern |
+| `BRUSH+HEEL` | → HEEL | — | Ambiguous → heel-set within 200 ms — reclassified to HEEL zone |
 
 > 📷 **Screenshot placeholder — status bar: step badges**  
-> *(Replace with: close-up of the status bar row showing e.g. `⬅ BWD R  −7°  OPTIMAL TOE` with the pelvis row hidden)*
+> *(Replace with: close-up of the status bar row showing e.g. `⬅ BWD R  −7°  TOE-FIRST ✓` with the pelvis row hidden)*
 
 ### Delay badge reference
 
@@ -156,7 +156,7 @@ Thresholds differ by direction because a backward (toe-first) landing naturally 
 > **Coaching tip:** `QUICK` on every anchor step is the most common finding at Newcomer/Intermediate level. The dancer steps back but immediately drops their weight, losing the stretch in the connection. Watch for `QUICK` in the status bar and cue: *"Step back and breathe before you land."*
 
 > 📷 **Screenshot placeholder — delay badge: DELAYED ✓ on anchor**
-> *(Replace with: status bar showing `⬅ BWD R  −12°  OPTIMAL TOE  DELAYED ✓` — all green, good technique)*
+> *(Replace with: status bar showing `⬅ BWD R  −12°  TOE-FIRST ✓  DELAYED ✓` — all green, good technique)*
 
 --- (Status Bar — appears when sensor is online)
 
@@ -187,8 +187,9 @@ Tap **`🔇 Audio: OFF`** in the header to enable alerts. Tap again to mute.
 
 | Event | Tone | Condition |
 | :--- | :--- | :--- |
-| **`FLAT-FOOT!`** | 1200 Hz click (80 ms) | Flat or toe-first landing on a forward step |
-| **`HEEL LANDING!`** | 1200 Hz click (80 ms) | Definitive heel-first contact on a backward step |
+| **`HEEL SLAM ⚠`** | 1200 Hz click (80 ms) | Hard heel impact in the HEEL zone (jerk > 22 g/s) |
+| **`TOE JAM ⚠`** | 1200 Hz click (80 ms) | Hard toe impact in the TOE zone (jerk > 22 g/s) |
+| **`HARD IMPACT ⚠`** | 1200 Hz click (80 ms) | Hard flat-foot landing in the ambiguous zone (jerk > 22 g/s) |
 | **`LATERAL SWAY`** | 400 Hz sustained (250 ms) | Pelvis lateral variance exceeds threshold — fires once on entry into error state |
 | **`BOUNCY`** | 600 Hz double click | Vertical oscillation variance too high — fires once on entry into error state |
 | **`UNSTABLE` anchor** | 800 → 350 Hz descending sweep (300 ms) | Anchor settle score < 30 after each backward step |

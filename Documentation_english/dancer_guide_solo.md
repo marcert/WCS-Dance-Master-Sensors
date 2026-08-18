@@ -80,8 +80,7 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 
 | Element | What it tells you |
 | :--- | :--- |
-| **➡️ FORWARD** / **⬅️ BACKWARD** | Direction of the step that just landed |
-| **↔️ FLAT** | Foot landed too flat to classify — treat as a flat-foot warning |
+| **Direction badge** | ➡️ FORWARD (θ ≥ +8°), ⬅️ BACK (θ < −8°), or — when the angle is in the ambiguous zone |
 | **θ angle** | Pitch of your foot at landing. Positive = heel higher than toe. |
 | **Strike badge** (large coloured label) | Classification of that landing — see tables below |
 | **Jerk bar** | Rate of impact force — how hard your foot hit the floor |
@@ -96,40 +95,46 @@ The system classifies direction from foot pitch angle θ. Direction is **reliabl
 
 | Direction badge | θ at landing | Meaning |
 | :--- | :--- | :--- |
-| **➡️ FORWARD** | θ ≥ +10° | Clear dorsiflexion — heel contacted first |
-| **↔️ FLAT** | −5° to +9° | Ambiguous zone — foot too flat to classify direction |
-| **⬅️ BACKWARD** | θ < −5° | Clear plantarflexion — toe-ball contacted first |
+| **➡️ FORWARD** | θ ≥ +8° | Clear dorsiflexion — heel contacted first |
+| **—** (grey) | −8° to +7° | Ambiguous zone — foot too flat to classify direction |
+| **⬅️ BACK** | θ < −8° | Clear plantarflexion — toe-ball contacted first |
 
-A single foot IMU cannot separate a flat forward step from a backward step with an early heel drop when θ is between −5° and +9°. Both show ↔️ FLAT.
+When θ is between −8° and +7°, the system cannot reliably determine direction. The direction badge shows — (grey). Use the camera view to check actual direction.
 
-### Forward step badges (➡️ FORWARD, θ ≥ +10°)
+### HEEL zone badges (➡️ FORWARD, θ ≥ +8°)
 
-| Badge | Angle | What you did | Target |
+| Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `HEEL SPIKE` ⚠️ | > +35° | Extremely steep heel angle | Reduce drive force or relax the ankle |
-| `OPTIMAL HEEL` ✅ | +10° to +35° | Clean heel strike — heel contacts first | Target for all forward walks and breaks |
-| `BRUSH+HEEL` ✅ | flat → +8° heel within 200 ms | Ball brushed during swing, then heel set cleanly | Reclassified from FLAT-FOOT! when the sensor detects the two-phase contact |
+| `HEEL STRIKE ✓` | ≤ 22 g/s | Clean heel strike — controlled contact | Target for all forward walks and breaks |
+| `HEEL SLAM ⚠` | > 22 g/s | Hard heel impact — excessive landing force | Bend the knee on contact and soften the ankle |
 
-### Ambiguous zone (↔️ FLAT, −5° to +9°)
+### Ambiguous zone (—, −8° to +7°)
 
-| Badge | Condition | What it means |
+The foot is too flat to classify direction. The quality badge still fires:
+
+| Badge | Jerk | What it means |
 | :--- | :--- | :--- |
-| `FLAT-FOOT!` ❌ | flat landing, no follow-through | Could be: forward step with insufficient heel lift, OR backward step with heel dropping too early. Use camera to check actual direction. |
-| `BRUSH+HEEL` ✅ | flat → heel-set detected within 200 ms | System auto-reclassifies — correct forward technique confirmed |
+| `SOFT ✓` | ≤ 20 g/s | Light, controlled landing — good absorption in this zone |
+| `MODERATE` | 20–22 g/s | Moderate impact — acceptable, but worth reducing |
+| `HARD IMPACT ⚠` | > 22 g/s | Heavy flat-foot landing — stomping pattern |
+| `BRUSH+HEEL` | — | Ambiguous landing followed by heel-set within 200 ms — reclassified to ➡️ FORWARD; correct technique confirmed |
 
-### Backward step badges (⬅️ BACKWARD, θ < −5°)
+Use the camera view to check actual direction when the direction badge shows —.
 
-| Badge | Angle | What you did | Target |
+### TOE zone badges (⬅️ BACK, θ < −8°)
+
+| Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL TOE` ✅ | −5° to −20° | Clean toe-ball contact | Target for all backward walks, anchors, extensions |
-| `HEEL SPIKE` ⚠️ | < −20° | Over-pointed foot at contact | Moderate the extension slightly |
+| `TOE-FIRST ✓` | ≤ 22 g/s | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
+| `TOE JAM ⚠` | > 22 g/s | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
 
-> **Note on backward HEEL errors:** A backward step where the heel drops early (θ = +5° to +9°) or strikes first (θ ≥ +10°) will show ↔️ FLAT or ➡️ FORWARD — the sensor cannot confirm backward direction in those ranges. If you see consistent FLAT-FOOT! on what you believe are backward steps, your heel is most likely contacting too early. Focus on sending the toe out first and keeping the ankle dorsiflexed until the foot settles.
+> **Note on early heel drops:** A backward step where the heel contacts before the toe will land in the ambiguous zone (—) rather than ⬅️ BACK. If you see consistent SOFT/MODERATE/HARD IMPACT on what you believe are backward steps, your heel is contacting too early. Focus on sending the toe out first and keeping the ankle relaxed until the foot settles.
 
 ### Impact Jerk bar
 
 - **Short bar, no click** → soft, controlled landing. Ideal.
-- **Full red bar + 500 Hz click** → heavy stomping. Bend the knee on contact and absorb with the ankle.
+- **Bar past yellow + 1200 Hz click** → `HEEL SLAM ⚠`, `TOE JAM ⚠`, or `HARD IMPACT ⚠` badge — hard landing. Bend the knee on contact and absorb with the ankle.
+- **Full red bar + 500 Hz click** → extreme impact (> 30 g/s) — separate alert from the badge system.
 
 ---
 
@@ -325,10 +330,10 @@ These three components are combined into a 0–100 score displayed in the badge.
 
 **One focus: heel vs. toe contact.**
 
-1. Walk forward. Does the badge say `OPTIMAL HEEL`? If not — lift your heel slightly more before the foot lands.
-2. Walk backward. Does the badge say `OPTIMAL TOE`? If not — send your toe out first. If you see ↔️ FLAT + `FLAT-FOOT!` on backward steps, your heel is contacting the floor before the toe.
-3. If you hear the **1200 Hz beep**, stop and slow down. That is a hard `FLAT-FOOT!` impact.
-4. Practise at a slow tempo until `OPTIMAL HEEL` and `OPTIMAL TOE` appear consistently. Only then increase speed.
+1. Walk forward. Does the badge say `HEEL STRIKE ✓`? If not — your heel is not contacting first. Lift the heel slightly more before the foot lands.
+2. Walk backward. Does the badge say `TOE-FIRST ✓`? If not — send your toe out first. If you see — (ambiguous) on backward steps, your heel is contacting the floor before the toe.
+3. If you hear the **1200 Hz beep**, stop and slow down. That is a `HEEL SLAM ⚠`, `TOE JAM ⚠`, or `HARD IMPACT ⚠` — too much landing force.
+4. Practise at a slow tempo until `HEEL STRIKE ✓` and `TOE-FIRST ✓` appear consistently. Only then increase speed.
 
 **With pelvis sensor:** Watch **Hip Activation** only. If `STIFF HIPS` appears consistently, your legs are moving without your core engaging.
 
@@ -336,8 +341,8 @@ These three components are combined into a 0–100 score displayed in the badge.
 
 **Two focuses: technique consistency + weight transfer timing.**
 
-1. Forward walks → aim for consistent `OPTIMAL HEEL` with the Jerk bar under half.
-2. Backward walks → aim for `OPTIMAL TOE`. ↔️ FLAT on a backward step means the foot is landing too flat.
+1. Forward walks → aim for consistent `HEEL STRIKE ✓` with the Jerk bar low.
+2. Backward walks → aim for `TOE-FIRST ✓`. A — direction badge on a backward step means the foot is landing too flat — the heel is dropping before the toe.
 3. Watch the **POWER PUSH badge**: is your trailing leg passive?
 4. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triple steps.
 5. Watch the new **DELAY badge**: aim for `DELAYED ✓` on anchor steps. Consistent `QUICK` means you are dropping weight immediately — no musical breath in the connection.
@@ -363,8 +368,10 @@ These three components are combined into a 0–100 score displayed in the badge.
 
 | What you see | Root cause | Fix |
 | :--- | :--- | :--- |
-| `FLAT-FOOT!` on every forward walk | Ankle held rigid; no heel articulation | Slow down. Exaggerate heel-first contact consciously. |
-| `FLAT-FOOT!` + ↔️ FLAT on backward steps | Heel contacting before toe | Send the toe first, keep the ankle dorsiflexed until the foot settles. |
+| `HEEL SLAM ⚠` on forward walks | Heel contacting hard — insufficient knee or ankle absorption | Slow down. Bend the knee more on contact and soften the ankle. |
+| `HARD IMPACT ⚠` on forward walks | Ankle held rigid; no heel articulation | Slow down. Exaggerate heel-first contact consciously. |
+| — badge on backward steps | Heel contacting before toe | Send the toe first, keep the ankle relaxed until the foot settles. |
+| `TOE JAM ⚠` consistently | Hard toe impact on backward steps | Moderate the extension; absorb the landing through the ankle. |
 | `HECTIC` Double Stance | Rushing the transfer; foot lifts too early | "Leave the floor last" — let the whole foot peel up from the toe. |
 | `SLUGGISH` Double Stance | Hesitating before committing weight | Trust the floor. Move the body, not just the foot. |
 | `STIFF ANKLE` consistently | Braced ankle at landing | Visualise landing on a sponge. Consciously unlock the ankle before contact. |
