@@ -14,8 +14,8 @@ Die technischen Badge-Bezeichnungen (z. B. `HEEL STRIKE ✓`, `DELAYED ✓`) ers
 | :--- | :--- | :--- |
 | [**Tänzerguide — Solo**](dancer_guide_solo.md) | Tänzer | Solo-Dashboard: Einrichtung, Level-Auswahl, alle Badge-Karten, Übungsempfehlungen, häufige Probleme |
 | [**Tänzerguide — Partner**](dancer_guide_partner.md) | Trainer / Tanzpartner | Partner-Dashboard: Kraftkurve, kombinierter Analyse-Graph, Pelvis-Badges, Coaching-Anwendungsfälle |
-| [**Solo-Dashboard — Technische Erläuterungen**](solo_explanations.md) | Trainer / Entwickler | Architektur, Sensorik, Komplementärfilter, Schrittalgorithmus, alle Metriken und Schwellenwerte |
-| [**Verbindungs-Dashboard — Erläuterungen**](explanations.md) | Alle | Erklärung der Hauptmetriken: Verbindungskraft, Jerk, Fußgraphen |
+| [**Solo-Dashboard — Technische Referenz**](solo_explanations.md) | Entwickler / Nerds | Architektur, Sensorik, Komplementärfilter, Schrittalgorithmus, alle Metriken und Schwellenwerte |
+| [**Verbindungs-Dashboard — Technische Referenz**](explanations.md) | Entwickler / Nerds | Verbindungskraft, Jerk-Formel, Fußabrollqualität, Schwellenwert-Herleitung, Visualisierungsarchitektur |
 
 ---
 
