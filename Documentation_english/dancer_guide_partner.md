@@ -173,6 +173,7 @@ For full descriptions of each badge see [dancer_guide_solo.md — Section 8](dan
 | **Hip-Foot Coupling** | `HIP LEADS` (>100 ms before foot) | `IN SYNC` (40–100 ms) | `HIP LAGS` (<40 ms) |
 | **Vertical Bounce** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` |
 | **Anchor Settle** | `ANCHORED (n)` (≥60) | `SETTLING (n)` (30–59) | `UNSTABLE (n)` (<30) |
+| **Hip Settle** | `HIP SETTLE ✓` | `SLIGHT SETTLE` | `OVERSWING ⚠` / `NO HIP SETTLE` |
 
 > 📷 **Screenshot placeholder — status bar: pelvis badges active**  
 > *(Replace with: close-up of the full status bar with both rows visible — step row + PELVIS: row showing all 5 badges lit in various colours)*

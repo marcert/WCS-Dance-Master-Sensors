@@ -413,8 +413,8 @@ Nur auf die **Schritt-Badge θ-Zone + Qualitäts-Badge** konzentrieren.
 3. **1200-Hz-Piep** = stoppen und verlangsamen (`HEEL SLAM ⚠`, `TOE JAM ⚠` oder `HARD IMPACT ⚠` — zu abrupt gelandet).
 
 #### Mittelstufe
-1. Konsistentes `OPTIMAL HEEL` — Jerk-Balken unter 50%.
-2. `OPTIMAL TOE` → `ANCHOR SETTLE`-Sequenz bei Ankern.
+1. Konsistentes `HEEL STRIKE ✓` — Jerk-Balken unter 50%.
+2. `TOE-FIRST ✓` bei jedem Schritt, `ANCHORED` bei Ankern.
 3. **Doppelstand-Karte**: `OPTIMAL ROLL` bei Triples anstreben.
 4. **POWER PUSH-Badge**: Standbein aktiv einsetzen.
 

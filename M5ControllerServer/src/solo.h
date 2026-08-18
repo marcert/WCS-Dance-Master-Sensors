@@ -603,6 +603,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
         let anchorSettleActive    = false;            // true while collecting post-anchor pelvis window
         let anchorSettleStartTime = 0;
+        let anchorWindowMs        = 500;              // tempo-adaptive: set at trigger, capped 280–500 ms
         let anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
 
         function fetchStream() {
@@ -729,7 +730,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             anchorSettleSamples.aSagP.push(aSagP);
                             anchorSettleSamples.gYawP.push(Math.abs(gYawP));
                             anchorSettleSamples.aLatP.push(aLatP);
-                            if (now - anchorSettleStartTime >= 500) {
+                            if (now - anchorSettleStartTime >= anchorWindowMs) {
                                 anchorSettleActive = false;
                                 let n = anchorSettleSamples.aSagP.length;
                                 if (n >= 8) {
@@ -739,17 +740,21 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                     let earlyYaw = anchorSettleSamples.gYawP.slice(0, half);
                                     let lateYaw  = anchorSettleSamples.gYawP.slice(half);
 
-                                    // Deceleration: high AP movement early → low late
-                                    let earlyAYMag = earlyAY.reduce((a,b)=>a+Math.abs(b),0) / earlyAY.length;
-                                    let lateAYMag  = lateAY.reduce((a,b)=>a+Math.abs(b),0)  / lateAY.length;
-                                    let decelScore = Math.min(1, Math.max(0, (earlyAYMag - lateAYMag + 0.05) / 0.25));
+                                    // Deceleration: RMS-based settling index — early phase RMS / late phase RMS
+                                    // Ratio > 2.5 = movement clearly damped; ratio < 1.0 = no settling
+                                    let earlyRMS = Math.sqrt(earlyAY.reduce((a,b)=>a+b*b,0) / earlyAY.length);
+                                    let lateRMS  = Math.sqrt(lateAY.reduce((a,b)=>a+b*b,0)  / lateAY.length);
+                                    let settlingRatio = earlyRMS / (lateRMS + 0.01);
+                                    let decelScore = Math.min(1, Math.max(0, (settlingRatio - 1.0) / 1.5));
 
-                                    // Yaw damping: hip rotation slows after anchor step
-                                    let earlyYawM  = earlyYaw.reduce((a,b)=>a+b,0) / earlyYaw.length;
-                                    let lateYawM   = lateYaw.reduce((a,b)=>a+b,0)  / lateYaw.length;
-                                    let yawDampScore = Math.min(1, Math.max(0, (earlyYawM - lateYawM) / 25));
+                                    // Yaw damping: RMS ratio — hip rotation clearly lower in late phase
+                                    let earlyYawRMS = Math.sqrt(earlyYaw.reduce((a,b)=>a+b*b,0) / earlyYaw.length);
+                                    let lateYawRMS  = Math.sqrt(lateYaw.reduce((a,b)=>a+b*b,0)  / lateYaw.length);
+                                    let yawRatio     = earlyYawRMS / (lateYawRMS + 0.5);
+                                    let yawDampScore = Math.min(1, Math.max(0, (yawRatio - 1.0) / 1.5));
 
-                                    // Stability: low variance in late phase = pelvis held position
+                                    // Stability: gyro vector norm variance in late phase (captures pitch + roll + yaw residual wobble)
+                                    let lateYawM    = lateYaw.reduce((a,b)=>a+b,0) / lateYaw.length;
                                     let lateYawVar  = lateYaw.reduce((a,b)=>a+(b-lateYawM)**2,0) / lateYaw.length;
                                     let stabilScore = Math.max(0, 1 - lateYawVar / 400);
 
@@ -1016,10 +1021,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             }
                         }
 
-                        // Anchor Settle — start 500ms pelvis measurement window on every backward step
+                        // Anchor Settle — start tempo-adaptive pelvis measurement window on every backward step
                         if (pelvicOk && activeDirection === "BACKWARD") {
                             anchorSettleActive    = true;
                             anchorSettleStartTime = now;
+                            anchorWindowMs        = Math.min(500, Math.max(280, stepDurationMs));
                             anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
                             let ab = document.getElementById('anchorSettleBadge');
                             if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = 'MEASURING...'; }

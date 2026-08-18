@@ -394,8 +394,8 @@ Ignore all other cards. Focus on one thing only: **θ angle + badge**.
 3. If you hear the **1200 Hz beep**, stop and slow down. That sound means a hard landing (`HEEL SLAM ⚠` or `HARD IMPACT ⚠`).
 
 #### Intermediate (technique refinement)
-1. Forward walks → aim for consistent `OPTIMAL HEEL` with Jerk bar under 50%.
-2. Backward walks → aim for `OPTIMAL TOE` → `ANCHOR SETTLE` sequence on anchor steps.
+1. Forward walks → aim for consistent `HEEL STRIKE ✓` with Jerk bar under 50%.
+2. Backward walks → aim for `TOE-FIRST ✓` on each step, and `ANCHORED` on anchor steps.
 3. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triples.
 4. Watch the **POWER PUSH badge**: is your trailing leg passive? Drive through the ball of the foot on every walk.
 
@@ -403,7 +403,7 @@ Ignore all other cards. Focus on one thing only: **θ angle + badge**.
 1. Use **SMOOTH LOAD vs INSTANT LOAD** to fine-tune how you receive weight — especially on syncopated patterns where COM timing matters.
 2. Compare **ASI** between your left and right sides. If one side is consistently worse, isolate that foot with single-foot drills.
 3. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — stiffness increases when ankles tire. This is a natural cue to slow down or rest.
-4. Film yourself with `📷 CAM` and replay during pauses. Look for the frame where `HEEL LANDING!` fires — your posture in that moment reveals the root cause (usually upper body tension or early COM shift).
+4. Film yourself with `📷 CAM` and replay during pauses. Look for the frame where `HEEL SLAM ⚠` fires — your posture in that moment reveals the root cause (usually upper body tension or early COM shift).
 
 ---
 

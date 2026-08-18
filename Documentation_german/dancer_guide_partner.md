@@ -32,7 +32,7 @@
 │   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
 │   ■ Sound/Error Left   ■ Sound/Error Right   ■ Hand Jerk     │
 ├──────────────────────────────────────────────────────────────┤
-│  STEP:  ⬅ BWD R   −7°   OPTIMAL TOE                         │
+│  STEP:  ⬅ BWD R   −7°   TOE-FIRST ✓                         │
 │  PELVIS: 🌀 ACTIVE  STABLE  HIP LEADS  GROUNDED  ANCHORED   │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -118,28 +118,28 @@ Wird bei jedem erkannten Fußkontakt aktualisiert. Verwendet dieselbe Klassifizi
 
 | Element | Bedeutung |
 | :--- | :--- |
-| **➡ FWD L / R** | Vorwärtsschritt, linker oder rechter Fuß |
-| **⬅ BWD L / R** | Rückwärtsschritt, linker oder rechter Fuß |
-| **↔ FLAT L / R** | Unklare Landung — zu flach für eine Richtungsklassifizierung |
+| **➡ FWD L / R** | Vorwärtsschritt (θ ≥ +8°), linker oder rechter Fuß |
+| **⬅ BWD L / R** | Rückwärtsschritt (θ < −8°), linker oder rechter Fuß |
+| **— L / R** | Ambiguous Zone (−8° bis +7°) — Richtung aus dem Winkel allein nicht klassifizierbar |
 | **θ Winkel** | Fußneigung beim Aufsetzen (positiv = Ferse hoch, negativ = Zehe runter) |
 | **Schritt-Badge** | Klassifizierung der Landung — siehe Tabelle unten |
 | **Verzögerungs-Badge** | Temponormierte Zeitgebung der Gewichtsverlagerung — siehe Tabelle unten |
 
 ### Schritt-Badge Referenz
 
-| Badge | Richtung | Winkel | Bewertung |
+| Badge | Zone | Jerk | Bewertung |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL HEEL` ✅ | Vorwärts | +10° bis +35° | Korrekter Fersen-zuerst-Kontakt |
-| `HEEL SPIKE` ⚠️ | Vorwärts | > +35° | Übermäßiger Fersenwinkel |
-| `OPTIMAL TOE` ✅ | Rückwärts | −5° bis −20° | Korrekter Zehenball-Kontakt |
-| `ANCHOR SETTLE` ✅ | Rückwärts | nahe flach + geringer Aufprall | Fuß setzt im Anchor ein — Gewicht wird neu verteilt |
-| `HEEL DROP` ⚠️ | Rückwärts | > +5° | Ferse berührt vor dem Zeh bei einem Rückwärtsschritt |
-| `HEEL LANDING!` ❌ | Rückwärts | > +10° | Eindeutiger Fersen-zuerst-Kontakt bei einem Rückwärtsschritt |
-| `FLAT-FOOT!` ❌ | Unklar | −5° bis +5° | Flache Landung ohne Klassifizierung |
-| `BALL-STEP` | Vorwärts | < −5° | Zehenball-zuerst bei einem Vorwärtsschritt |
+| `HEEL STRIKE ✓` | HEEL (θ ≥ +8°) | ≤ 22 g/s | Korrekter Fersen-zuerst-Kontakt |
+| `HEEL SLAM ⚠` | HEEL (θ ≥ +8°) | > 22 g/s | Harter Fersenaufprall — zu viel Landekraft |
+| `TOE-FIRST ✓` | TOE (θ < −8°) | ≤ 22 g/s | Korrekter Zehenball-Kontakt |
+| `TOE JAM ⚠` | TOE (θ < −8°) | > 22 g/s | Harter Zehenaufprall — überstreckter oder erzwungener Kontakt |
+| `SOFT ✓` | Ambiguous (−8° bis +7°) | ≤ 20 g/s | Leichte, kontrollierte Landung — Kamera für Richtungsprüfung nutzen |
+| `MODERATE` | Ambiguous (−8° bis +7°) | 20–22 g/s | Mittlerer Aufprall in der Flachzone |
+| `HARD IMPACT ⚠` | Ambiguous (−8° bis +7°) | > 22 g/s | Harte Flachfuß-Landung — Stampfmuster |
+| `BRUSH+HEEL` | → HEEL | — | Ambiguous → Fersenauflage innerhalb 200 ms — neu klassifiziert als HEEL-Zone |
 
 > 📷 **Screenshot-Platzhalter — Statusleiste: Schritt-Badges**  
-> *(Ersetzen durch: Nahaufnahme der Statusleistenzeile, z. B. `⬅ BWD R  −7°  OPTIMAL TOE` mit ausgeblendeter Becken-Zeile)*
+> *(Ersetzen durch: Nahaufnahme der Statusleistenzeile, z. B. `⬅ BWD R  −7°  TOE-FIRST ✓` mit ausgeblendeter Becken-Zeile)*
 
 ### Verzögerungs-Badge Referenz
 
@@ -156,7 +156,7 @@ Die Schwellenwerte unterscheiden sich je nach Richtung, da eine Rückwärtslandu
 > **Coaching-Tipp:** `QUICK` bei jedem Anchor-Schritt ist der häufigste Befund auf Newcomer-/Intermediate-Niveau. Der Tänzer tritt zurück, verlagert aber sofort das Gewicht und verliert damit die Dehnung in der Verbindung. Auf `QUICK` in der Statusleiste achten und als Cue geben: *„Tritt zurück und atme, bevor du landest."*
 
 > 📷 **Screenshot-Platzhalter — Verzögerungs-Badge: DELAYED ✓ im Anchor**
-> *(Ersetzen durch: Statusleiste mit `⬅ BWD R  −12°  OPTIMAL TOE  DELAYED ✓` — alles grün, gute Technik)*
+> *(Ersetzen durch: Statusleiste mit `⬅ BWD R  −12°  TOE-FIRST ✓  DELAYED ✓` — alles grün, gute Technik)*
 
 --- (Statusleiste — erscheint wenn der Sensor online ist)
 
@@ -173,6 +173,7 @@ Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.
 | **Hüft-Fuß-Kopplung** | `HIP LEADS` (>100 ms vor dem Fuß) | `IN SYNC` (40–100 ms) | `HIP LAGS` (<40 ms) |
 | **Vertikales Wippen** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` |
 | **Anchor Settle** | `ANCHORED (n)` (≥60) | `SETTLING (n)` (30–59) | `UNSTABLE (n)` (<30) |
+| **Hip Settle** | `HIP SETTLE ✓` | `SLIGHT SETTLE` | `OVERSWING ⚠` / `NO HIP SETTLE` |
 
 > 📷 **Screenshot-Platzhalter — Statusleiste: Becken-Badges aktiv**  
 > *(Ersetzen durch: Nahaufnahme der vollständigen Statusleiste mit beiden Zeilen sichtbar — Schritt-Zeile + PELVIS:-Zeile mit allen 5 Badges in verschiedenen Farben)*
@@ -187,8 +188,9 @@ Das Partner-Dashboard gibt synthetische Töne aus, wenn kritische Technikfehler 
 
 | Ereignis | Ton | Bedingung |
 | :--- | :--- | :--- |
-| **`FLAT-FOOT!`** | 1200-Hz-Klick (80 ms) | Flache oder Zehenerstkontakt-Landung bei einem Vorwärtsschritt |
-| **`HEEL LANDING!`** | 1200-Hz-Klick (80 ms) | Eindeutiger Fersenerstkontakt bei einem Rückwärtsschritt |
+| **`HEEL SLAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Fersenaufprall in der HEEL-Zone (Jerk > 22 g/s) |
+| **`TOE JAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Zehenaufprall in der TOE-Zone (Jerk > 22 g/s) |
+| **`HARD IMPACT ⚠`** | 1200-Hz-Klick (80 ms) | Harte Flachfuß-Landung in der Ambiguous-Zone (Jerk > 22 g/s) |
 | **`LATERAL SWAY`** | 400-Hz-Ton, gehalten (250 ms) | Laterale Beckenvarianz überschreitet Schwellenwert — feuert einmalig beim Eintritt in den Fehlerzustand |
 | **`BOUNCY`** | 600-Hz-Doppelklick | Vertikale Schwingungsvarianz zu hoch — feuert einmalig beim Eintritt in den Fehlerzustand |
 | **`UNSTABLE`-Anker** | 800 → 350-Hz-Absteigsweep (300 ms) | Anchor-Settle-Score < 30 nach jedem Rückwärtsschritt |

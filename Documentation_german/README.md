@@ -1,7 +1,7 @@
 # WCS Dance Master Sensors — Deutsche Dokumentation
 
 Diese Dokumentation richtet sich an Tänzer und Trainer, die lieber auf Deutsch lesen möchten.  
-Die technischen Badge-Bezeichnungen (z. B. `OPTIMAL HEEL`, `DELAYED ✓`) erscheinen im Dashboard auf Englisch und werden hier erklärt.
+Die technischen Badge-Bezeichnungen (z. B. `HEEL STRIKE ✓`, `DELAYED ✓`) erscheinen im Dashboard auf Englisch und werden hier erklärt.
 
 > 🇬🇧 Englische Dokumentation: [Documentation_english/README.md](../Documentation_english/README.md)  
 > 🏠 Haupt-Readme: [readme.md](../readme.md)
@@ -23,7 +23,7 @@ Die technischen Badge-Bezeichnungen (z. B. `OPTIMAL HEEL`, `DELAYED ✓`) ersche
 
 Folgende Begriffe werden bewusst auf Englisch belassen, da sie so im Dashboard angezeigt werden:
 
-- Badge-Namen: `OPTIMAL HEEL`, `DELAYED ✓`, `QUICK`, `HIP LEADS` usw.
+- Badge-Namen: `HEEL STRIKE ✓`, `DELAYED ✓`, `QUICK`, `HIP LEADS` usw.
 - Sensor-IDs, Code, Dateinamen, URLs
 
 Alles andere ist auf Deutsch erklärt.
