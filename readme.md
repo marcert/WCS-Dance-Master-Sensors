@@ -14,6 +14,7 @@ A real-time wireless sensor network and video-overlay feedback system built for 
 | :--- | :--- |
 | **Left & Right Foot** | Foot roll-off quality (gyro angular rate), heel/toe strike angle, impact force (Z-axis g-force), push-off power |
 | **Hand / Scale Unit** | Lead-follow tension in grams (−3.5 kg to +3.5 kg via HX711 strain gauge), connection jerk index |
+| **Pelvis Sensor** *(optional)* | Lateral pelvic tilt, yaw damping (Anchor Settle score), hip activation (yaw rate), hip–foot coupling timing, vertical bounce |
 
 Alerts fire immediately as audio beeps and coloured badge overlays — faster than you can read a graph.
 
@@ -33,7 +34,9 @@ Three training levels hide or reveal cards depending on what is relevant:
 | :--- | :--- | :--- |
 | `👤 BEG` | Step direction + heel/toe badge only | Learning basic foot contact |
 | `🏃 INT` | + Jerk bar, Push-Off badge, Double Stance card | Technique refinement |
-| `⭐ ADV` | All cards — full biomechanical feedback | Detailed analysis |
+| `⭐ ADV` | All cards — full biomechanical feedback incl. pelvis metrics | Detailed analysis |
+
+When the optional **Pelvis Sensor** is attached, both dashboards display five additional real-time metrics: hip activation, lateral stability, hip–foot coupling, vertical bounce, and Anchor Settle score.
 
 ---
 
@@ -44,7 +47,7 @@ Three training levels hide or reveal cards depending on what is relevant:
 | [**Dancer's Guide — Solo**](Documentation_english/dancer_guide_solo.md) | Dancers | How to use the Solo Dashboard: setup, level selector, all badge cards, training progressions, common problems. Start here if you want to train — no technical knowledge required. |
 | [**Dancer's Guide — Partner**](Documentation_english/dancer_guide_partner.md) | Coaches / Partners | How to use the Partner Dashboard: connection force graph, combined analysis graph, pelvis badges, coaching use cases. Open on a second device while the dancer uses the solo view. |
 | [**Solo Dashboard — Technical Reference**](Documentation_english/solo_explanations.md) | Coaches / Developers | Architecture, sensor math, complementary filter, step detection algorithm, all metric formulas, threshold tables, firmware notes. |
-| [**Connection Dashboard — Explanations**](Documentation_english/explanations.md) | All | Explanation of the main dashboard metrics (connection force, jerk, foot graphs). |
+| [**Connection Dashboard — Technical Reference**](Documentation_english/explanations.md) | Developers / Nerds | Connection force, jerk formula, foot roll-off quality, threshold derivations, visualization architecture. |
 | [**Parts List**](Documentation_english/parts.md) | Builders | Bill of materials, wiring, and sourcing notes for building the hardware. |
 
 ---
@@ -57,7 +60,7 @@ Three training levels hide or reveal cards depending on what is relevant:
 
 ### Every session
 1. **Power on the Master Unit** first — it locks the Wi-Fi channel.
-2. **Power on the Foot Sensors** (and Hand Unit if using). They scan channels 1–13 and auto-pair with the Master.
+2. **Power on the Foot Sensors** (and Hand Unit and Pelvis Sensor if using). They scan channels 1–13 and auto-pair with the Master.
 3. **Connect your phone or tablet** to the Master's Wi-Fi network (`M5-Dance-Master` / `12345678`, or your home Wi-Fi if configured).
 4. **Open the dashboard** in your browser:
    - Main dashboard: `http://<IP>/`
@@ -84,8 +87,10 @@ Three training levels hide or reveal cards depending on what is relevant:
 |   Hand / Scale Unit    |->|   Central Master Unit  |<-|   Foot Sensor (Right)   |
 | ID: 3 | HX711 + IMU   |  |    M5Stack Master      |  | ID: 2 | M5Stack + IMU   |
 +------------------------+  +----------+-------------+  +-------------------------+
-                                       |
-                                       | Wi-Fi AP/STA + WebServer (port 80)
+ +-------------------------+           |
+ | Pelvis Sensor (opt.)    |..........>| (ESP-NOW, same channel)
+ | ID: 4 | M5Stack + IMU   |           |
+ +-------------------------+           | Wi-Fi AP/STA + WebServer (port 80)
                                        v
                            +-----------+-------------+
                            |   Web Dashboard (HTML5) |
@@ -96,7 +101,7 @@ Three training levels hide or reveal cards depending on what is relevant:
 ```
 
 ### Data flow
-- Foot and Hand sensors broadcast IMU/scale packets via **ESP-NOW** at 200 Hz.
+- Foot, Hand, and Pelvis sensors broadcast IMU/scale packets via **ESP-NOW** at 200 Hz.
 - Master receives packets, aggregates them, and exposes a `/data` JSON endpoint.
 - Dashboard polls `/data` at 50 Hz and renders badges, graphs, and camera overlay in the browser.
 
@@ -109,6 +114,7 @@ Three training levels hide or reveal cards depending on what is relevant:
 | Master | M5StickC Plus / Plus2 or M5Stack Core |
 | Foot Sensors (×2) | M5StickC Plus / Plus2 (internal 6-axis IMU required) |
 | Hand / Scale Unit | M5StickC + HX711 load cell amplifier + strain-gauge load cell (GPIO 33 DOUT / GPIO 32 SCK) |
+| Pelvis Sensor *(optional)* | M5StickC Plus / Plus2 (internal 6-axis IMU required) — worn on a belt at the sacrum |
 
 Full bill of materials and wiring: [parts.md](parts.md)
 
@@ -144,6 +150,10 @@ Install the following libraries in **Arduino IDE** or **PlatformIO**:
 3. **Hand / Scale Unit**
    - Flash with `#define HAND_ID 3`.
    - Default scale factor: `129.1f` — calibrate against a known weight if needed.
+
+4. **Pelvis Sensor** *(optional)*
+   - Flash `M5Pelvic/` — `#define PELVIS_ID 4`.
+   - Mount on a belt at the sacrum with the display facing outward.
 
 ---
 
