@@ -119,6 +119,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             font-size: min(3vw, 14px); font-weight: bold;
             font-family: 'Arial Black', Gadget, sans-serif;
             background: rgba(40,40,40,0.85); color: #888;
+            white-space: nowrap;
         }
         .p-green  { background: rgba(15,60,15,0.9)  !important; color: #66bb6a !important; }
         .p-yellow { background: rgba(60,45,0,0.9)   !important; color: #ffa726 !important; }
@@ -165,7 +166,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <span style="font-size:min(3vw,13px);color:#aaa;">STEP:</span>
             <span id="p-dirBadge"    class="p-badge">—</span>
             <span id="p-angleVal"    style="font-size:min(3vw,13px);color:#ddd;">—</span>
-            <span id="p-strikeBadge" class="p-badge">—</span>
+            <span id="p-strikeBadge" class="p-badge" style="min-width:9em;text-align:center;">—</span>
             <span id="p-loadBadge"   class="p-badge">—</span>
         </div>
         <div id="pelvisInfoDiv" style="visibility:hidden;width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;">
@@ -174,7 +175,8 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <span id="p-slotBadge"     class="p-badge">— LAT</span>
             <span id="p-couplingBadge" class="p-badge">— COUP</span>
             <span id="p-bounceBadge"   class="p-badge">— BOUNCE</span>
-            <span id="p-anchorBadge"   class="p-badge">— ANCHOR</span>
+            <span id="p-anchorBadge"   class="p-badge" style="min-width:9.5em;text-align:center;">— ANCHOR</span>
+            <span id="p-hipSettleBadge" class="p-badge" style="min-width:9.5em;text-align:center;">— HIP SETTLE</span>
         </div>
     </div>
 
@@ -395,8 +397,8 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let aZPDynHistory  = new Array(50).fill(0);
     let gYawTimedBuf   = [];
     let hipActSmoothed = 0;
-    let anchorSettleActive = false, anchorSettleStartTime = 0;
-    let anchorSettleSamples = { aYP: [], gYawP: [] };
+    let anchorSettleActive = false, anchorSettleStartTime = 0, anchorWindowMs = 500;
+    let anchorSettleSamples = { aYP: [], gYawP: [], aLatP: [] };
 
     // -- audio --
     let audioCtxP = null, audioEnabledP = false;
@@ -564,7 +566,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
             let leftImpactDev = Math.max(0, Math.abs(currentLA) - 1.0); // only penalise impacts above 1g, not foot-lifting
             let leftQuality  = Math.abs(currentLG) / (1.0 + leftImpactDev * 2.0);
-            let y_lg = 125 - (leftQuality / 300) * 125;
+            let y_lg = 250 - (leftQuality / 300) * 250;
             y_lg = Math.max(0, Math.min(250, y_lg));
             let isLeftErr = (serverError === 1 || serverError === 3) || (Math.abs(currentLA) > 1.5 && Math.abs(currentLG) < 80.0);
 
@@ -580,7 +582,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
 
             let rightImpactDev = Math.max(0, Math.abs(currentRA) - 1.0); // only penalise impacts above 1g, not foot-lifting
             let rightQuality = Math.abs(currentRG) / (1.0 + rightImpactDev * 2.0);
-            let y_rg = 125 - (rightQuality / 300) * 125;
+            let y_rg = 250 - (rightQuality / 300) * 250;
             y_rg = Math.max(0, Math.min(250, y_rg));
             let isRightErr = (serverError === 2 || serverError === 3) || (Math.abs(currentRA) > 1.5 && Math.abs(currentRG) < 80.0);
 
@@ -669,9 +671,12 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             // Anchor Settle trigger (fires on each backward step)
             if (targetPOk && activeDir === "BACKWARD") {
                 anchorSettleActive = true; anchorSettleStartTime = now;
-                anchorSettleSamples = { aYP: [], gYawP: [] };
+                anchorWindowMs = Math.min(500, Math.max(280, stepDurationMs));
+                anchorSettleSamples = { aYP: [], gYawP: [], aLatP: [] };
                 let ab = document.getElementById('p-anchorBadge');
                 if (ab) { ab.className='p-badge'; ab.innerText='MEASURING...'; }
+                let hse0 = document.getElementById('p-hipSettleBadge');
+                if (hse0) { hse0.className='p-badge'; hse0.style.cssText='background:#1e272e;color:#8b949e;'; hse0.innerText='MEASURING...'; }
             }
             // Capture jerk at trigger moment (same scaling as solo.h)
             let activeJerk_p = isLeft ? preJerkL_s : preJerkR_s;
@@ -777,11 +782,12 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             // gYaw timed ring — {t, v} pairs, 600ms window (for hip-foot coupling)
             gYawTimedBuf.push({ t: now, v: Math.abs(gYawP_p) });
             while (gYawTimedBuf.length > 0 && now - gYawTimedBuf[0].t > 600) gYawTimedBuf.shift();
-            // Anchor Settle — collect 500ms window, evaluate at end
+            // Anchor Settle — collect tempo-adaptive window, evaluate at end
             if (anchorSettleActive) {
                 anchorSettleSamples.aYP.push(aYP_p);
                 anchorSettleSamples.gYawP.push(Math.abs(gYawP_p));
-                if (now - anchorSettleStartTime >= 500) {
+                anchorSettleSamples.aLatP.push(aXP_p);
+                if (now - anchorSettleStartTime >= anchorWindowMs) {
                     anchorSettleActive = false;
                     let n = anchorSettleSamples.aYP.length;
                     if (n >= 8) {
@@ -802,6 +808,20 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                             if      (score >= 60) { ab.className='p-badge p-green';  ab.innerText='ANCHORED ('+score+')'; }
                             else if (score >= 30) { ab.className='p-badge p-yellow'; ab.innerText='SETTLING ('+score+')'; }
                             else                  { ab.className='p-badge p-red';    ab.innerText='UNSTABLE ('+score+')'; playDescendingSweep(); }
+                        }
+                        // Hip Settle — lateral pelvic impulse in first half of window
+                        let earlyLat    = anchorSettleSamples.aLatP.slice(0, half);
+                        let lateLat     = anchorSettleSamples.aLatP.slice(half);
+                        let earlyLatPeak = Math.max(...earlyLat.map(v => Math.abs(v)));
+                        let lateLatMean  = lateLat.reduce((a,b) => a+b, 0) / lateLat.length;
+                        let lateLatVar   = lateLat.reduce((a,b) => a + (b - lateLatMean)**2, 0) / lateLat.length;
+                        let hse = document.getElementById('p-hipSettleBadge');
+                        if (hse) {
+                            hse.style.cssText = '';
+                            if      (earlyLatPeak > 0.30)                           { hse.className='p-badge p-yellow'; hse.innerText='OVERSWING ⚠'; }
+                            else if (earlyLatPeak > 0.10 && lateLatVar < 0.015)     { hse.className='p-badge p-green';  hse.innerText='HIP SETTLE ✓'; }
+                            else if (earlyLatPeak > 0.05)                           { hse.className='p-badge p-yellow'; hse.innerText='SLIGHT SETTLE'; }
+                            else                                                     { hse.className='p-badge p-red';    hse.innerText='NO HIP SETTLE'; }
                         }
                     }
                 }

@@ -200,7 +200,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       lastSeenRight = millis();
     }
 
-    if (accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
+    if (footData.foot_id != 4 && accelVal > ACCEL_MAX && gyroVal < GYRO_MIN) {
       if (isLeft) {
         currentError = (currentError == ERR_RIGHT) ? ERR_BOTH : ERR_LEFT;
       } else {
