@@ -69,9 +69,36 @@ Das Frontend stellt Echtzeit-Daten über HTML5-Canvas-Elemente dar, die über `r
     *   Echtzeit-Gewichtskurven über ein gleitendes 10-Sekunden-Fenster.
     *   Dynamische Linienfärbung: **Grün** (Kompression / positive Last) und **Rot** (Zugspannung / negative Last) basierend auf Nulldurchgangslogik.
 2.  **Kombiniertes Analyse-Diagramm (`graph_kombi`):**
-    *   **Fußqualitätskurven:** Linker Fuß (Cyan), rechter Fuß (Magenta) — kontinuierlicher Qualitätswert aus der Formel in §1.
+    *   **Fußqualitätskurven:** Linker Fuß (Cyan), rechter Fuß (Magenta) — kontinuierlicher Qualitätswert aus der Formel in §1. Die Kurve nutzt die volle Canvas-Höhe: `Q = 0` liegt am unteren Rand, `Q = 150` an der horizontalen Mittellinie, `Q = 300` am oberen Rand. Die Mittellinie ist damit eine aussagekräftige Schwelle: Kurven in der oberen Hälfte = überdurchschnittliche Abrollqualität; untere Hälfte = passiv oder impact-dominiert.
     *   **Jerk-Verfolgungskurve:** Gelbe Linie — Führungshärte-/Jerk-Profil, auf Canvas-Koordinaten skaliert.
     *   **Fehlermarkierungen:** Vertikale Vollhöhen-Linien bei Schwellenwertüberschreitung:
         *   **Cyan / Blau:** Linker Fuß — Aufprall-/Artikulationsfehler.
         *   **Magenta / Lila:** Rechter Fuß — Aufprall-/Artikulationsfehler.
         *   **Yellow / Orange:** Hand-Jerk / Führungshärte-Spitze.
+
+---
+
+## 6. Pelvis-Metriken (Partner-Dashboard)
+
+Wenn der Pelvis-Sensor (`foot_id = 4`) online ist, erscheinen sechs Badge-Metriken in der Status-Leiste. Alle sechs sind immer aktiv — kein Level-Gate.
+
+| Badge | Signal | Schwellenwerte |
+| :--- | :--- | :--- |
+| **Hip Activation** | `gYaw`-Peak über 500 ms, IIR-geglättet | ≥ 60°/s → ACTIVE ✅ \| 25–59°/s → MODERATE ⚠ \| < 25°/s → STIFF HIPS ❌ |
+| **Lateral Stability** | Varianz der lateralen Beckenbeschleunigung über 1 s | < 0,004 → STABLE ✅ \| 0,004–0,015 → SLIGHT SWAY ⚠ \| > 0,015 → LATERAL SWAY ❌ |
+| **Hip-Foot Coupling** | Vorlaufzeit: Peak-Hüftrotation → Fußkontakt | > 100 ms → HIP LEADS ✅ \| 40–100 ms → IN SYNC ⚠ \| Hüfte nach Fuß → HIP LAGS ❌ |
+| **Vertical Bounce** | Varianz der vertikalen Beckenbeschleunigung (Schwerkraft entfernt) über 1 s | < 0,006 → GROUNDED ✅ \| 0,006–0,020 → SLIGHT BOUNCE ⚠ \| > 0,020 → BOUNCY ❌ |
+| **Anchor Settle** | Gewichteter Score (0–100) über tempo-adaptives Fenster nach jedem Rückwärtsschritt | ≥ 60 → ANCHORED ✅ \| 30–59 → SETTLING ⚠ (Score eingeblendet) \| < 30 → UNSTABLE ❌ |
+| **Hip Settle** | Peak der lateralen Beckenbeschleunigung (`earlyLatPeak`) in der ersten Fensterhälfte | > 0,30 g → OVERSWING ⚠ \| 0,10–0,30 g + späte Varianz < 0,015 → HIP SETTLE ✓ ✅ \| 0,05–0,10 g → SLIGHT SETTLE ⚠ \| ≤ 0,05 g → NO HIP SETTLE ❌ |
+
+### Anchor Settle — Details
+
+Fensterdauer: `anchorWindowMs = min(500, max(280, stepDurationMs))` — skaliert mit dem aktuellen Tempo.
+
+Score-Zusammensetzung:
+
+$$\text{score} = \text{decelScore} \times 0{,}35 + \text{yawDampScore} \times 0{,}35 + \text{stabilScore} \times 0{,}30$$
+
+* **decelScore** — sagittale Dezeleration: früher Mittelwert > später Mittelwert (Becken bremst Vorwärtsmomentum ab)
+* **yawDampScore** — Yaw-Dämpfung: Yaw-Peak frühe Hälfte > späte Hälfte (Rotation stoppt nach der Landung)
+* **stabilScore** — Spät-Phasen-Stabilität: niedrige Varianz von `|gYaw|` in der zweiten Fensterhälfte

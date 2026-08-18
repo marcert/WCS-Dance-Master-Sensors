@@ -69,9 +69,36 @@ The frontend renders real-time data using HTML5 Canvas elements updated via `req
     *   Displays real-time weight curves across a 10-second sliding window.
     *   Dynamically shifts line colour between **Green** (compression / positive load) and **Red** (tension / negative load) based on zero-crossing logic.
 2.  **Combined Analysis Graph (`graph_kombi`):**
-    *   **Foot quality curves:** Left foot (Cyan), right foot (Magenta) — continuous score from the formula in §1.
+    *   **Foot quality curves:** Left foot (Cyan), right foot (Magenta) — continuous score from the formula in §1. The curve spans the full canvas height: `Q = 0` renders at the bottom, `Q = 150` at the horizontal centre reference line, `Q = 300` at the top. The midline is therefore a useful threshold: curves in the upper half indicate above-average rolling quality; curves in the lower half indicate passive or impact-dominated movement.
     *   **Jerk tracking curve:** Yellow line — computed lead hardness/jerk profile, scaled to canvas coordinates.
     *   **Error markers:** Vertical full-height lines rendered whenever errors or jerk peaks breach thresholds:
         *   **Cyan / Blue:** Left foot impact/articulation error.
         *   **Magenta / Purple:** Right foot impact/articulation error.
         *   **Yellow / Orange:** Hand jerk / lead hardness spike.
+
+---
+
+## 6. Pelvis Metrics (Partner Dashboard)
+
+When the pelvis sensor (`foot_id = 4`) is online, six badge metrics appear in the status bar. All six are always active — no level gating.
+
+| Badge | Signal | Thresholds |
+| :--- | :--- | :--- |
+| **Hip Activation** | Peak `gYaw` over 500 ms, IIR-smoothed | ≥ 60°/s → ACTIVE ✅ \| 25–59°/s → MODERATE ⚠ \| < 25°/s → STIFF HIPS ❌ |
+| **Lateral Stability** | Variance of lateral pelvic acceleration over 1 s | < 0.004 → STABLE ✅ \| 0.004–0.015 → SLIGHT SWAY ⚠ \| > 0.015 → LATERAL SWAY ❌ |
+| **Hip-Foot Coupling** | Lead time: peak hip rotation → foot contact | > 100 ms → HIP LEADS ✅ \| 40–100 ms → IN SYNC ⚠ \| hip after foot → HIP LAGS ❌ |
+| **Vertical Bounce** | Variance of vertical pelvic acceleration (gravity removed) over 1 s | < 0.006 → GROUNDED ✅ \| 0.006–0.020 → SLIGHT BOUNCE ⚠ \| > 0.020 → BOUNCY ❌ |
+| **Anchor Settle** | Weighted score (0–100) over a tempo-adaptive window after each backward step | ≥ 60 → ANCHORED ✅ \| 30–59 → SETTLING ⚠ (score shown) \| < 30 → UNSTABLE ❌ |
+| **Hip Settle** | Peak lateral pelvic acceleration (`earlyLatPeak`) in first half of Anchor Settle window | > 0.30 g → OVERSWING ⚠ \| 0.10–0.30 g + late variance < 0.015 → HIP SETTLE ✓ ✅ \| 0.05–0.10 g → SLIGHT SETTLE ⚠ \| ≤ 0.05 g → NO HIP SETTLE ❌ |
+
+### Anchor Settle — detail
+
+Window duration: `anchorWindowMs = min(500, max(280, stepDurationMs))` — scales with current tempo.
+
+Score composition:
+
+$$\text{score} = \text{decelScore} \times 0.35 + \text{yawDampScore} \times 0.35 + \text{stabilScore} \times 0.30$$
+
+* **decelScore** — sagittal deceleration: early mean > late mean (pelvis brakes forward momentum)
+* **yawDampScore** — yaw damping: yaw peak in early half > late half (rotation stops after landing)
+* **stabilScore** — late-phase stability: low variance of `|gYaw|` in second half of window
