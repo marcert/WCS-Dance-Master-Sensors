@@ -22,22 +22,23 @@ The Solo Training System operates as a high-frequency biomechanical feedback loo
               +-----------------+  +-----------------+
                                 |  |  ESP-NOW (5 ms Interval)
                                 v  v
-                 +--------------------------------+
-                 | Central Master Unit (Gateway)  |
-                 | M5Stick S3 Web Server          |
-                 +---------------+----------------+
-                                 |
-                                 | Web HTTP / JSON Stream (`/data`) @ 50 Hz
-                                 v
-                 +--------------------------------+
-                 | Web Browser Dashboard (`/solo`)|
-                 | Transparent WebRTC Overlay     |
-                 | Web Audio API Biofeedback      |
-                 +--------------------------------+
+ +------------------------+   +-+------------------------------+
+ | Pelvis Sensor (opt.)   |-->|  Central Master Unit (Gateway) |
+ | ID: 4 | M5Stick @ 200Hz|   |  M5Stick S3 Web Server         |
+ +------------------------+   +----------------+---------------+
+                                               |
+                                               | Web HTTP / JSON Stream (`/data`) @ 50 Hz
+                                               v
+                              +--------------------------------+
+                              | Web Browser Dashboard (`/solo`)|
+                              | Transparent WebRTC Overlay     |
+                              | Web Audio API Biofeedback      |
+                              +--------------------------------+
 ```
 
 * **Foot Nodes (IDs 1 & 2):** M5Stick S3 units equipped with 6-axis IMUs (BMI270 / MPU6886). Firmware operates at **200 Hz (5 ms sampling interval)** to capture ultra-fast transient impact peaks during heel-strikes and toe-landings.
-* **Central Master Unit:** Aggregates ESP-NOW streams and delivers JSON data packets (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`) to the browser via the `/data` endpoint.
+* **Pelvis Node (ID 4, optional):** Same hardware worn on a belt at the sacrum. Streams 3-axis accelerometer (`pA`, `pAy`, `pAx`) and yaw gyroscope (`pYaw`, `pG`) at 200 Hz. Enables hip activation, lateral stability, Anchor Settle, and Hip Settle analysis. When absent, the dashboard operates normally without pelvis cards.
+* **Central Master Unit:** Aggregates ESP-NOW streams and delivers JSON data packets (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optionally `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) to the browser via the `/data` endpoint.
 * **Web Dashboard (`/solo`):** Client-side JavaScript executes state machine filtering, direction mapping, pitch integration, stance timeline calculations, and Web Audio API feedback.
 
 ---
@@ -58,6 +59,18 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
     (Ball / Scouts)        (Eccentric Ankle)       (Heel Kisses Floor & COM Shift)
       -20° ≤ θ ≤ 5°           θ → 0°                  θ ≈ -2° to 5°, aZ > 0.85g
 ```
+
+**The three rockers (Perry & Burnfield model):**
+
+| Rocker | Stance Phase | Pivot | Muscular Control |
+| :--- | :--- | :--- | :--- |
+| **Heel Rocker** (1st) | Initial Contact → Loading Response | Heel | Eccentric tibialis anterior — lowers foot to floor |
+| **Ankle Rocker** (2nd) | Loading Response → Midstance | Ankle joint | Eccentric gastrocnemius/soleus — controls tibial advance |
+| **Forefoot Rocker** (3rd) | Terminal Stance → Push-off | Metatarsal heads | Windlass mechanism + concentric plantarflexors |
+
+In WCS **forward steps** all three rockers are present: heel strike → ankle advance → forefoot roll-off. **Backward steps** engage only the forefoot and ankle rockers in reverse (toe-first contact → heel settle). The θ angle at T-1 captures the foot's position at the transition between rocker phases; jerk quantifies how abruptly each transition is executed.
+
+> **Deeper reading:** Perry, J. & Burnfield, J.M. (2010). *Gait Analysis: Normal and Pathological Function* (2nd ed.). SLACK Inc. — the standard clinical reference for all gait phase terminology used here. Freely accessible overview: [Wikipedia — Gait analysis](https://en.wikipedia.org/wiki/Gait_analysis).
 
 ---
 
@@ -117,6 +130,10 @@ Backward Step (Toe-Landing / Toe-Ball-Heel):
 ### C. Terminal Stance & Power Push Propulsion
 West Coast Swing propulsion requires an active toe push-off (*Windlass Mechanism*) from the trailing leg at the end of the stance phase. The optimal plantarflexion angular velocity depends on movement direction — forward propulsion demands more drive than the subtler redistribution at an anchor or backward walk.
 
+> **The Windlass Mechanism** (Hicks, 1954): As the toes dorsiflex at push-off, the plantar fascia — which wraps under the metatarsal heads — tightens like a rope on a windlass drum. This elevates the medial arch and stiffens the foot into a rigid lever, converting it from a flexible shock absorber into an efficient propulsive structure. In WCS, a `🚀 POWER PUSH` badge confirms the mechanism has loaded: sufficient $-\omega_\text{pitch}$ angular velocity indicates the forefoot rocker has completed and toe-off has generated real propulsive force.
+>
+> **Reference:** Hicks, J.H. (1954). The mechanics of the foot. *Journal of Anatomy*, 87(4), 345–357. Free overview: [Wikipedia — Windlass mechanism of the foot](https://en.wikipedia.org/wiki/Windlass_mechanism_of_the_foot).
+
 * **Detection — two complementary signals:**
   * **Instantaneous peak:** $-\omega_{\text{pitch}} \ge 120^\circ/\text{s}$ AND $aY > 0.15g$ — catches short explosive pushes.
   * **Energy integral:** $\Phi_{\text{push}} = \int -\omega_{\text{pitch}}\,dt$ while $aY > 0.15g$, accumulated since last landing, reset at each step trigger — catches sustained lower-amplitude drives that the peak detector alone would miss.
@@ -159,7 +176,7 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 #### Why Overlap Matters in WCS Mechanics:
 * **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles touch the ground ($|aZ| > 0.55g$).
 * **Elastic Extension & Timing:** A healthy overlap ratio ($18\%\text{ to }38\%$) creates the characteristic "elastic" stretch and smooth momentum transfer in WCS. Too little overlap indicates rushing or bouncing, while too much overlap results in heavy, sluggish transitions.
-* **Note on scientific literature:** Biomechanical sources cite a single-foot stance phase of ~60% of the gait cycle. This is a different measurement — it describes how long *one* foot stays on the ground. The metric here measures the *simultaneous bilateral contact* ratio (both feet on the ground at the same time within one step cycle), which is a subset of and distinctly different from the single-foot stance phase.
+* **Note on scientific literature:** Classic gait analysis (Perry & Burnfield, 2010 — cited in §2A; Winter, D.A., 1990: *Biomechanics and Motor Control of Human Gait*, University of Waterloo Press) establishes stance phase at ~60% and swing phase at ~40% of the gait cycle at comfortable walking speed. This is a different measurement — it describes how long *one* foot stays on the ground during a single gait cycle. The metric here measures the *simultaneous bilateral contact* ratio (both feet on the floor at the same time within one step interval), which is a subset of and distinctly different from the single-foot stance phase. Free overview of gait cycle phases: [Wikipedia — Gait#Phases of gait](https://en.wikipedia.org/wiki/Gait#Phases_of_gait).
 
 | Ratio Range (%) | Badge Rating | Biomechanical Meaning |
 | :---: | :---: | :--- |
@@ -276,148 +293,3 @@ The Solo Training Dashboard is optimized for mobile browser use (tablets/smartph
   * `📐 ZERO`: Recalibrates static instep pitch angles for both feet.
   * `🔊 Audio`: Toggles Web Audio API synthesized biofeedback tones ON/OFF.
 
----
-
-## 6. Dancer's Training Guide
-
-> **This chapter has been extracted into a standalone file: [`dancer_guide_solo.md`](dancer_guide_solo.md)**
->
-> The dancer guide is self-contained — dancers can open it directly without reading the technical sections of this document. It covers dashboard layout, the level selector (BEG / INT / ADV), all badge cards, skill-level training progressions, and a common-problems reference.
-> For the partner/coach view see [`dancer_guide_partner.md`](dancer_guide_partner.md).
->
-> The abbreviated section below is kept for quick cross-reference within this document.
-
----
-
-### 6.1 Setup Before You Start
-
-1. **Mount your phone or tablet on a tripod** at eye level, facing you. Landscape mode gives the best view.
-2. **Tap `📷 CAM`** to activate the camera overlay. You will now see your live body behind the data cards.
-3. **Put on your dance shoes** before the next step.
-4. **Stand naturally in your dance stance** (feet shoulder-width, slight forward pitch). Tap `📐 ZERO`. The system now knows what "flat foot on the floor" feels like for your specific shoes and instep angle.
-5. **Tap `🔊 Audio` ON.** The audio beeps are your real-time alarm system — they fire faster than you can read the screen.
-6. Start walking or dancing. Give yourself 10–15 steps to warm up before you analyse anything.
-
-> **Re-tare whenever you change shoes or surfaces.** The `📐 ZERO` calibration is shoe-specific.
-
----
-
-### 6.2 Reading the Step Badge Card
-
-This is the primary real-time feedback card. It updates on every detected foot contact.
-
-#### What the numbers mean
-
-| Display element | What it tells you |
-| :--- | :--- |
-| **➡️ FORWARD** | θ ≥ +8°: reliable heel-first contact (forward step) |
-| **⬅️ BACK** | θ < −8°: reliable toe-first contact (deep backward or ball-step) |
-| **—** | −12° to +9°: ambiguous zone; direction not shown |
-| **θ (signed angle)** | Pitch of your foot at the moment of landing, relative to flat. Positive = heel higher than toe; negative = toe higher than heel. |
-| **Badge** | Landing quality (see table below) — applies to all steps regardless of direction |
-| **Jerk (g/s)** | Rate of impact force — how hard your foot hit the floor |
-
-#### Landing quality badges (all steps — direction-agnostic)
-
-| Badge | θ | Jerk | What happened | Leader interpretation |
-| :--- | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` ✅ | ≥ +8° | ≤ 22 g/s | Clean heel-first contact | Good forward step |
-| `HEEL SLAM ⚠` ❌ | ≥ +8° | > 22 g/s | Heel landed too hard | Forward step: reduce impact; absorb with knee/ankle |
-| `TOE-FIRST ✓` ✅ | < −8° | ≤ 22 g/s | Controlled toe-first contact | Good deep backward step or intentional ball-step |
-| `TOE JAM ⚠` ❌ | < −8° | > 22 g/s | Toe landed too hard | Soften the toe placement |
-| `SOFT ✓` ✅ | −8° to +7° | ≤ 20 g/s | Flat zone, controlled landing | Backward step quality: good — foot placed gently |
-| `MODERATE` ⚠️ | −8° to +7° | 20–22 g/s | Flat zone, medium impact | Acceptable; aim for softer placement |
-| `HARD IMPACT ⚠` ❌ | −8° to +7° | > 22 g/s | Flat zone, hard landing | Backward step: foot was dropped, not placed |
-| `BRUSH+HEEL` ✅ | ambiguous | — | Brush contact → heel-set within 200 ms | Confirmed forward step with brush technique |
-
-#### Impact Jerk bar
-
-- **Short bar, no click** → soft, controlled landing. Ideal for most steps.
-- **Full red bar + 500 Hz click** → heavy stomping. Bend the knee as the foot meets the floor and absorb with the ankle rather than dropping the foot.
-
----
-
-### 6.3 Reading the Push-Off & Loading Badges
-
-These three badges appear below the Jerk bar and update together after each step.
-
-| Badge | What it means | How to improve |
-| :--- | :--- | :--- |
-| `🚀 POWER PUSH` ✅ | Strong, biomechanically optimal push-off from your trailing foot | Maintain — you are actively driving forward |
-| `↗ PUSH` ⚠️ | Push-off detected but below optimal force | Drive more actively through the ball of the trailing foot; think "push the floor away" |
-| `— PUSH-OFF` | No significant push-off detected | Your trailing leg is passive. Actively extend the ankle at the end of each walk |
-| `SMOOTH LOAD` ✅ | Weight transferred progressively onto the landing foot | Good joint mechanics — keep it |
-| `INSTANT LOAD` ⚠️ | Full weight dropped onto the landing foot immediately at impact | Slow the COM down; think of "receiving" the floor rather than landing on it |
-| `EARLY UNLOAD` ⚠️ | Weight already shifting away before the landing foot is settled | You are rushing to the next step. Complete the current weight investment before moving |
-| `DELAYED ✓` ✅ | Weight committed 12–38% (FWD) or 18–50% (BWD) of beat after contact | WCS-characteristic hover — the body arrives after the foot |
-| `QUICK` ⚠️ | Weight committed in < 12% (FWD) or < 18% (BWD) of the beat interval | Immediate weight drop — mechanical, no musical "breath" in the transfer |
-| `LATE` ⚠️ | Weight committed in > 38% (FWD) or > 50% (BWD) of the beat interval | Over-hovering — weight never fully arrived (ADV only) |
-| `ANKLE FLEX` ✅ | Ankle rolling through impact (pronation impulse detected) | Good shock absorption — ankle acting as natural spring |
-| `MODERATE ROLL` ⚠️ | Some ankle mobility, could be more | Consciously relax the ankle at landing; avoid bracing the foot rigid |
-| `STIFF ANKLE` ⚠️ | Minimal ankle roll — impact transmitted directly up the chain | Focus on landing with a soft, unlocked ankle. Over time this reduces knee and hip load |
-
----
-
-### 6.4 Reading the Double Stance Card
-
-This card tells you how long both feet are on the floor at the same time during each weight transfer.
-
-| Badge | Ratio | What it means | Training implication |
-| :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 18%–38% | Smooth, grounded weight transfer with natural bilateral overlap | Maintain — this is the characteristic WCS rolling connection |
-| `HECTIC` ⚠️ | < 18% | Rushed transfer — one foot leaves before the other is secure | Slow down; roll through the foot before lifting. Think "peel not lift" |
-| `SLUGGISH` ⚠️ | > 38% | Prolonged double contact — hesitation or heavy stance | Commit to the weight transfer earlier; move the COM, not just the foot |
-
-**Watch this card during triple steps and walks.** A consistent `OPTIMAL ROLL` across a full 8-count pattern means your weight transfer timing is on. `HECTIC` on the anchor step often means you are rushing out of the anchor before building the connection.
-
----
-
-### 6.5 Reading the Symmetry & Smoothness Card
-
-| Display | What it tells you | Green target |
-| :--- | :--- | :--- |
-| **ASI %** | How much difference there is between your left and right foot roll-off | `SYMMETRIC` — below 10% |
-| **Smoothness** | How fluid your overall ankle articulation is across both feet | `SMOOTH` — 65 or above |
-
-- A high **ASI** (e.g. `ASYMMETRIC` > 25%) often means one leg is doing most of the work or one ankle is stiffer. This is common when recovering from an old injury or when one foot's technique habit differs from the other.
-- A low **Smoothness** score means your ankle movements are jerky or stuttering — not a continuous, fluid arc. Slow your tempo down and focus on rolling through the full foot rather than stepping flat.
-
----
-
-### 6.6 What to Focus on — by Skill Level
-
-#### Beginner (just starting out)
-Ignore all other cards. Focus on one thing only: **θ angle + badge**.
-
-1. Walk forward. Does the badge say `HEEL STRIKE ✓`? If not, lift your heel slightly more before the step lands. θ should reach at least +10°.
-2. Walk backward. Does the badge say `SOFT ✓`? That means you placed the foot gently — correct. If you see `HARD IMPACT ⚠`, you are dropping your foot rather than placing it.
-3. If you hear the **1200 Hz beep**, stop and slow down. That sound means a hard landing (`HEEL SLAM ⚠` or `HARD IMPACT ⚠`).
-
-#### Intermediate (technique refinement)
-1. Forward walks → aim for consistent `HEEL STRIKE ✓` with Jerk bar under 50%.
-2. Backward walks → aim for `TOE-FIRST ✓` on each step, and `ANCHORED` on anchor steps.
-3. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triples.
-4. Watch the **POWER PUSH badge**: is your trailing leg passive? Drive through the ball of the foot on every walk.
-
-#### Advanced (biomechanical optimisation)
-1. Use **SMOOTH LOAD vs INSTANT LOAD** to fine-tune how you receive weight — especially on syncopated patterns where COM timing matters.
-2. Compare **ASI** between your left and right sides. If one side is consistently worse, isolate that foot with single-foot drills.
-3. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — stiffness increases when ankles tire. This is a natural cue to slow down or rest.
-4. Film yourself with `📷 CAM` and replay during pauses. Look for the frame where `HEEL SLAM ⚠` fires — your posture in that moment reveals the root cause (usually upper body tension or early COM shift).
-
----
-
-### 6.7 Common Problems and How to Fix Them
-
-| What you see | Root cause | Fix |
-| :--- | :--- | :--- |
-| `HEEL STRIKE ✓` never fires on forward walks | Ankle held rigid; no heel articulation | Slow down. Exaggerate the heel-first contact consciously. Drill: walk in place, touching heel then ball in sequence. |
-| `HEEL SLAM ⚠` on forward steps | Heel contact correct, but landing too abrupt | Bend the knee as the foot meets the floor; absorb with the ankle. |
-| `HARD IMPACT ⚠` on backward steps | Body weight moving backward too fast before foot scouts — foot is dropped, not placed | Delay the COM — send the foot first, body follows. Drill: backward walks holding a wall for balance. |
-| `SOFT ✓` on backward steps | Controlled placement | This is correct — backward steps land in the ambiguous θ zone, and SOFT ✓ is the quality target. |
-| `HECTIC` Double Stance | Rushing the transfer; foot lifts too early | Think "leave the floor last" — let the whole foot peel up from toe. |
-| `SLUGGISH` Double Stance | Hesitating before committing weight | Trust the floor. Move the body, not just the foot. Drill: metronome walks, landing on the beat. |
-| `STIFF ANKLE` consistently | Braced ankle at landing | Visualise landing on a sponge. Consciously unlock the ankle joint before contact. |
-| `ASYMMETRIC` ASI | One foot stiffer or less articulated | Identify which foot (left or right from the badge) and drill that foot in isolation with slow deliberate rolls. |
-| `— PUSH-OFF` (no badge) | Trailing leg passive — no drive | Think "push the floor, don't just lift the foot". Add a conscious toe-extension at the end of each walk. |
-| `INSTANT LOAD` on anchors | Dropping weight abruptly at anchor | Slow the settle. Think "melt into the anchor" rather than "land on it". |

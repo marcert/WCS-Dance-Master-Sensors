@@ -22,22 +22,23 @@ Das Solo-Training-System arbeitet als hochfrequenter biomechanischer Feedback-Kr
               +-----------------+  +-----------------+
                                 |  |  ESP-NOW (5 ms Intervall)
                                 v  v
-                 +--------------------------------+
-                 | Zentrale Master-Einheit        |
-                 | M5Stick S3 Web-Server          |
-                 +---------------+----------------+
-                                 |
-                                 | Web HTTP / JSON-Stream (`/data`) @ 50 Hz
-                                 v
-                 +--------------------------------+
-                 | Web-Browser-Dashboard (`/solo`)|
-                 | Transparentes WebRTC-Overlay   |
-                 | Web Audio API Biofeedback      |
-                 +--------------------------------+
+ +------------------------+   +-+-----------------------------+
+ | Beckensensor (opt.)    |-->|  Zentrale Master-Einheit      |
+ | ID: 4 | M5Stick @ 200Hz|   |  M5Stick S3 Web-Server        |
+ +------------------------+   +---------------+---------------+
+                                              |
+                                              | Web HTTP / JSON-Stream (`/data`) @ 50 Hz
+                                              v
+                             +--------------------------------+
+                             | Web-Browser-Dashboard (`/solo`)|
+                             | Transparentes WebRTC-Overlay   |
+                             | Web Audio API Biofeedback      |
+                             +--------------------------------+
 ```
 
 * **Fußknoten (IDs 1 & 2):** M5Stick-S3-Einheiten mit 6-Achsen-IMUs (Inertial Measurement Units, BMI270 / MPU6886). Die Firmware arbeitet mit **200 Hz (5 ms Abtastintervall)**, um ultraschnelle transiente Impulsspitzen bei Fersenaufsatz und Zehenlandungen zu erfassen.
-* **Zentrale Master-Einheit:** Aggregiert ESP-NOW-Streams und liefert JSON-Datenpakete (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`) über den `/data`-Endpunkt an den Browser.
+* **Beckenknoten (ID 4, optional):** Gleiche Hardware, am Kreuzbein auf einem Gürtel getragen. Überträgt 3-Achsen-Beschleunigung (`pA`, `pAy`, `pAx`) und Gier-Gyro (`pYaw`, `pG`) bei 200 Hz. Ermöglicht Hüftaktivierung, seitliche Stabilität, Anchor Settle und Hip Settle. Fehlt der Sensor, arbeitet das Dashboard normal ohne Beckenkarten.
+* **Zentrale Master-Einheit:** Aggregiert ESP-NOW-Streams und liefert JSON-Datenpakete (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optional `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) über den `/data`-Endpunkt an den Browser.
 * **Web-Dashboard (`/solo`):** Clientseitiges JavaScript führt Zustandsmaschinen-Filterung, Richtungszuordnung, Neigungsintegration, Standphasen-Berechnungen und Web-Audio-API-Feedback aus.
 
 ---
@@ -59,6 +60,18 @@ Rückwärtsschritt (Zehenlandung / Zehe-Ballen-Ferse):
     (Ballen / Spitze)        (Exz. Sprunggelenk)    (Ferse berührt Boden & COM-Verlagerung)
       -20° ≤ θ ≤ 5°           θ → 0°                  θ ≈ -2° to 5°, aZ > 0.85g
 ```
+
+**Die drei Rocker (Modell nach Perry & Burnfield):**
+
+| Rocker | Standphase | Drehpunkt | Muskuläre Kontrolle |
+| :--- | :--- | :--- | :--- |
+| **Fersenrocker** (1.) | Erstkontakt → Belastungsreaktion | Ferse | Exzentr. M. tibialis anterior — senkt Fuß zum Boden |
+| **Sprunggelenkrocker** (2.) | Belastungsreaktion → Mittlere Standphase | Sprunggelenk | Exzentr. Gastrocnemius/Soleus — kontrolliert Tibiavorlauf |
+| **Vorfußrocker** (3.) | Terminale Standphase → Abstoß | Metatarsalköpfe | Windlass-Mechanismus + konzentrische Plantarflexoren |
+
+Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz → Tibiavorlauf → Vorfußabrollbewegung. Bei **Rückwärtsschritten** wirken nur Vorfuß- und Sprunggelenkrocker in umgekehrter Reihenfolge (Zehenerstkontakt → Fersenabsenken). Der θ-Winkel zum T-1-Zeitpunkt erfasst die Fußposition an den Übergängen zwischen den Rocker-Phasen; Jerk quantifiziert, wie abrupt jeder Übergang ausgeführt wird.
+
+> **Weiterführende Literatur:** Perry, J. & Burnfield, J.M. (2010). *Gait Analysis: Normal and Pathological Function* (2. Aufl.). SLACK Inc. — die klinische Standardreferenz für alle hier verwendeten Gangphasen-Begriffe. Frei zugänglicher Überblick: [Wikipedia — Ganganalyse](https://de.wikipedia.org/wiki/Ganganalyse).
 
 ---
 
@@ -119,6 +132,10 @@ Rückwärtsschritt (Zehenlandung / Zehe-Ballen-Ferse):
 
 WCS-Antrieb erfordert ein aktives Zehenabdrücken (*Windlass-Mechanismus*) vom Standbein am Ende der Standphase. Die optimale Plantarflexions-Winkelgeschwindigkeit hängt von der Bewegungsrichtung ab — Vorwärtsantrieb erfordert mehr Kraft als die subtilere Umverteilung bei einem Anker oder Rückwärtslauf.
 
+> **Der Windlass-Mechanismus** (Hicks, 1954): Beim Zehenabdrücken dorsalflexieren die Zehen, wodurch die Plantarfaszie — die unter den Metatarsalköpfen verläuft — sich wie ein Seil auf einer Winde (engl. *windlass*) strafft. Das hebt das mediale Längsgewölbe an und verwandelt den Fuß von einer flexiblen Stoßdämpferstruktur in einen steifen Hebel für den Vorwärtsantrieb. Im WCS bestätigt ein `🚀 POWER PUSH`-Badge, dass der Mechanismus ausgelöst wurde: die ausreichende $-\omega_\text{pitch}$-Winkelgeschwindigkeit zeigt, dass der Vorfußrocker vollständig abgeschlossen und der Zehenabdruck propulsiv war.
+>
+> **Referenz:** Hicks, J.H. (1954). The mechanics of the foot. *Journal of Anatomy*, 87(4), 345–357. Freier Überblick (englisch): [Wikipedia — Windlass mechanism of the foot](https://en.wikipedia.org/wiki/Windlass_mechanism_of_the_foot).
+
 * **Erkennung — zwei komplementäre Signale:**
   * **Momentaner Spitzenwert:** $-\omega_{\text{pitch}} \ge 120^\circ/\text{s}$ UND $aY > 0.15g$ — erfasst kurze explosive Abstoßbewegungen.
   * **Energieintegral:** $\Phi_{\text{push}} = \int -\omega_{\text{pitch}}\,dt$ während $aY > 0.15g$, akkumuliert seit der letzten Landung, zurückgesetzt bei jedem Schrittauslöser — erfasst anhaltende Antriebe mit geringerer Amplitude, die der Spitzendetektor allein übersehen würde.
@@ -161,13 +178,13 @@ West Coast Swing betont einen kontinuierlichen, gegrundeten „Abroll"-Gewichtst
 $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{step}}} \right) \times 100\%$$
 
 #### Warum Überlappung in der WCS-Mechanik wichtig ist:
-* **Gegrundetes Abrollen:** Im West Coast Swing ist der Gewichtstransfer graduell. Während ein Fuß den Boden verlässt, nimmt der andere das Gewicht auf und erzeugt eine natürliche bilaterale Überlappungsphase ($|aZ| > 0.55g$).
+* **Geerdetes Abrollen:** Im West Coast Swing ist der Gewichtstransfer graduell. Während ein Fuß den Boden verlässt, nimmt der andere das Gewicht auf und erzeugt eine natürliche bilaterale Überlappungsphase ($|aZ| > 0.55g$).
 * **Elastische Ausdehnung & Timing:** Ein gesundes Überlappungsverhältnis ($18\%\text{ bis }38\%$) erzeugt die charakteristische „elastische" Dehnung und den reibungslosen Impulsübergang im WCS. Zu wenig Überlappung zeigt Hetzen oder Springen an, zu viel führt zu schwerfälligen Übergängen.
-* **Hinweis zur wissenschaftlichen Literatur:** Biomechanische Quellen nennen eine Einzel-Fuß-Standphase von ~60 % des Gangzyklus. Dies ist eine andere Messung — sie beschreibt, wie lange *ein* Fuß auf dem Boden bleibt. Die Metrik hier misst das *gleichzeitige bilaterale Kontaktverhältnis* innerhalb eines Schrittzyklusses, das sich grundlegend davon unterscheidet.
+* **Hinweis zur Fachliteratur:** Die klassische Ganganalyse (Perry & Burnfield, 2010 — zitiert in §2A; Winter, D.A., 1990: *Biomechanics and Motor Control of Human Gait*, University of Waterloo Press) gibt die Standphase mit ~60 % und die Schwungphase mit ~40 % des Gangzyklus bei komfortabler Gehgeschwindigkeit an. Dies ist eine andere Messung — sie beschreibt, wie lange *ein* Fuß während eines Gangzyklus auf dem Boden bleibt. Die hiesige Metrik misst das *gleichzeitige bilaterale Kontaktverhältnis* innerhalb eines Schrittintervalls, was ein Subset der Einzel-Fuß-Standphase ist. Freier Überblick über Gangphasendefinitionen: [Wikipedia — Ganganalyse](https://de.wikipedia.org/wiki/Ganganalyse).
 
 | Verhältnisbereich (%) | Badge-Bewertung | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
-| **18% bis 38%** | `OPTIMAL ROLL` | Ideale gegrundete Abrollphase für Läufe und Ausdehnung. |
+| **18% bis 38%** | `OPTIMAL ROLL` | Ideale geerdete Abrollphase für Läufe und Ausdehnung. |
 | **< 18%** | `HECTIC` | Gehetzter Gewichtstransfer; fehlende Abrollartikulierung. |
 | **> 38%** | `SLUGGISH` | Übermäßiger Bodenkontakt; schwerfälliger Tempoübergang. |
 
@@ -192,7 +209,7 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
 Beide Metriken werden aus einem Post-Aufprall-Überwachungsfenster berechnet, das unmittelbar nach jedem Schrittauslöser öffnet.
 
 **Gewichtstransfer-Gradient** (240-ms-Fenster, 12 Samples):
-$$\text{loadRise} = \overline{aZ}_{[160\text{–}240\,\text{ms}]} - \overline{aZ}_{[0\text{–}80\,\text{ms}]}$$
+$$\text{loadRise} = \overline{aZ}_{[160\text{–}240\text{ ms}]} - \overline{aZ}_{[0\text{–}80\text{ ms}]}$$
 
 | loadRise | Badge | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
@@ -208,7 +225,7 @@ Fußroll-Integral über die ersten 100 ms (Samples 0–4):
 $$\text{rollIntegral} = \left|\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\,\text{s}\right| \quad [\text{Grad}]$$
 
 Abrollumkehr-Prüfung — Vorzeichenwechsel zwischen früher (Samples 0–3) und später (Samples 6–9) Phase:
-$$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;\text{UND}\;\; \overline{\omega}_{[0\text{–}3]} \cdot \overline{\omega}_{[6\text{–}9]} < 0$$
+$$\text{rollReversal} = \lvert\overline{\omega}_{[0\text{–}3]}\rvert > 8°/\text{s} \quad\text{UND}\quad \overline{\omega}_{[0\text{–}3]} \cdot \overline{\omega}_{[6\text{–}9]} < 0$$
 
 | Bedingung | Badge | Biomechanische Interpretation |
 | :---: | :---: | :--- |
@@ -279,7 +296,7 @@ Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder B
 
 1. **Transientes Signal-Kandidaten-Sensing:**
    Jeder Fuß qualifiziert sich unabhängig als Aufprallkandidat über ODER-Logik:
-   $$\text{signal}_{\text{foot}} = \bigl(|aZ| > 1.08\,g\bigr) \;\mathbf{ODER}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{UND}\; \text{preJerk} > 8\bigr)$$
+   $$\text{signal}_{\text{foot}} = \bigl(\lvert aZ\rvert > 1.08\,g\bigr) \quad\mathbf{ODER}\quad \bigl(\lvert\omega_{\text{pitch}}\rvert > 80\,\text{deg/s} \quad\mathbf{UND}\quad \text{preJerk} > 8\bigr)$$
    Das `preJerk`-Gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) auf dem Gyro-Pfad unterdrückt Abhebebewegungs-Artefakte. Wenn beide Füße im gleichen Frame signalisieren, wird der dominante Fuß nach maximaler Bodenreaktionskraft ausgewählt: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
 2. **Pro-Fuß Kadenz-Adaptives Sperrzeitfenster & Alternierungswächter:**
@@ -304,138 +321,3 @@ Das Solo-Training-Dashboard ist für die mobile Browser-Nutzung optimiert (Table
   * `📐 ZERO`: Kalibriert statische Neigungswinkel beider Füße neu.
   * `🔊 Audio`: Schaltet synthetische Web-Audio-API-Biofeedback-Töne EIN/AUS.
 
----
-
-## 6. Tänzerguide
-
-> **Dieses Kapitel wurde in eine separate Datei ausgelagert: [`dancer_guide_solo.md`](dancer_guide_solo.md)**
->
-> Der Tänzerguide ist eigenständig — Tänzer können ihn direkt öffnen, ohne die technischen Abschnitte dieses Dokuments lesen zu müssen. Er behandelt das Dashboard-Layout, die Level-Auswahl (BEG / INT / ADV), alle Badge-Karten, Level-basierte Übungsempfehlungen und eine Problemreferenz.
-> Für die Partner-/Trainer-Ansicht siehe [`dancer_guide_partner.md`](dancer_guide_partner.md).
->
-> Der folgende verkürzte Abschnitt dient als Schnellreferenz innerhalb dieses Dokuments.
-
----
-
-### 6.1 Einrichtung vor dem Start
-
-1. **Smartphone oder Tablet auf ein Stativ montieren** auf Augenhöhe, dem Tänzer zugewandt. Querformat bietet die beste Ansicht.
-2. **`📷 CAM` antippen** um das Kamera-Overlay zu aktivieren.
-3. **Tanzschuhe anziehen** vor dem nächsten Schritt.
-4. **Natürlich in der Tanzhaltung stehen** (Füße schulterbreit, leichte Vorwärtsneigung). **`📐 ZERO` antippen.** Das System kennt jetzt „flacher Fuß auf dem Boden" für die spezifischen Schuhe.
-5. **`🔊 Audio` EIN schalten.** Die Audio-Pieptöne reagieren schneller als die Anzeige gelesen werden kann.
-6. Mit dem Gehen oder Tanzen beginnen. 10–15 Aufwärmschritte einplanen.
-
-> **Neu tarieren bei Schuh- oder Untergrundwechsel.** Die `📐 ZERO`-Kalibrierung ist schuhanfangsspezifisch.
-
----
-
-### 6.2 Die Schritt-Badge-Karte lesen
-
-Aktualisiert sich bei jedem erkannten Fußkontakt.
-
-| Anzeigelement | Bedeutung |
-| :--- | :--- |
-| **➡️ FORWARD** | θ ≥ +8° — zuverlässiger Fersenerstkontakt |
-| **⬅️ BACK** | θ < −8° — zuverlässiger Zehenerstkontakt |
-| **—** (grau) | −8° ≤ θ < +8° — mehrdeutig; Richtung nicht angezeigt |
-| **θ (vorzeichenbehafteter Winkel)** | Fußneigung zum Landezeitpunkt. Positiv = Ferse höher; negativ = Zehe höher. |
-| **Badge** | Landungsqualität dieser Landung (richtungsunabhängig) |
-| **Jerk (g/s)** | Rate der Aufprallkraft |
-
-#### Landungsqualitäts-Badges
-
-| Badge | θ-Zone | Jerk | Bedeutung |
-| :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` ✅ | ≥ +8° (Ferse) | ≤ 22 g/s | Sauberer Fersenaufsatz — korrekte Vorwärtstechnik |
-| `HEEL SLAM ⚠` ❌ | ≥ +8° (Ferse) | > 22 g/s | Fersenkontakt zu abrupt — mit Knie/Knöchel abfedern |
-| `TOE-FIRST ✓` ✅ | < −8° (Zehe) | ≤ 22 g/s | Kontrollierter Zehenerstkontakt — korrekt für tiefe Rückwärtsschritte |
-| `TOE JAM ⚠` ❌ | < −8° (Zehe) | > 22 g/s | Zehenkontakt zu hart |
-| `SOFT ✓` ✅ | −8° bis +7° (mehrdeutig) | ≤ 20 g/s | Kontrollierte Landung — gut für Vor- und Rückwärtsschritte |
-| `MODERATE` ⚠️ | −8° bis +7° (mehrdeutig) | 20–22 g/s | Akzeptabel; Aufprall reduzieren |
-| `HARD IMPACT ⚠` ❌ | −8° bis +7° (mehrdeutig) | > 22 g/s | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
-| `BRUSH+HEEL` ✅ | mehrdeutig → Ferse | 200-ms-Fenster | Brush-Schritt mit Fersenfolge erkannt — ➡️ FORWARD |
-
-> **Hinweis:** `SOFT ✓` bei θ ≈ 0° bedeutet einen kontrollierten Rückwärtsschritt. `HARD IMPACT ⚠` bei θ ≈ 0° bedeutet, auf den Fuß gefallen — dieselbe Anzeige macht den Unterschied sichtbar.
-
-#### Aufprall-Jerk-Balken
-
-- **Kurzer Balken, kein Klick** → weiche, kontrollierte Landung. Ideal.
-- **Voller roter Balken + 1200-Hz-Klick** → hartes Stampfen. Knie beim Bodenkontakt beugen und mit dem Knöchel absorbieren.
-
----
-
-### 6.3 Push-Off & Loading-Badges lesen
-
-| Badge | Bedeutung | Verbesserung |
-| :--- | :--- | :--- |
-| `🚀 POWER PUSH` ✅ | Starker, biomechanisch optimaler Abstoß | Beibehalten |
-| `↗ PUSH` ⚠️ | Abstoß erkannt, unter optimaler Kraft | Aktiver durch den Fußballen treiben |
-| `— PUSH-OFF` | Kein signifikanter Abstoß | Standbein ist passiv — Knöchel am Ende jedes Laufs strecken |
-| `SMOOTH LOAD` ✅ | Progressiver Gewichtstransfer | Gute Gelenkmechanik — beibehalten |
-| `INSTANT LOAD` ⚠️ | Gewicht sofort fallen gelassen | COM verlangsamen; „Boden empfangen" statt drauf landen |
-| `EARLY UNLOAD` ⚠️ | Gewicht verlagert sich vor Stabilisierung | Aktuellen Gewichtseinsatz abschließen, bevor weitergegangen wird |
-| `DELAYED ✓` ✅ | Gewicht 12–38% (VW) oder 18–50% (RW) des Beats nach Kontakt | WCS-typisches Schweben — beibehalten |
-| `QUICK` ⚠️ | Gewicht sofort übertragen | Kein musikalischer Atem im Transfer — bewusst pausieren |
-| `LATE` ⚠️ | Gewicht kam nie vollständig an (nur ADV) | Früher committen — Körper muss ankommen |
-| `ANKLE FLEX` ✅ | Knöchel rollt durch Aufprall | Gute Stoßdämpfung — beibehalten |
-| `MODERATE ROLL` ⚠️ | Etwas Knöchelmobilität | Knöchel bewusst entspannen |
-| `STIFF ANKLE` ⚠️ | Minimales Abrollen | Mit weichem, entspanntem Knöchel landen |
-
----
-
-### 6.4 Die Doppelstand-Karte lesen
-
-| Badge | Verhältnis | Bedeutung | Trainingsimplikation |
-| :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 18%–38% | Glatter, gegrundeter Transfer | Beibehalten — charakteristische WCS-Abrollverbindung |
-| `HECTIC` ⚠️ | < 18% | Gehetzter Transfer | Verlangsamen; „Abschälen nicht Heben" |
-| `SLUGGISH` ⚠️ | > 38% | Übermäßiger Doppelkontakt | Früher committen — Körper bewegen, nicht nur den Fuß |
-
----
-
-### 6.5 Die Symmetrie & Glättigkeits-Karte lesen
-
-| Anzeige | Bedeutung | Grünes Ziel |
-| :--- | :--- | :--- |
-| **ASI %** | Unterschied zwischen linkem und rechtem Fuß-Abrollen | `SYMMETRIC` — unter 10% |
-| **Smoothness** | Flüssigkeit der Knöchelartikulierung über beide Füße | `SMOOTH` — 65 oder höher |
-
----
-
-### 6.6 Fokus je nach Fertigkeitslevel
-
-#### Anfänger
-Nur auf die **Schritt-Badge θ-Zone + Qualitäts-Badge** konzentrieren.
-
-1. Vorwärts gehen → `HEEL STRIKE ✓`? Falls nicht: Ferse anheben (θ muss ≥ +8° sein).
-2. Rückwärts gehen → `SOFT ✓`? Falls nicht: Verlangsamen und Zehe zuerst schicken.
-3. **1200-Hz-Piep** = stoppen und verlangsamen (`HEEL SLAM ⚠`, `TOE JAM ⚠` oder `HARD IMPACT ⚠` — zu abrupt gelandet).
-
-#### Mittelstufe
-1. Konsistentes `HEEL STRIKE ✓` — Jerk-Balken unter 50%.
-2. `TOE-FIRST ✓` bei jedem Schritt, `ANCHORED` bei Ankern.
-3. **Doppelstand-Karte**: `OPTIMAL ROLL` bei Triples anstreben.
-4. **POWER PUSH-Badge**: Standbein aktiv einsetzen.
-
-#### Fortgeschritten
-1. **SMOOTH LOAD vs INSTANT LOAD** zum Feintuning des Gewichtsempfangs.
-2. **ASI** links/rechts vergleichen — schlechtere Seite isoliert üben.
-3. **ANKLE FLEX vs STIFF ANKLE** zur Ermüdungsüberwachung.
-4. Mit `📷 CAM` filmen und während Pausen analysieren.
-
----
-
-### 6.7 Häufige Probleme und Lösungen
-
-| Was zu sehen | Grundursache | Lösung |
-| :--- | :--- | :--- |
-| `HEEL SLAM ⚠` bei Vorwärtsläufen | Ferse korrekt, aber Knie/Knöchel absorbieren nicht | Knie beim Aufsetzen weich halten; Landung abfedern statt stampfen. |
-| `HARD IMPACT ⚠` bei Vorwärtsläufen | Knöchel starr; keine Fersenartikulierung (θ bleibt nahe 0°) | Verlangsamen. Fersen-Erstkontakt bewusst übertreiben. |
-| `HARD IMPACT ⚠` bei Rückwärtsschritten | Körpergewicht bewegt sich zu früh rückwärts — auf den Fuß gefallen | COM verzögern — erst Fuß schicken, Körper folgt. Ziel: `SOFT ✓`. |
-| `MODERATE` konstant | Aufprall zu groß, aber Richtung/Zone korrekt | Knie beim Kontakt mehr beugen; Gewicht senken, nicht fallen lassen. |
-| `HECTIC` Doppelstand | Transfer gehetzt; Fuß hebt zu früh ab | „Letzter, der den Boden verlässt" — ganzen Fuß abschälen. |
-| `SLUGGISH` Doppelstand | Zögern vor Gewichts-Commitment | Dem Boden vertrauen. Körper bewegen, nicht nur Fuß. |
-| `STIFF ANKLE` konstant | Gebremstes Sprunggelenk | Vorstellen, auf einem Schwamm zu landen. |
-| `ASYMMETRIC` ASI | Ein Fuß steifer oder weniger artikuliert | Schlechteren Fuß isoliert mit langsamen Abrollbewegungen üben. |
-| `— PUSH-OFF` (kein Badge) | Standbein passiv | „Boden schieben, nicht nur Fuß heben." |
