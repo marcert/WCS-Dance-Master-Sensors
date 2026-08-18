@@ -304,7 +304,7 @@ Measures the variance of vertical pelvis acceleration (gravity removed) over 1 s
 
 ### Anchor Settle (ADV)
 
-After every backward (anchor) step, the system opens a 500 ms measurement window and evaluates three signals:
+After every backward (anchor) step, the system opens a **tempo-adaptive measurement window** (280–500 ms, automatically scaled to the current step tempo) and evaluates three signals:
 
 1. **Deceleration** — did the pelvis slow down in the anterior-posterior direction?
 2. **Yaw damping** — did hip rotation slow after the step?
@@ -336,7 +336,9 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 | `NO HIP SETTLE` | No lateral impulse — pelvis stays neutral after the anchor | Actively load the standing leg: after the anchor step, allow the hip to drop slightly towards the standing side |
 | `OVERSWING ⚠` | Lateral impulse too strong — pelvis swings too far to the side | Moderate the movement; the lateral shift should be subtle, not a visible swing |
 
-> **Note:** "Settling into the hip" is a stylistic element — some teaching styles emphasise it strongly, others less so. This badge provides information, not a verdict. If your teacher does not want a lateral settle, disregard this badge.
+> **Note:** "Settling into the hip" is a stylistic element — some teaching styles emphasise it strongly, others less so. In WCS, the lateral pelvic movement is intentionally subtler than in Latin dance: the goal is a "grounded arrival", not a visible swing. This badge provides information, not a verdict. If your teacher does not want a lateral settle, disregard this badge.
+>
+> **Thresholds (0.05 / 0.10 / 0.30 g):** These values are initial estimates, not yet validated against real dance data. Thresholds can be adjusted after a first test session with the pelvis sensor.
 
 ---
 

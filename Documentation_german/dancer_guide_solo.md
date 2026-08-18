@@ -292,7 +292,7 @@ Misst, wie stark sich das Becken beim Tanzen auf und ab bewegt. Der Sensor erken
 
 ### Anchor Settle (ADV)
 
-Nach jedem Rückwärts-(Anker-)Schritt öffnet das System ein 500-ms-Messfenster und wertet drei Signale aus:
+Nach jedem Rückwärts-(Anker-)Schritt öffnet das System ein **tempo-adaptives Messfenster** (280–500 ms, automatisch je nach Schritttempo berechnet) und wertet drei Signale aus:
 
 1. **Verzögerung** — hat sich das Becken in der anterior-posterioren Richtung (vorwärts-rückwärts, d. h. Abstopp-Bewegung beim Anker) verlangsamt?
 2. **Gier-Dämpfung** — hat die Hüftrotation nach dem Schritt abgenommen?
@@ -326,7 +326,9 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 | `NO HIP SETTLE` | Kein lateraler Impuls — Becken bleibt neutral nach dem Anker | Das Standbein aktiv belasten: nach dem Ankerschritt die Hüfte leicht zur Standbeinseite absinken lassen |
 | `OVERSWING ⚠` | Zu starker lateraler Impuls — Becken schwingt zu weit zur Seite | Bewegung mäßigen; laterale Neigung soll subtil sein, nicht sichtbar pendeln |
 
-> **Hinweis:** Das „In-die-Hüfte-Setzen" ist ein stilistisches Merkmal — manche Lehrstile betonen es stark, andere weniger. Der Badge gibt Information, keine Bewertung. Wenn dein Trainer keinen lateralen Settle möchte, ignoriere diesen Badge.
+> **Hinweis:** Das „In-die-Hüfte-Setzen" ist ein stilistisches Merkmal — manche Lehrstile betonen es stark, andere weniger. Im WCS ist die laterale Beckenbewegung bewusst subtiler als z. B. im Latin-Tanz: es geht um ein „geerdetes Ankommen", nicht um eine sichtbare Schwingung. Der Badge gibt Information, keine Bewertung. Wenn dein Trainer keinen lateralen Settle möchte, ignoriere diesen Badge.
+>
+> **Schwellenwerte (0,05 / 0,10 / 0,30 g):** Diese Werte sind erste Schätzwerte und wurden noch nicht mit echten Tanzdaten validiert. Nach dem ersten Testlauf mit Beckensensor können die Grenzen angepasst werden.
 
 ---
 
