@@ -80,8 +80,7 @@ Dies ist die **primäre Echtzeit-Feedback-Karte**. Sie wird bei jedem erkannten 
 
 | Element | Was es dir sagt |
 | :--- | :--- |
-| **➡️ FORWARD** / **⬅️ BACKWARD** | Richtung des Schritts, der gerade gelandet ist |
-| **↔️ FLAT** | Fuß zu flach gelandet, um zu klassifizieren — als Flachfuß-Warnung behandeln |
+| **Richtungs-Badge** | ➡️ FORWARD (θ ≥ +8°), ⬅️ BACK (θ < −8°), oder — wenn der Winkel in der unklaren Zone liegt |
 | **θ-Winkel** | Nickwinkel deines Fußes beim Aufsetzen. Positiv = Ferse höher als Zehe. |
 | **Strike-Badge** (großes farbiges Label) | Klassifizierung dieser Landung — siehe Tabellen unten |
 | **Jerk-Leiste** | Aufprallkraftrate — wie hart dein Fuß den Boden getroffen hat |
@@ -96,40 +95,46 @@ Das System klassifiziert die Richtung anhand des Nickwinkels θ des Fußes. Die 
 
 | Richtungs-Badge | θ beim Aufsetzen | Bedeutung |
 | :--- | :--- | :--- |
-| **➡️ FORWARD** | θ ≥ +10° | Klare Dorsalflexion — Ferse hat zuerst Kontakt |
-| **↔️ FLAT** | −5° bis +9° | Unklare Zone — Fuß zu flach für Richtungsbestimmung |
-| **⬅️ BACKWARD** | θ < −5° | Klare Plantarflexion — Ballen hat zuerst Kontakt |
+| **➡️ FORWARD** | θ ≥ +8° | Klare Dorsalflexion — Ferse hat zuerst Kontakt |
+| **—** (grau) | −8° bis +7° | Unklare Zone — Fuß zu flach für Richtungsbestimmung |
+| **⬅️ BACK** | θ < −8° | Klare Plantarflexion — Ballen hat zuerst Kontakt |
 
-Ein einzelner Fuß-IMU kann einen flachen Vorwärtsschritt nicht von einem Rückwärtsschritt mit frühem Fersenabsatz trennen, wenn θ zwischen −5° und +9° liegt. Beide zeigen ↔️ FLAT.
+Liegt θ zwischen −8° und +7°, kann das System die Richtung nicht zuverlässig bestimmen. Der Richtungs-Badge zeigt — (grau). Zur Richtungsprüfung die Kameraansicht nutzen.
 
-### Vorwärtsschritt-Badges (➡️ FORWARD, θ ≥ +10°)
+### HEEL-Zone-Badges (➡️ FORWARD, θ ≥ +8°)
 
-| Badge | Winkel | Was du getan hast | Ziel |
+| Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `HEEL SPIKE` ⚠️ | > +35° | Extrem steiler Fersenwinkel | Antriebskraft reduzieren oder Sprunggelenk entspannen |
-| `OPTIMAL HEEL` ✅ | +10° bis +35° | Sauberer Fersenauftritt — Ferse setzt zuerst auf | Ziel für alle Vorwärtsgänge und Breaks |
-| `BRUSH+HEEL` ✅ | flach → +8° Ferse innerhalb von 200 ms | Ballen während des Schwungs gestreift, dann Ferse sauber gesetzt | Wird von FLAT-FOOT! umklassifiziert, wenn der Sensor den zweiphasigen Kontakt erkennt |
+| `HEEL STRIKE ✓` | ≤ 22 g/s | Sauberer Fersenauftritt — kontrollierter Kontakt | Ziel für alle Vorwärtsgänge und Breaks |
+| `HEEL SLAM ⚠` | > 22 g/s | Harter Fersenaufprall — zu viel Landekraft | Knie beim Aufsetzen beugen und Sprunggelenk weicher machen |
 
-### Unklare Zone (↔️ FLAT, −5° bis +9°)
+### Unklare Zone (—, −8° bis +7°)
 
-| Badge | Bedingung | Was es bedeutet |
+Der Fuß ist zu flach, um die Richtung zu bestimmen. Der Qualitäts-Badge wird dennoch ausgelöst:
+
+| Badge | Jerk | Was es bedeutet |
 | :--- | :--- | :--- |
-| `FLAT-FOOT!` ❌ | flache Landung, kein Nachgang | Könnte sein: Vorwärtsschritt mit unzureichendem Fersenanheben ODER Rückwärtsschritt mit zu frühem Fersenabsatz. Kamera zur Richtungsüberprüfung verwenden. |
-| `BRUSH+HEEL` ✅ | flach → Fersenauftritt innerhalb von 200 ms erkannt | System klassifiziert automatisch um — korrekte Vorwärtstechnik bestätigt |
+| `SOFT ✓` | ≤ 20 g/s | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
+| `MODERATE` | 20–22 g/s | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
+| `HARD IMPACT ⚠` | > 22 g/s | Schwerer Flachfuß-Aufprall — Stampfmuster |
+| `BRUSH+HEEL` | — | Flache Landung gefolgt von Fersenauftritt innerhalb von 200 ms — automatisch zu ➡️ FORWARD umklassifiziert; korrekte Technik bestätigt |
 
-### Rückwärtsschritt-Badges (⬅️ BACKWARD, θ < −5°)
+Wenn der Richtungs-Badge — zeigt, die Kameraansicht zur Richtungsprüfung nutzen.
 
-| Badge | Winkel | Was du getan hast | Ziel |
+### TOE-Zone-Badges (⬅️ BACK, θ < −8°)
+
+| Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL TOE` ✅ | −5° bis −20° | Sauberer Ballen-Kontakt | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
-| `HEEL SPIKE` ⚠️ | < −20° | Übermäßig gestreckter Fuß beim Kontakt | Streckung leicht mäßigen |
+| `TOE-FIRST ✓` | ≤ 22 g/s | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
+| `TOE JAM ⚠` | > 22 g/s | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
 
-> **Hinweis zu Rückwärts-Fersenfehlern:** Ein Rückwärtsschritt, bei dem die Ferse zu früh abgesetzt wird (θ = +5° bis +9°) oder zuerst auftrifft (θ ≥ +10°), zeigt ↔️ FLAT oder ➡️ FORWARD — der Sensor kann die Rückwärtsrichtung in diesen Bereichen nicht bestätigen. Wenn du bei Schritten, die du für Rückwärtsschritte hältst, konstant FLAT-FOOT! siehst, setzt deine Ferse höchstwahrscheinlich zu früh auf. Konzentriere dich darauf, zuerst die Zehe hinauszuschicken und das Sprunggelenk dorsalflektiert zu halten, bis der Fuß aufsetzt.
+> **Hinweis zu frühem Fersenabsatz:** Setzt die Ferse beim Rückwärtsschritt vor dem Ballen auf, landet der Schritt in der unklaren Zone (—) statt bei ⬅️ BACK. Wenn bei Schritten, die als Rückwärtsschritte gemeint sind, konstant SOFT/MODERATE/HARD IMPACT erscheinen, setzt die Ferse zu früh auf. Darauf achten, zuerst den Ballen aufkommen zu lassen und das Sprunggelenk entspannt zu halten, bis der Fuß vollständig steht.
 
 ### Aufprall-Jerk-Leiste
 
 - **Kurze Leiste, kein Klick** → weiche, kontrollierte Landung. Ideal.
-- **Volle rote Leiste + 500-Hz-Klick** → schweres Stampfen. Knie beim Aufsetzen beugen und mit dem Sprunggelenk abfedern.
+- **Leiste im gelben Bereich + 1200-Hz-Klick** → `HEEL SLAM ⚠`, `TOE JAM ⚠` oder `HARD IMPACT ⚠` — harte Landung. Knie beim Aufsetzen beugen und mit dem Sprunggelenk abfedern.
+- **Volle rote Leiste + 500-Hz-Klick** → extremer Aufprall (> 30 g/s) — separater Alarm vom Badge-System.
 
 ---
 
@@ -150,7 +155,7 @@ Diese drei Badges erscheinen unterhalb der Jerk-Leiste und werden nach jedem Sch
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
 | `SMOOTH LOAD` ✅ | Gewicht wurde schrittweise auf den Landefuß übertragen | Gute Gelenkbiomechanik — beibehalten |
-| `INSTANT LOAD` ⚠️ | Volles Gewicht beim Aufprall abgeworfen | Massenschwerpunkt verlangsamen; daran denken, den Boden zu „empfangen" statt darauf zu landen |
+| `INSTANT LOAD` ⚠️ | Gewicht wurde beim Aufprall sofort und vollständig auf den Landefuß übertragen | Massenschwerpunkt verlangsamen; den Boden „empfangen" statt darauf zu fallen |
 | `EARLY UNLOAD` ⚠️ | Gewicht verlagert sich, bevor der Fuß sicher steht | Du eilst zum nächsten Schritt. Aktuelle Gewichtsverlagerung vollständig abschließen, bevor du dich bewegst |
 
 ### Verzögerungs-Badge (INT + ADV)
@@ -162,7 +167,7 @@ Die Schwellenwerte unterscheiden sich je nach Richtung: Ein Rückwärtsschritt (
 | Badge | Vorwärtsschritt | Rückwärtsschritt | Was es bedeutet |
 | :--- | :--- | :--- | :--- |
 | `DELAYED ✓` ✅ | 12–38 % des Beats | 18–50 % des Beats | Für WCS typisches Schweben — Gewicht kommt nach dem Fußkontakt an |
-| `QUICK` ⚠️ | < 12 % | < 18 % | Gewicht sofort beim Kontakt abgeworfen — mechanisch, nicht musikalisch |
+| `QUICK` ⚠️ | < 12 % | < 18 % | Gewicht sofort beim Kontakt auf den Standfuß übertragen — mechanisch, nicht musikalisch |
 | `LATE` ⚠️ | > 38 % | > 50 % | Gewicht nie vollständig übertragen — schwebend oder unvollständige Verlagerung (nur ADV) |
 
 Bei **INT**-Stufe werden nur `DELAYED ✓` / `QUICK` angezeigt — jede verzögerte Übertragung ist bereits Fortschritt. `LATE` wird bei **ADV**-Stufe hinzugefügt, wo übermäßiges Schweben ebenfalls ein Problem wird.
@@ -188,9 +193,9 @@ Sichtbar ab **Fortgeschritten**. Diese Karte zeigt, wie lange beide Füße währ
 
 | Badge | Überschneidungsrate | Was es bedeutet | Trainingsimplikation |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 18 %–38 % | Gleichmäßige, geerdte Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
+| `OPTIMAL ROLL` ✅ | 18 %–38 % | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
 | `HECTIC` ⚠️ | < 18 % | Gehetzt — ein Fuß verlässt den Boden, bevor der andere sicher steht | „Abrollen, nicht abheben" — durch den Fuß rollen, bevor man schreitet |
-| `SLUGGISH` ⚠️ | > 38 % | Verlängerter Doppelkontakt — Zögern oder schwere Stellung | Früher zum Massenschwerpunkt-Versatz bekennen |
+| `SLUGGISH` ⚠️ | > 38 % | Verlängerter Doppelkontakt — Zögern oder schwere Stellung | Den Massenschwerpunkt früher verlagern |
 
 Beobachte diese Karte während **Tripleschritten und Gängen**. `HECTIC` bei einem Ankerschritt bedeutet oft, dass du den Anker verlässt, bevor du Verbindung aufgebaut hast.
 
@@ -220,19 +225,7 @@ Befestige den Sensor am **hinteren Hosenbund auf Höhe des unteren Rückens** (L
 
 ### Befestigung überprüfen
 
-Am oberen Rand der Beckenkarte zeigt eine kleine graue Datenzeile drei Live-Rohwerte:
-
-```
-aZ:+0.95  aX:-0.20  gY:   0
-```
-
-| Wert | Was er zeigt | Erwartet im Ruhezustand |
-| :--- | :--- | :--- |
-| `aZ` | Vertikale Beschleunigung | **+0,90 bis +1,00** (Schwerkraft) |
-| `aX` | Laterale Beschleunigung | −0,30 bis +0,30 (kleine Neigungsabweichung ist normal) |
-| `gY` | Hüft-Gierrate (°/s) | Nahe **0** |
-
-Wenn `aZ` weit von +0,95 entfernt ist (z. B. nahe 0 oder negativ), ist der Sensor nicht korrekt befestigt — er könnte gedreht sein oder in die falsche Richtung zeigen. Neu befestigen: flach am Rücken, Display nach außen.
+Sobald der Beckensensor aktiv ist, erscheint die Beckenkarte oben links. Wenn die Hüftaktivierungs-Badge beim normalen Stehen dauerhaft `🌀 ACTIVE` zeigt (ohne Bewegung), ist der Sensor wahrscheinlich falsch befestigt oder dreht sich. Sensor neu anklipsen: flach am Rücken, Display nach außen.
 
 ### Badge-Übersicht
 
@@ -243,6 +236,7 @@ Wenn `aZ` weit von +0,95 entfernt ist (z. B. nahe 0 oder negativ), ist der Senso
 | **Hüft-Fuß-Kopplung** | INT+ | Ob die Hüften jeden Schritt initiieren oder den Füßen folgen |
 | **Vertikales Auf-und-Ab** | INT+ | Wie viel vertikale Bewegung das Becken erzeugt |
 | **Anchor Settle** | ADV | Qualität der Beckensetzung in den 500 ms nach jedem Ankerschritt |
+| **Hip Settle** | ADV | Ob du dich nach dem Ankerschritt in die Hüfte setzt (laterale Beckenneigung) |
 
 ---
 
@@ -286,7 +280,7 @@ Vergleicht, wann die maximale Hüftrotation relativ zum Moment des Fußkontakts 
 
 ### Vertikales Auf-und-Ab (INT+)
 
-Misst die Varianz der vertikalen Beckenbeschleunigung (Schwerkraft entfernt) über 1 Sekunde.
+Misst, wie stark sich das Becken beim Tanzen auf und ab bewegt. Der Sensor erkennt dabei nur die Auf-und-Ab-Bewegung — reines Stehen ruhig ergibt `GROUNDED`.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
@@ -300,9 +294,11 @@ Misst die Varianz der vertikalen Beckenbeschleunigung (Schwerkraft entfernt) üb
 
 Nach jedem Rückwärts-(Anker-)Schritt öffnet das System ein 500-ms-Messfenster und wertet drei Signale aus:
 
-1. **Verzögerung** — hat sich das Becken in der anterior-posterioren Richtung verlangsamt?
+1. **Verzögerung** — hat sich das Becken in der anterior-posterioren Richtung (vorwärts-rückwärts, d. h. Abstopp-Bewegung beim Anker) verlangsamt?
 2. **Gier-Dämpfung** — hat die Hüftrotation nach dem Schritt abgenommen?
 3. **Stabilität** — wie ruhig war das Becken in der zweiten Hälfte des Fensters?
+
+> **Was gemessen wird:** Das System wertet Abstopp-Bewegung (vorwärts-rückwärts) und Rotationsdämpfung aus. Das „In-die-Hüfte-Setzen" (leichte seitliche Beckenneigung beim Anker) wird derzeit **nicht** erfasst — dafür eignet sich die Kameraansicht.
 
 Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im Badge angezeigt wird.
 
@@ -319,16 +315,31 @@ Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im 
 
 ---
 
-## 9. Training nach Fertigkeitsstufe
+### Hip Settle (ADV)
+
+Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob eine kurze laterale Beckenneigung zur Standbeinseite hin stattfindet und dann stabil gehalten wird. Das System wertet `aLatP` (laterale Beschleunigung des Beckensensors) in dem gleichen 500-ms-Fenster wie Anchor Settle aus.
+
+| Badge | Was es bedeutet | Wie man es verbessert |
+| :--- | :--- | :--- |
+| `HIP SETTLE ✓` | Klarer lateraler Impuls früh im Fenster, danach stabile Haltung — Becken setzt sich bewusst auf das Standbein | Beibehalten |
+| `SLIGHT SETTLE` | Kleiner lateraler Impuls vorhanden, aber nicht ausgeprägt | Bewusst mehr Gewicht auf das Standbein „fallen lassen" und halten |
+| `NO HIP SETTLE` | Kein lateraler Impuls — Becken bleibt neutral nach dem Anker | Das Standbein aktiv belasten: nach dem Ankerschritt die Hüfte leicht zur Standbeinseite absinken lassen |
+| `OVERSWING ⚠` | Zu starker lateraler Impuls — Becken schwingt zu weit zur Seite | Bewegung mäßigen; laterale Neigung soll subtil sein, nicht sichtbar pendeln |
+
+> **Hinweis:** Das „In-die-Hüfte-Setzen" ist ein stilistisches Merkmal — manche Lehrstile betonen es stark, andere weniger. Der Badge gibt Information, keine Bewertung. Wenn dein Trainer keinen lateralen Settle möchte, ignoriere diesen Badge.
+
+---
+
+## 9. Training nach Level
 
 ### Anfänger — `👤 BEG` verwenden
 
 **Ein Fokus: Fersen- vs. Zehenkontakt.**
 
-1. Vorwärts gehen. Zeigt das Badge `OPTIMAL HEEL`? Wenn nicht — Ferse vor dem Aufsetzen etwas stärker anheben.
-2. Rückwärts gehen. Zeigt das Badge `OPTIMAL TOE`? Wenn nicht — Zehe zuerst hinausschicken. Wenn du bei Rückwärtsschritten ↔️ FLAT + `FLAT-FOOT!` siehst, kontaktiert deine Ferse den Boden vor der Zehe.
-3. Wenn du den **1200-Hz-Piep** hörst, anhalten und verlangsamen. Das ist ein harter `FLAT-FOOT!`-Aufprall.
-4. Bei langsamem Tempo üben, bis `OPTIMAL HEEL` und `OPTIMAL TOE` konsistent erscheinen. Erst dann Tempo erhöhen.
+1. Vorwärts gehen. Zeigt das Badge `HEEL STRIKE ✓`? Wenn nicht — die Ferse hebt sich vor dem Aufsetzen nicht genug an. Bewusst die Ferse zuerst aufkommen lassen.
+2. Rückwärts gehen. Zeigt das Badge `TOE-FIRST ✓`? Wenn nicht — zuerst den Ballen aufkommen lassen. Wenn bei Rückwärtsschritten der Richtungs-Badge — (grau) erscheint, setzt die Ferse vor dem Ballen auf.
+3. Wenn du den **1200-Hz-Piep** hörst, anhalten und verlangsamen. Das ist `HEEL SLAM ⚠`, `TOE JAM ⚠` oder `HARD IMPACT ⚠` — zu viel Aufprallkraft.
+4. Bei langsamem Tempo üben, bis `HEEL STRIKE ✓` und `TOE-FIRST ✓` konsistent erscheinen. Erst dann Tempo erhöhen.
 
 **Mit Beckensensor:** Nur **Hüftaktivierung** beobachten. Wenn `STIFF HIPS` konstant erscheint, bewegen sich deine Beine ohne Rumpfbeteiligung.
 
@@ -336,11 +347,11 @@ Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im 
 
 **Zwei Fokuspunkte: Technik-Konsistenz + Gewichtsübertragungs-Timing.**
 
-1. Vorwärtsgänge → auf konstantes `OPTIMAL HEEL` mit Jerk-Leiste unter der Hälfte achten.
-2. Rückwärtsgänge → auf `OPTIMAL TOE` achten. ↔️ FLAT bei einem Rückwärtsschritt bedeutet, dass der Fuß zu flach landet.
+1. Vorwärtsgänge → auf konstantes `HEEL STRIKE ✓` mit niedriger Jerk-Leiste achten.
+2. Rückwärtsgänge → auf `TOE-FIRST ✓` achten. Ein — Richtungs-Badge bei einem Rückwärtsschritt bedeutet, dass der Fuß zu flach landet — die Ferse setzt vor dem Ballen auf.
 3. Das **POWER PUSH-Badge** beobachten: ist dein hinteres Bein passiv?
 4. Die **Doppelstand-Karte** einführen: bei Tripleschritten auf `OPTIMAL ROLL` hinarbeiten.
-5. Das neue **DELAY-Badge** beobachten: bei Ankerschritten auf `DELAYED ✓` achten. Konstantes `QUICK` bedeutet, dass du das Gewicht sofort abwirfst — kein musikalischer Atemzug in der Verbindung.
+5. Das neue **DELAY-Badge** beobachten: bei Ankerschritten auf `DELAYED ✓` achten. Konstantes `QUICK` bedeutet, dass das Gewicht sofort auf den Standfuß übertragen wird — kein musikalischer Atemzug in der Verbindung.
 
 **Mit Beckensensor:** **Laterale Stabilität**, **Hüft-Fuß-Kopplung** und **Vertikales Auf-und-Ab** hinzufügen. Die wertvollste Einzelmetrik auf dieser Stufe ist die Hüft-Fuß-Kopplung — konstantes `HIP LAGS` bedeutet, dass du mit deinen Füßen gehst, nicht mit deinem Körper.
 
@@ -348,14 +359,14 @@ Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im 
 
 **Vollständige biomechanische Feedback-Schleife.**
 
-1. **SMOOTH LOAD vs. INSTANT LOAD** verwenden, um den Gewichtsempfang zu verfeinern — besonders bei synkopierten Mustern.
-2. **DELAY-Badge** mit **SMOOTH LOAD** kreuzlesen: `DELAYED ✓` + `SMOOTH LOAD` ist die ideale Kombination — sowohl Timing als auch Rampenqualität stimmen. `DELAYED ✓` + `INSTANT LOAD` bedeutet, du hast gewartet, dann aber abgeworfen; `QUICK` + `SMOOTH LOAD` bedeutet, der Gradient war gut, aber das Schweben zu kurz.
+1. **SMOOTH LOAD vs. INSTANT LOAD** verwenden, um den Gewichtstransfer zu verfeinern — besonders bei synkopierten Mustern. SMOOTH LOAD bedeutet: das Gewicht fließt gleichmäßig über eine Rampe auf den Standfuß. INSTANT LOAD bedeutet: das Gewicht springt sofort beim Aufprall auf den Standfuß, ohne diese Rampe.
+2. **DELAY-Badge** mit **SMOOTH LOAD** kreuzlesen: `DELAYED ✓` + `SMOOTH LOAD` ist die ideale Kombination — sowohl Timing als auch Qualität der Gewichtsrampe stimmen. `DELAYED ✓` + `INSTANT LOAD` bedeutet, du hast gewartet, dann aber das Gewicht schlagartig übertragen; `QUICK` + `SMOOTH LOAD` bedeutet, die Gewichtsrampe war gut, aber der Moment des Übertragens kam zu früh.
 3. **ASI** zwischen links und rechts über eine vollständige Trainingssitzung vergleichen. Eine konstant schlechtere Seite weist auf ein Kompensationsmuster hin.
 4. **ANKLE FLEX vs. STIFF ANKLE** zur Ermüdungsüberwachung nutzen — Sprunggelenkssteifigkeit nimmt bei Muskelermüdung zu.
 5. Mit `📷 CAM` aufnehmen und während der Pausen abspielen.
 5. Das **Roll-off-Dynamik-Diagramm** verwenden, um Gyrospitzenwerte zwischen den Füßen zu vergleichen.
 
-**Mit Beckensensor:** **Anchor Settle** als Anker-Qualitäts-KPI verwenden. Einen vollständigen 8-Zähler-Basic ausführen und den Wert nach jedem Ankerschritt prüfen.
+**Mit Beckensensor:** **Anchor Settle** als Anker-Qualitäts-KPI verwenden. Grundfiguren wie Sugar Push, Left Side Pass oder Underarm Turn tanzen und den Wert nach jedem Ankerschritt prüfen.
 
 ---
 
@@ -363,15 +374,16 @@ Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im 
 
 | Was du siehst | Ursache | Lösung |
 | :--- | :--- | :--- |
-| `FLAT-FOOT!` bei jedem Vorwärtsgang | Sprunggelenk starr gehalten; keine Fersenartikulierung | Verlangsamen. Bewusst übertriebenen Fersen-zuerst-Kontakt üben. |
-| `FLAT-FOOT!` + ↔️ FLAT bei Rückwärtsschritten | Ferse kontaktiert vor Zehe | Zehe zuerst schicken, Sprunggelenk dorsalflektiert halten, bis der Fuß aufsetzt. |
+| `HEEL SLAM ⚠` / `HARD IMPACT ⚠` bei Vorwärtsgängen | Zu wenig Knie- oder Sprunggelenksdämpfung beim Aufsetzen | Verlangsamen. Knie stärker beugen und Sprunggelenk weicher halten beim Aufsetzen. |
+| — Richtungs-Badge bei Rückwärtsschritten | Ferse setzt vor dem Ballen auf | Zuerst den Ballen aufkommen lassen, Sprunggelenk entspannt halten, bis der Fuß vollständig steht. |
+| `TOE JAM ⚠` konstant | Harter Ballenaufprall bei Rückwärtsschritten | Streckung mäßigen; Landung durch das Sprunggelenk abfedern. |
 | `HECTIC`-Doppelstand | Verlagerung gehetzt; Fuß hebt zu früh ab | „Als Letztes den Boden verlassen" — den ganzen Fuß von der Zehe abrollen lassen. |
-| `SLUGGISH`-Doppelstand | Zögern vor dem Gewichtsbekenntnis | Dem Boden vertrauen. Den Körper bewegen, nicht nur den Fuß. |
+| `SLUGGISH`-Doppelstand | Zögern vor dem vollständigen Gewichtstransfer | Dem Boden vertrauen. Den Körper bewegen, nicht nur den Fuß. |
 | `STIFF ANKLE` konstant | Sprunggelenk beim Aufsetzen gespannt | Sich vorstellen, auf einem Schwamm zu landen. Sprunggelenk bewusst entspannen vor dem Kontakt. |
 | `ASYMMETRIC`-ASI | Ein Fuß steifer oder weniger artikuliert | Betroffenen Fuß identifizieren und isoliert üben. |
 | `— PUSH-OFF` (kein Badge) | Hinterbein passiv | „Boden drücken, nicht nur Fuß heben." |
-| `INSTANT LOAD` bei Ankern | Gewicht abrupt abgeworfen | „In den Anker schmelzen" statt „darauf landen". |
-| `QUICK` bei Ankerschritten | Kein Schweben vor Gewichtsbekenntnis | „Zurücktreten, atmen, dann setzen." Bewusste Pause zwischen Fußkontakt und Gewichtsankunft einplanen. |
+| `INSTANT LOAD` bei Ankern | Gewicht schlagartig auf den Standfuß übertragen | „In den Anker schmelzen" statt „darauf fallen". |
+| `QUICK` bei Ankerschritten | Kein Schweben vor dem Gewichtstransfer | „Zurücktreten, atmen, dann setzen." Bewusste Pause zwischen Fußkontakt und Gewichtsübernahme einplanen. |
 | `LATE` bei Vorwärtsgängen | Gewicht kommt nie vollständig an | Der Verlagerung vertrauen — vollständig übertragen, bevor der nächste Schritt eingeleitet wird. |
 | `STIFF HIPS` konstant | Beine ohne Rumpfbeteiligung | Jeden Schritt mit einem bewussten Hüftrotationsimpuls beginnen, bevor der Fuß sich bewegt. |
 | `LATERAL SWAY` durchgehend | Hüftheben oder seitlicher Beckendruck | Becken waagerecht halten; auf asymmetrische Gewichtsverteilung achten. |

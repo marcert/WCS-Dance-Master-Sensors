@@ -307,7 +307,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <!-- TOP-LEFT: PELVIS HIP MECHANICS (replaces spacer while sensor is online) -->
                 <div id="pelvicCard" class="card">
                     <div class="card-title">Pelvis — Hip Mechanics</div>
-                    <div id="pelvicRaw" style="font-size:0.68rem;color:#636e72;font-family:monospace;margin-bottom:4px;white-space:nowrap;overflow:hidden;letter-spacing:0.01em;"></div>
+                    <div id="pelvicRaw" style="display:none;"></div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                         <span style="font-size:0.78rem;color:#8b949e;">Hip Activation</span>
                         <span id="hipActBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP</span>
@@ -327,6 +327,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:0.78rem;color:#8b949e;">Anchor Settle</span>
                         <span id="anchorSettleBadge" class="badge" style="background:#1e272e;color:#8b949e;">— ANCHOR</span>
+                    </div>
+                    <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.78rem;color:#8b949e;">Hip Settle</span>
+                        <span id="hipSettleBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP SETTLE</span>
                     </div>
                 </div>
 
@@ -599,7 +603,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
         let anchorSettleActive    = false;            // true while collecting post-anchor pelvis window
         let anchorSettleStartTime = 0;
-        let anchorSettleSamples   = { aSagP: [], gYawP: [] };
+        let anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
 
         function fetchStream() {
             fetch('/data')
@@ -724,6 +728,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         if (anchorSettleActive) {
                             anchorSettleSamples.aSagP.push(aSagP);
                             anchorSettleSamples.gYawP.push(Math.abs(gYawP));
+                            anchorSettleSamples.aLatP.push(aLatP);
                             if (now - anchorSettleStartTime >= 500) {
                                 anchorSettleActive = false;
                                 let n = anchorSettleSamples.aSagP.length;
@@ -754,6 +759,21 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         if      (anchorScore >= 60) { ab.className = 'badge badge-green';  ab.style.cssText = ''; ab.innerText = 'ANCHORED (' + anchorScore + ')'; }
                                         else if (anchorScore >= 30) { ab.className = 'badge badge-yellow'; ab.style.cssText = ''; ab.innerText = 'SETTLING (' + anchorScore + ')'; }
                                         else                        { ab.className = 'badge badge-red';    ab.style.cssText = ''; ab.innerText = 'UNSTABLE (' + anchorScore + ')'; }
+                                    }
+
+                                    // Hip Settle — lateral impulse in early half, stable in late half
+                                    let earlyLat = anchorSettleSamples.aLatP.slice(0, half);
+                                    let lateLat  = anchorSettleSamples.aLatP.slice(half);
+                                    let earlyLatPeak = Math.max(...earlyLat.map(v => Math.abs(v)));
+                                    let lateLatMean  = lateLat.reduce((a,b) => a+b, 0) / lateLat.length;
+                                    let lateLatVar   = lateLat.reduce((a,b) => a + (b - lateLatMean)**2, 0) / lateLat.length;
+                                    let hse = document.getElementById('hipSettleBadge');
+                                    if (hse) {
+                                        hse.style.cssText = '';
+                                        if      (earlyLatPeak > 0.30)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'OVERSWING ⚠'; }
+                                        else if (earlyLatPeak > 0.10 && lateLatVar < 0.015)        { hse.className = 'badge badge-green';  hse.innerText = 'HIP SETTLE ✓'; }
+                                        else if (earlyLatPeak > 0.05)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'SLIGHT SETTLE'; }
+                                        else                                                        { hse.className = 'badge badge-red';    hse.innerText = 'NO HIP SETTLE'; }
                                     }
                                 }
                             }
@@ -1000,9 +1020,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         if (pelvicOk && activeDirection === "BACKWARD") {
                             anchorSettleActive    = true;
                             anchorSettleStartTime = now;
-                            anchorSettleSamples   = { aSagP: [], gYawP: [] };
+                            anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
                             let ab = document.getElementById('anchorSettleBadge');
                             if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = 'MEASURING...'; }
+                            let hse = document.getElementById('hipSettleBadge');
+                            if (hse) { hse.className = 'badge'; hse.style.cssText = 'background:#1e272e;color:#8b949e;'; hse.innerText = 'MEASURING...'; }
                         }
 
                         // Visuelles Aufblinken der Kachel bei jedem erkannten Schritt
