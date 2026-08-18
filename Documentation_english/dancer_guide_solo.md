@@ -248,6 +248,7 @@ If `aZ` is far from +0.95 (e.g. near 0 or negative), the sensor is not mounted c
 | **Hip-Foot Coupling** | INT+ | Whether hips initiate each step or follow the feet |
 | **Vertical Bounce** | INT+ | How much vertical movement the pelvis generates |
 | **Anchor Settle** | ADV | Quality of the pelvis settle in the 500 ms after each anchor step |
+| **Hip Settle** | ADV | Whether the pelvis shifts into the standing hip after each anchor step (lateral tilt) |
 
 ---
 
@@ -321,6 +322,21 @@ These three components are combined into a 0–100 score displayed in the badge.
 - **Low score despite clean foot technique** → the issue is pelvis, not foot angle. Work on the settle itself, not the step.
 - **`HECTIC` Double Stance + low Anchor Settle** → you are leaving the anchor before the pelvis has stabilised.
 - **`🌀 ACTIVE` hip + `UNSTABLE` anchor** → hips rotate well during travel but do not dampen at the anchor. Practise a deliberate "soft stop".
+
+---
+
+### Hip Settle (ADV)
+
+Measures whether you "settle into the hip" after an anchor step — i.e. whether a brief lateral pelvic shift towards the standing leg occurs and then holds. The system evaluates `aLatP` (lateral acceleration of the pelvis sensor) within the same 500 ms window as Anchor Settle.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `HIP SETTLE ✓` | Clear lateral impulse early in the window, stable hold after — pelvis consciously settling onto the standing leg | Maintain |
+| `SLIGHT SETTLE` | Small lateral impulse present but not pronounced | Let more weight consciously drop onto the standing leg and hold |
+| `NO HIP SETTLE` | No lateral impulse — pelvis stays neutral after the anchor | Actively load the standing leg: after the anchor step, allow the hip to drop slightly towards the standing side |
+| `OVERSWING ⚠` | Lateral impulse too strong — pelvis swings too far to the side | Moderate the movement; the lateral shift should be subtle, not a visible swing |
+
+> **Note:** "Settling into the hip" is a stylistic element — some teaching styles emphasise it strongly, others less so. This badge provides information, not a verdict. If your teacher does not want a lateral settle, disregard this badge.
 
 ---
 
