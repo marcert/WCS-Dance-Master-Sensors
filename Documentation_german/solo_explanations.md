@@ -209,7 +209,8 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
 Beide Metriken werden aus einem Post-Aufprall-Überwachungsfenster berechnet, das unmittelbar nach jedem Schrittauslöser öffnet.
 
 **Gewichtstransfer-Gradient** (240-ms-Fenster, 12 Samples):
-$$\text{loadRise} = \overline{aZ}_{[160\text{–}240\text{ ms}]} - \overline{aZ}_{[0\text{–}80\text{ ms}]}$$
+
+$$\text{loadRise} = \overline{aZ}_{[160-240\text{ ms}]} - \overline{aZ}_{[0-80\text{ ms}]}$$
 
 | loadRise | Badge | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
@@ -222,10 +223,12 @@ $$\text{loadRise} = \overline{aZ}_{[160\text{–}240\text{ ms}]} - \overline{aZ}
 > **Messtechnischer Hinweis:** `gRoll` misst die Rotation des *Schuhsegments* um die Roll-Achse des Sensors, nicht direkt den Subtalargelenk-Eversionswinkel. `rollIntegral` ist ein Fußrotations-Proxy für Pronations-Stoßdämpfung; die Umkehrprüfung ist ein Proxy für den Pronation→Supination-Zyklus, der den Windlass-Mechanismus vorspannt. Beide sind als Trainingsindikatoren validiert, keine anatomischen Gelenkmessungen.
 
 Fußroll-Integral über die ersten 100 ms (Samples 0–4):
-$$\text{rollIntegral} = \left|\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\,\text{s}\right| \quad [\text{Grad}]$$
+
+$$\text{rollIntegral} = \left\lvert\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\,\text{s}\right\rvert \quad [\text{Grad}]$$
 
 Abrollumkehr-Prüfung — Vorzeichenwechsel zwischen früher (Samples 0–3) und später (Samples 6–9) Phase:
-$$\text{rollReversal} = \lvert\overline{\omega}_{[0\text{–}3]}\rvert > 8°/\text{s} \quad\text{UND}\quad \overline{\omega}_{[0\text{–}3]} \cdot \overline{\omega}_{[6\text{–}9]} < 0$$
+
+$$\text{rollReversal} = \lvert\overline{\omega}_{0-3}\rvert > 8°/\text{s} \quad\text{UND}\quad \overline{\omega}_{0-3} \cdot \overline{\omega}_{6-9} < 0$$
 
 | Bedingung | Badge | Biomechanische Interpretation |
 | :---: | :---: | :--- |
@@ -296,7 +299,9 @@ Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder B
 
 1. **Transientes Signal-Kandidaten-Sensing:**
    Jeder Fuß qualifiziert sich unabhängig als Aufprallkandidat über ODER-Logik:
+
    $$\text{signal}_{\text{foot}} = \bigl(\lvert aZ\rvert > 1.08\,g\bigr) \quad\mathbf{ODER}\quad \bigl(\lvert\omega_{\text{pitch}}\rvert > 80\,\text{deg/s} \quad\mathbf{UND}\quad \text{preJerk} > 8\bigr)$$
+
    Das `preJerk`-Gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) auf dem Gyro-Pfad unterdrückt Abhebebewegungs-Artefakte. Wenn beide Füße im gleichen Frame signalisieren, wird der dominante Fuß nach maximaler Bodenreaktionskraft ausgewählt: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
 2. **Pro-Fuß Kadenz-Adaptives Sperrzeitfenster & Alternierungswächter:**
