@@ -12,7 +12,7 @@ Dieses Dokument beschreibt die mathematischen und biomechanischen Grundlagen des
 
 Die Cyan- (links) und Magenta- (rechts) Linien im kombinierten Analyse-Graphen zeigen einen kontinuierlichen Qualitätswert aus Aufprallbeschleunigung und Rotationsartikulation:
 
-$$\text{FootQuality} = \frac{\left| \text{gyro\_x} \right|}{1{,}0 + \max(0,\; \left| \text{accel\_z} \right| - 1{,}0) \times 2{,}0}$$
+$$\text{FootQuality} = \frac{\lvert \omega_\text{pitch} \rvert}{1{,}0 + \max(0,\; \lvert a_z \rvert - 1{,}0) \times 2{,}0}$$
 
 > Der Nenner bestraft nur Aufpralle oberhalb von 1 g — das Anheben des Fußes (Werte unter 1 g) verschlechtert den Qualitätswert nicht.
 

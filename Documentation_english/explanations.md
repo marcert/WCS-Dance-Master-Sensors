@@ -12,7 +12,7 @@ This document covers the mathematical and biomechanical foundations of the **Con
 
 The cyan (left) and magenta (right) lines in the combined analysis graph represent a continuous quality score derived from impact acceleration and rotational articulation:
 
-$$\text{FootQuality} = \frac{\left| \text{gyro\_x} \right|}{1.0 + \max(0,\; \left| \text{accel\_z} \right| - 1.0) \times 2.0}$$
+$$\text{FootQuality} = \frac{\lvert \omega_\text{pitch} \rvert}{1.0 + \max(0,\; \lvert a_z \rvert - 1.0) \times 2.0}$$
 
 > The denominator only penalises impacts above 1 g — foot-lifting (values below 1 g) does not degrade the quality score.
 
