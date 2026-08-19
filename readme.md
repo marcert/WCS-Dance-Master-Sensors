@@ -116,7 +116,7 @@ When the optional **Pelvis Sensor** is attached, both dashboards display five ad
 | Hand / Scale Unit | M5StickC + HX711 load cell amplifier + strain-gauge load cell (GPIO 33 DOUT / GPIO 32 SCK) |
 | Pelvis Sensor *(optional)* | M5StickC Plus / Plus2 (internal 6-axis IMU required) — worn on a belt at the sacrum |
 
-Full bill of materials and wiring: [parts.md](parts.md)
+Full bill of materials and wiring: [parts.md](Documentation_english/parts.md)
 
 ---
 
