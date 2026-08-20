@@ -12,6 +12,7 @@ This document outlines all required hardware components, 3D/mechanical parts, an
 | **M5Stick S3** | 1 | **Central Master Unit** (Web Server, Dashboard Host & ESP-NOW Receiver) | [M5Stack Shop](https://shop.m5stack.com/products/m5stamp-s3-pin-header) |
 | **M5Stick S3** | 2 | **Foot IMU Sensors** (Left Foot ID 1, Right Foot ID 2) | [M5Stack Shop](https://shop.m5stack.com/products/m5stamp-s3-pin-header) |
 | **M5StickC PLUS2** | 1 | **Hand / Scale Sensor Node** (Reads HX711 & local graph display) | [M5Stack Shop](https://shop.m5stack.com/products/m5stickc-plus2-esp32-pico-mini-iot-development-kit) |
+| **M5StickC PLUS / PLUS2** | 1 | **Pelvis Sensor** *(optional)* — worn on a belt at the sacrum (foot_id = 4); internal 6-axis IMU required; enables Hip Activation, Lateral Stability, Hip-Foot Coupling, Vertical Bounce, Anchor Settle & Hip Settle metrics | [M5Stack Shop](https://shop.m5stack.com/products/m5stickc-plus2-esp32-pico-mini-iot-development-kit) |
 | **M5Stack Weight Sensor Unit (HX711)** | 1 | ADC Amplifier for reading strain gauge load cell differential signals | [M5Stack Weight Sensor Unit](https://shop.m5stack.com/products/weight-sensor-unit?variant=16804759404634) |
 | **S-Type Load Cell (Tension / Compression)** | 1 | Measures push (+ force) and pull (- force) lead connection up to 10 kg | [S-Type M8 Load Cell](https://www.amazon.de/dp/B0G4C7QRQK) |
 | **T-Bar Handles (M8 Thread)** | 2 | Ergonomic connection handles for Leader & Follower hands during tension tests | [M8 T-Handles (Amazon)](https://www.amazon.de/dp/B0C5JB4N8M) |
