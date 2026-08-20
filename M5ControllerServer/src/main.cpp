@@ -185,10 +185,10 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       leftAccelX   = footData.accel_x;
       lastSeenLeft = millis();
     } else if (footData.foot_id == 4) {
-      pelvicGyro   = footData.gyro_x;
+      pelvicGyro   = footData.gyro_roll;
       pelvicAccel  = footData.accel_z;
       pelvicAccelY = footData.accel_y;
-      pelvicYaw    = footData.gyro_roll;
+      pelvicYaw    = footData.gyro_x;
       pelvicAccelX = footData.accel_x;
       lastSeenPelvic = millis();
     } else {
@@ -382,7 +382,7 @@ void loop() {
   if (pelvicOnline != dPOn) {
     dPOn = pelvicOnline;
     M5.Display.setCursor(5, 80);
-    M5.Display.setTextColor(PURPLE, BLACK);
+    M5.Display.setTextColor(MAGENTA, BLACK);
     M5.Display.printf("P: %-14s", pelvicOnline ? "ONLINE" : "OFFLINE");
   }
 

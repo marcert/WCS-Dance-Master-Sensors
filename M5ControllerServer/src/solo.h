@@ -507,8 +507,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     canvasRO.observe(canvas);
 
     const maxHistory = 100;
-    let pitchLeftHistory = new Array(maxHistory).fill(0);
+    let pitchLeftHistory  = new Array(maxHistory).fill(0);
     let pitchRightHistory = new Array(maxHistory).fill(0);
+    let gYawHistory       = new Array(maxHistory).fill(0);
 
         let prevAccelZLeft = 1.0;
         let prevAccelZRight = 1.0;
@@ -638,6 +639,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let filtR = pitchRightHistory[pitchRightHistory.length - 1] * (1 - LP_ALPHA) + gPitchR * LP_ALPHA;
                     pitchLeftHistory.shift();  pitchLeftHistory.push(filtL);
                     pitchRightHistory.shift(); pitchRightHistory.push(filtR);
+                    gYawHistory.shift(); gYawHistory.push(pelvicOk ? gYawP : 0);
 
                     // aY swing-phase ring buffers — update every poll before step detection.
                     // Left foot aY is stored raw (inversion applied at read time, not here).
@@ -694,9 +696,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         hipActSmoothed = hipActSmoothed * 0.9 + gYawPeak * 0.1;
                         let hipBadge = document.getElementById('hipActBadge');
                         if (hipBadge) {
-                            if      (hipActSmoothed >= 60)  { hipBadge.className = 'badge badge-green';  hipBadge.style.cssText = ''; hipBadge.innerText = '🌀 ACTIVE'; }
-                            else if (hipActSmoothed >= 25)  { hipBadge.className = 'badge badge-yellow'; hipBadge.style.cssText = ''; hipBadge.innerText = 'MODERATE'; }
-                            else                            { hipBadge.className = 'badge badge-red';    hipBadge.style.cssText = ''; hipBadge.innerText = 'STIFF HIPS'; }
+                            let hipThrActive = Math.round(60 * 500 / Math.max(400, stepDurationMs));
+                            let hipThrMod    = Math.round(25 * 500 / Math.max(400, stepDurationMs));
+                            if      (hipActSmoothed >= hipThrActive) { hipBadge.className = 'badge badge-green';  hipBadge.style.cssText = ''; hipBadge.innerText = '🌀 ACTIVE'; }
+                            else if (hipActSmoothed >= hipThrMod)    { hipBadge.className = 'badge badge-yellow'; hipBadge.style.cssText = ''; hipBadge.innerText = 'MODERATE'; }
+                            else                                     { hipBadge.className = 'badge badge-red';    hipBadge.style.cssText = ''; hipBadge.innerText = 'STIFF HIPS'; }
                         }
 
                         // Lateral Stability — variance of aXP over 1s
@@ -882,12 +886,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         // Detection gate: aY > 0.15g confirms floor shear (filters unweighted foot swings).
                                         // Two complementary signals: instantaneous peak (catches short explosive pushes) and
                                         // energy integral accumulated since last landing (catches sustained lower-amplitude drives).
-                                        const PUSH_DETECT       = 120;  // minimum peak to register any push
-                                        const PUSH_OPT_FWD      = 200;  // optimal peak for forward propulsion
-                                        const PUSH_OPT_BWD      = 160;  // optimal peak for backward / anchor redistribution
-                                        const PUSH_INT_DETECT   = 12;   // minimum integral (°) ≈ 120°/s × 100ms
-                                        const PUSH_INT_OPT_FWD  = 20;   // optimal integral forward (°) ≈ 200°/s × 100ms
-                                        const PUSH_INT_OPT_BWD  = 16;   // optimal integral anchor (°) ≈ 160°/s × 100ms
+                                        let   sfPush            = 500 / Math.max(400, stepDurationMs);
+                                        const PUSH_DETECT       = Math.round(120 * sfPush);
+                                        const PUSH_OPT_FWD      = Math.round(200 * sfPush);
+                                        const PUSH_OPT_BWD      = Math.round(160 * sfPush);
+                                        const PUSH_INT_DETECT   = 12;   // integral (°) — tempo-independent
+                                        const PUSH_INT_OPT_FWD  = 20;   // integral (°) — tempo-independent
+                                        const PUSH_INT_OPT_BWD  = 16;   // integral (°) — tempo-independent
                                         let pushPeakL = aYL > 0.15 ? -gPitchL : 0;
                                         let pushPeakR = aYR > 0.15 ? -gPitchR : 0;
                                         let pushOptL    = (lastDirectionL === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
@@ -938,16 +943,16 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         // Reset debug source — overwritten below if dθ window fires.
                         lastDirVal = null;  lastDirSrc = "θ";
 
-                        // Ambiguous zone (−5° < θ < +10°): resolve direction from pitch-angle trend.
-                        // Compare calibrated θ at T-1 (just before contact) to T-8 (160 ms earlier).
+                        // Ambiguous zone (0° < θ < +10°): resolve direction from pitch-angle trend.
+                        // Negative θ already confirms plantarflexion → BACKWARD, no trend check needed.
                         // Forward step: foot dorsiflexes during swing → θ rises → positive trend.
                         // Backward step: foot plantarflexes during swing → θ falls → negative trend.
                         // No left/right sign inversion required — both use same calibrated θ convention.
-                        if (activeTheta > -12 && activeTheta < 10) {
+                        if (activeTheta > 0 && activeTheta < 10) {
                             let tBuf = (activeFoot === "L") ? thetaBufferL : thetaBufferR;
                             if (tBuf.length >= 9) {
                                 let thetaTrend = tBuf[tBuf.length - 2] - tBuf[tBuf.length - 9]; // T-1 minus T-8
-                                let trendThr = activeTheta > 5 ? 0.5 : (activeTheta > 0 ? 0.8 : 1.5);
+                                let trendThr = activeTheta > 5 ? 0.5 : 0.8;
                                 if      (thetaTrend >  trendThr) activeDirection = "FORWARD";
                                 else if (thetaTrend < -trendThr) activeDirection = "BACKWARD";
                                 else                        activeDirection = "AMBIGUOUS";
@@ -1315,6 +1320,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             if(i===0) ctx.moveTo(0, y); else ctx.lineTo(i * stepX, y);
         }
         ctx.stroke();
+        ctx.strokeStyle = "#ffd600"; ctx.lineWidth = 2; ctx.setLineDash([4,3]); ctx.beginPath();
+        for(let i=0; i<maxHistory; i++) {
+            let y = midY - (gYawHistory[i] / 300) * midY;
+            if(i===0) ctx.moveTo(0, y); else ctx.lineTo(i * stepX, y);
+        }
+        ctx.stroke(); ctx.setLineDash([]);
     }
 
     fetchStream();

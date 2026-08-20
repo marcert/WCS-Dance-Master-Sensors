@@ -647,11 +647,11 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             // Direction: T-1 vs mount offset
             let activeDir = (isLeft ? prevPitchLeftAngle < leftMountOffset : prevPitchRightAngle < rightMountOffset) ? "BACKWARD" : "FORWARD";
             // Ambiguous zone override (same as solo.h: T-1 minus T-8 trend)
-            if (activeTheta > -12 && activeTheta < 10) {
+            if (activeTheta > 0 && activeTheta < 10) {
                 let tBuf = isLeft ? thetaBufferL : thetaBufferR;
                 if (tBuf.length >= 9) {
                     let trend = tBuf[tBuf.length - 2] - tBuf[tBuf.length - 9];
-                    let trendThr = activeTheta > 5 ? 0.5 : (activeTheta > 0 ? 0.8 : 1.5);
+                    let trendThr = activeTheta > 5 ? 0.5 : 0.8;
                     if      (trend >  trendThr) activeDir = "FORWARD";
                     else if (trend < -trendThr) activeDir = "BACKWARD";
                     else                   activeDir = "AMBIGUOUS";
@@ -749,9 +749,11 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             hipActSmoothed = hipActSmoothed * 0.9 + gYawPeak * 0.1;
             let hipEl = document.getElementById('p-hipActBadge');
             if (hipEl) {
-                if      (hipActSmoothed >= 60) { hipEl.className='p-badge p-green';  hipEl.innerText='🌀 ACTIVE'; }
-                else if (hipActSmoothed >= 25) { hipEl.className='p-badge p-yellow'; hipEl.innerText='MODERATE'; }
-                else                           { hipEl.className='p-badge p-red';    hipEl.innerText='STIFF HIPS'; }
+                let hipThrActive = Math.round(60 * 500 / Math.max(400, stepDurationMs));
+                let hipThrMod    = Math.round(25 * 500 / Math.max(400, stepDurationMs));
+                if      (hipActSmoothed >= hipThrActive) { hipEl.className='p-badge p-green';  hipEl.innerText='🌀 ACTIVE'; }
+                else if (hipActSmoothed >= hipThrMod)    { hipEl.className='p-badge p-yellow'; hipEl.innerText='MODERATE'; }
+                else                                     { hipEl.className='p-badge p-red';    hipEl.innerText='STIFF HIPS'; }
             }
             // Lateral Stability — variance of aXP over 1s
             aXPHistory.shift(); aXPHistory.push(aXP_p);
