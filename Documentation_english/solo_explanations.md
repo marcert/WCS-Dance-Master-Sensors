@@ -104,6 +104,8 @@ In WCS **forward steps** all three rockers are present: heel strike → ankle ad
    | θ < −8° | ⬅️ BACK (purple) — reliable toe-first contact |
    | −8° ≤ θ < +8° | — (grey) — ambiguous; direction not shown |
 
+   **Internal direction classification (Anchor Settle trigger):** Distinct from the badge display, the internal `activeDir` logic uses a narrower ambiguous zone: only `0° < θ < +10°` requires a pitch-angle trend check. For `θ ≤ 0°` (any plantarflexion / toe-first contact), `activeDir` is set to BACKWARD directly without trend analysis. This ensures backward steps landing at θ = -2° to -5° correctly trigger the Anchor Settle evaluation window even though the direction badge still shows "—" (because |θ| < 8°).
+
    **Landing quality badge — direction-agnostic, based on θ zone + jerk:**
 
    The strike badge evaluates *how* the foot landed, independent of direction. This is useful for both forward and backward steps: `SOFT ✓` at θ ≈ 0° indicates a controlled backward flat step; `HARD IMPACT ⚠` at θ ≈ 0° means the dancer fell onto the foot.
@@ -148,6 +150,8 @@ West Coast Swing propulsion requires an active toe push-off (*Windlass Mechanism
 | FORWARD (→ anchor / backward walk) | $\ge 160^\circ/\text{s}$ | $\ge 16°$ | `🚀 POWER PUSH` (Green) | Sufficient redistribution — lower drive expected at anchor |
 | Either direction | peak $120\text{–}199^\circ/\text{s}$ OR integral $\ge 12°$ | | `↗ PUSH` (Yellow) | Push-off detected but below directional optimum |
 | Either direction | peak $< 120^\circ/\text{s}$ AND integral $< 12°$ | | `— PUSH-OFF` (Grey) | No significant push-off detected |
+
+> **Tempo-adaptive scaling:** All peak thresholds (120/160/200 °/s at reference tempo) scale with step interval: `scaleFactor = 500 / max(400, stepDurationMs)`. At slow tempo (700 ms/step, scaleFactor ≈ 0.71) the thresholds drop to ≈86/114/142 °/s; at fast tempo (400 ms/step, scaleFactor = 1.25) they rise to ≈150/200/250 °/s. The integral thresholds (12°/16°/20°) represent total angular displacement and are tempo-independent.
 
 > **Note:** The $-\omega_{\text{pitch}}$ values are foot-segment angular velocities, not anatomical ankle-joint velocities. Literature values (~250°/s) are for barefoot/athletic gait; 200°/s and 160°/s are performance thresholds calibrated for dance shoes on studio floors. The integral thresholds (12°/16°/20°) approximate 100 ms of sustained push at the corresponding peak velocities.
 
@@ -292,4 +296,115 @@ The Solo Training Dashboard is optimized for mobile browser use (tablets/smartph
   * `⛶ FULL`: Triggers Native Fullscreen API to maximize screen real estate.
   * `📐 ZERO`: Recalibrates static instep pitch angles for both feet.
   * `🔊 Audio`: Toggles Web Audio API synthesized biofeedback tones ON/OFF.
+
+---
+
+## 6. Pelvis Metrics (Solo Dashboard)
+
+When the pelvis sensor (ID 4) is connected, the Solo Dashboard displays six additional badge cards derived from pelvic kinematics. The sensor is worn on a belt at the sacrum and streams 3-axis accelerometer (`pAx`, `pAy`, `pAz`) and yaw gyroscope (`pYaw`) data at 200 Hz.
+
+### gYaw Curve in the Live Roll-off Dynamics Graph
+
+A **dashed yellow line** in the Live Roll-off Dynamics graph shows the measured hip yaw rate (`pYaw` from the pelvis sensor), scaled to the same display range as the foot pitch curves. This curve is visible whenever the pelvis sensor is connected and provides a real-time reference for how hip rotation timing aligns with foot roll-off events.
+
+### Hip Activation
+
+Measures the peak rotational speed of the pelvis around the vertical axis — a proxy for active hip engagement during each step.
+
+**Signal processing:**
+- Sliding buffer: `gYawAbsHistory` — 25 samples (~0.5 s window) of absolute `pYaw` values
+- Peak extraction: `gYawPeak = max(gYawAbsHistory)`
+- Exponential smoothing: `hipActSmoothed = hipActSmoothed × 0.9 + gYawPeak × 0.1` (τ ≈ 2 s)
+
+**Thresholds (tempo-adaptive):**
+
+$$\text{scaleFactor} = \frac{500}{\max(400,\; \text{stepDurationMs})}$$
+
+| State | Threshold | Colour |
+| :--- | :--- | :--- |
+| ACTIVE | `hipActSmoothed ≥ round(60 × scaleFactor)` °/s | Green |
+| MODERATE | `hipActSmoothed ≥ round(25 × scaleFactor)` °/s | Yellow |
+| STIFF HIPS | below MODERATE threshold | Red |
+
+Reference values at 500 ms/step (scaleFactor = 1.0): ACTIVE ≥ 60 °/s, MODERATE ≥ 25 °/s. At slow tempo (700 ms/step, scaleFactor ≈ 0.71): ACTIVE ≥ 43 °/s, MODERATE ≥ 18 °/s. At fast tempo (400 ms/step, scaleFactor = 1.25): ACTIVE ≥ 75 °/s, MODERATE ≥ 31 °/s.
+
+### Lateral Stability
+
+Monitors pelvis sway in the mediolateral (side-to-side) direction.
+
+- Buffer: `aXPHistory` — 50 samples (~1 s) of lateral acceleration `pAx`
+- Metric: `aXVar = variance(aXPHistory)`
+
+| State | Condition | Colour |
+| :--- | :--- | :--- |
+| STABLE | `aXVar < 0.004` | Green |
+| SLIGHT SWAY | `aXVar < 0.015` | Yellow |
+| LATERAL SWAY | `aXVar ≥ 0.015` | Red |
+
+### Hip-Foot Coupling
+
+Assesses whether the pelvis rotation initiates before foot contact (the WCS ideal) or lags behind.
+
+- Buffer: `gYawTimedBuf` — ring buffer of `{value, timestamp}` pairs for the last 600 ms
+- Trigger: at each confirmed step, find the timestamp of peak `pYaw` magnitude in the buffer
+- Lead time: `leadMs = stepTimestamp − peakTimestamp`
+
+| State | Condition | Colour |
+| :--- | :--- | :--- |
+| HIP LEADS | `leadMs > 100 ms` | Green |
+| IN SYNC | `leadMs > 40 ms` | Yellow |
+| HIP LAGS | `leadMs ≤ 40 ms` | Red |
+
+### Vertical Bounce
+
+Detects excessive vertical oscillation of the pelvis — a sign of bouncy or heel-heavy movement rather than the grounded, level carriage characteristic of good WCS.
+
+- Buffer: `aZPDynHistory` — 50 samples (~1 s) of `(pAz − 1.0)` (gravity-subtracted vertical acceleration)
+- Metric: `aZVar = variance(aZPDynHistory)`
+
+| State | Condition | Colour |
+| :--- | :--- | :--- |
+| GROUNDED | `aZVar < 0.006` | Green |
+| SLIGHT BOUNCE | `aZVar < 0.020` | Yellow |
+| BOUNCY | `aZVar ≥ 0.020` | Red |
+
+### Anchor Settle
+
+Evaluates the quality of deceleration and pelvis settling at the end of each backward step — the defining moment where WCS stretch converts into grounded, controlled weight transfer.
+
+**Trigger:** Every confirmed BACKWARD step. Window duration scales with tempo:
+
+$$\text{anchorWindowMs} = \min(500,\; \max(280,\; \text{stepDurationMs}))$$
+
+Samples collected within the window: sagittal pelvis acceleration `aYP` and hip yaw rate `gYawP`.
+
+**Score composition (scaled 0–100):**
+
+$$\text{score} = \text{decelScore} \times 0.35 + \text{yawDampScore} \times 0.35 + \text{stabilScore} \times 0.30$$
+
+| Component | Formula | What it captures |
+| :--- | :--- | :--- |
+| **decelScore** | `(earlyAYMag − lateAYMag + 0.05) / 0.25`, clipped 0–1 | Sagittal braking: pelvis decelerates forward momentum |
+| **yawDampScore** | `(earlyYawMean − lateYawMean) / 25`, clipped 0–1 | Yaw damping: hip rotation ceases after landing |
+| **stabilScore** | `max(0, 1 − lateYawVariance / 400)` | Late stability: low yaw variance in second half of window |
+
+| State | Condition | Colour |
+| :--- | :--- | :--- |
+| ANCHORED | score ≥ 60 | Green |
+| SETTLING | score ≥ 30 | Yellow |
+| UNSTABLE | score < 30 | Red |
+
+### Hip Settle
+
+Evaluated at the end of the Anchor Settle window. Uses lateral pelvis acceleration (`pAx`) samples from the first half of the window to detect the characteristic lateral weight-shift of a well-executed anchor.
+
+- `earlyLatPeak` = max absolute `pAx` in the first half of the window
+- `lateLatVar` = variance of `pAx` in the second half
+
+| State | Condition | Colour |
+| :--- | :--- | :--- |
+| OVERSWING ⚠ | `earlyLatPeak > 0.30 g` | Yellow |
+| HIP SETTLE ✓ | `earlyLatPeak > 0.10 g` AND `lateLatVar < 0.015` | Green |
+| SLIGHT SETTLE | `earlyLatPeak > 0.05 g` | Yellow |
+| NO HIP SETTLE | `earlyLatPeak ≤ 0.05 g` | Red |
 

@@ -91,6 +91,8 @@ When the pelvis sensor (`foot_id = 4`) is online, six badge metrics appear in th
 | **Anchor Settle** | Weighted score (0–100) over a tempo-adaptive window after each backward step | ≥ 60 → ANCHORED ✅ \| 30–59 → SETTLING ⚠ (score shown) \| < 30 → UNSTABLE ❌ |
 | **Hip Settle** | Peak lateral pelvic acceleration (`earlyLatPeak`) in first half of Anchor Settle window | > 0.30 g → OVERSWING ⚠ \| 0.10–0.30 g + late variance < 0.015 → HIP SETTLE ✓ ✅ \| 0.05–0.10 g → SLIGHT SETTLE ⚠ \| ≤ 0.05 g → NO HIP SETTLE ❌ |
 
+> **Hip Activation — tempo-adaptive thresholds:** The 60 °/s / 25 °/s values shown above are reference values at 500 ms/step. At runtime the thresholds scale with the current step interval: `scaleFactor = 500 / max(400, stepDurationMs)`. Effective thresholds: ACTIVE ≥ `round(60 × scaleFactor)` °/s, MODERATE ≥ `round(25 × scaleFactor)` °/s. At slow tempo (700 ms/step, scaleFactor ≈ 0.71): ACTIVE ≥ 43 °/s, MODERATE ≥ 18 °/s. At fast tempo (400 ms/step, scaleFactor = 1.25): ACTIVE ≥ 75 °/s, MODERATE ≥ 31 °/s.
+
 ### Anchor Settle — detail
 
 Window duration: `anchorWindowMs = min(500, max(280, stepDurationMs))` — scales with current tempo.

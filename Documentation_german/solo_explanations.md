@@ -105,6 +105,8 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
    | θ < −8° | ⬅️ BACK (lila) — zuverlässiger Zehenerstkontakt |
    | −8° ≤ θ < +8° | — (grau) — mehrdeutig; Richtung nicht angezeigt |
 
+   **Interne Richtungsklassifikation (Anchor-Settle-Auslöser):** Unabhängig von der Badge-Anzeige verwendet die interne `activeDir`-Logik eine engere mehrdeutige Zone: Nur `0° < θ < +10°` erfordert eine Neigungstrend-Prüfung. Für `θ ≤ 0°` (jede Plantarflexion / Zehenerstkontakt) wird `activeDir` direkt auf BACKWARD gesetzt, ohne Trendanalyse. Dies stellt sicher, dass Rückwärtsschritte, die bei θ = −2° bis −5° landen, das Anchor-Settle-Auswertungsfenster korrekt auslösen, obwohl das Richtungs-Badge weiterhin „—" anzeigt (da |θ| < 8°).
+
    **Landungsqualitäts-Badge — richtungsunabhängig, basierend auf θ-Zone + Jerk:**
 
    Das Strike-Badge bewertet *wie* der Fuß gelandet ist, unabhängig von der Richtung. Dies ist für Vorwärts- und Rückwärtsschritte gleichermaßen nützlich: `SOFT ✓` bei θ ≈ 0° zeigt einen kontrollierten Rückwärtsschritt an; `HARD IMPACT ⚠` bei θ ≈ 0° bedeutet, dass der Tänzer auf den Fuß gefallen ist.
@@ -150,6 +152,8 @@ WCS-Antrieb erfordert ein aktives Zehenabdrücken (*Windlass-Mechanismus*) vom S
 | FORWARD (→ Anker / Rückwärtslauf) | $\ge 160^\circ/\text{s}$ | $\ge 16°$ | `🚀 POWER PUSH` (Grün) | Ausreichende Umverteilung — geringerer Antrieb am Anker erwartet |
 | Beide Richtungen | Spitze $120\text{–}199^\circ/\text{s}$ ODER Integral $\ge 12°$ | | `↗ PUSH` (Gelb) | Abstoß erkannt, aber unter dem Richtungsoptimum |
 | Beide Richtungen | Spitze $< 120^\circ/\text{s}$ UND Integral $< 12°$ | | `— PUSH-OFF` (Grau) | Kein signifikanter Abstoß erkannt |
+
+> **Tempoabhängige Skalierung:** Alle Peak-Schwellenwerte (120/160/200 °/s bei Referenztempo) skalieren mit dem Schrittintervall: `scaleFactor = 500 / max(400, stepDurationMs)`. Bei langsamem Tempo (700 ms/Schritt, scaleFactor ≈ 0,71) fallen die Schwellenwerte auf ≈86/114/142 °/s; bei schnellem Tempo (400 ms/Schritt, scaleFactor = 1,25) steigen sie auf ≈150/200/250 °/s. Die Integralschwellenwerte (12°/16°/20°) messen die gesamte Winkelverschiebung und sind temponeutral.
 
 > **Hinweis:** Die $-\omega_{\text{pitch}}$-Werte sind Fußsegment-Winkelgeschwindigkeiten, keine anatomischen Sprunggelenk-Winkelgeschwindigkeiten. Literaturwerte (~250°/s) gelten für Barfuß-/Sportgang; 200°/s und 160°/s sind Leistungsschwellenwerte, kalibriert für Tanzschuhe auf Studioparkettböden. Die Integralschwellenwerte (12°/16°/20°) approximieren 100 ms anhaltenden Abstoß bei den entsprechenden Spitzengeschwindigkeiten.
 
@@ -325,4 +329,115 @@ Das Solo-Training-Dashboard ist für die mobile Browser-Nutzung optimiert (Table
   * `⛶ FULL`: Aktiviert die native Vollbild-API.
   * `📐 ZERO`: Kalibriert statische Neigungswinkel beider Füße neu.
   * `🔊 Audio`: Schaltet synthetische Web-Audio-API-Biofeedback-Töne EIN/AUS.
+
+---
+
+## 6. Becken-Metriken (Solo-Dashboard)
+
+Wenn der Beckensensor (ID 4) verbunden ist, zeigt das Solo-Dashboard sechs zusätzliche Badge-Kacheln auf Basis der Beckenkinematik. Der Sensor sitzt auf einem Gürtel am Kreuzbein und überträgt 3-Achsen-Beschleunigung (`pAx`, `pAy`, `pAz`) sowie Gier-Gyro (`pYaw`) mit 200 Hz.
+
+### gYaw-Kurve im Live-Abroll-Dynamik-Graphen
+
+Eine **gestrichelte gelbe Linie** im Live-Abroll-Dynamik-Graphen zeigt die gemessene Hüftgier-Rate (`pYaw` des Beckensensors), auf den gleichen Anzeigebereich wie die Fußneigungskurven skaliert. Die Kurve ist sichtbar, sobald der Beckensensor verbunden ist, und gibt in Echtzeit Aufschluss darüber, wie das Hüftrotations-Timing mit den Fußabroll-Ereignissen zusammenfällt.
+
+### Hip Activation (Hüftaktivierung)
+
+Misst die Spitzen-Rotationsgeschwindigkeit des Beckens um die Vertikalachse — ein Proxy für aktives Hüftengagement bei jedem Schritt.
+
+**Signalverarbeitung:**
+- Gleitpuffer: `gYawAbsHistory` — 25 Samples (~0,5 s Fenster) der Beträge von `pYaw`
+- Spitzenwertextraktion: `gYawPeak = max(gYawAbsHistory)`
+- Exponentielle Glättung: `hipActSmoothed = hipActSmoothed × 0,9 + gYawPeak × 0,1` (τ ≈ 2 s)
+
+**Schwellenwerte (tempoabhängig):**
+
+$$\text{scaleFactor} = \frac{500}{\max(400,\; \text{stepDurationMs})}$$
+
+| Zustand | Schwellenwert | Farbe |
+| :--- | :--- | :--- |
+| ACTIVE | `hipActSmoothed ≥ round(60 × scaleFactor)` °/s | Grün |
+| MODERATE | `hipActSmoothed ≥ round(25 × scaleFactor)` °/s | Gelb |
+| STIFF HIPS | unterhalb MODERATE | Rot |
+
+Referenzwerte bei 500 ms/Schritt (scaleFactor = 1,0): ACTIVE ≥ 60 °/s, MODERATE ≥ 25 °/s. Bei langsamem Tempo (700 ms/Schritt, scaleFactor ≈ 0,71): ACTIVE ≥ 43 °/s, MODERATE ≥ 18 °/s. Bei schnellem Tempo (400 ms/Schritt, scaleFactor = 1,25): ACTIVE ≥ 75 °/s, MODERATE ≥ 31 °/s.
+
+### Lateral Stability (Seitliche Stabilität)
+
+Überwacht die seitliche Schwingung des Beckens (mediolateral).
+
+- Puffer: `aXPHistory` — 50 Samples (~1 s) der lateralen Beschleunigung `pAx`
+- Metrik: `aXVar = variance(aXPHistory)`
+
+| Zustand | Bedingung | Farbe |
+| :--- | :--- | :--- |
+| STABLE | `aXVar < 0,004` | Grün |
+| SLIGHT SWAY | `aXVar < 0,015` | Gelb |
+| LATERAL SWAY | `aXVar ≥ 0,015` | Rot |
+
+### Hip-Foot Coupling (Hüft-Fuß-Kopplung)
+
+Bewertet, ob die Beckenrotation vor dem Fußkontakt einsetzt (WCS-Ideal) oder hinterher.
+
+- Puffer: `gYawTimedBuf` — Ringpuffer mit `{Wert, Zeitstempel}`-Einträgen der letzten 600 ms
+- Auslöser: bei jedem bestätigten Schritt — Zeitstempel des maximalen `pYaw`-Betrags im Puffer ermitteln
+- Vorlaufzeit: `leadMs = Schritt-Zeitstempel − Peak-Zeitstempel`
+
+| Zustand | Bedingung | Farbe |
+| :--- | :--- | :--- |
+| HIP LEADS | `leadMs > 100 ms` | Grün |
+| IN SYNC | `leadMs > 40 ms` | Gelb |
+| HIP LAGS | `leadMs ≤ 40 ms` | Rot |
+
+### Vertical Bounce (Vertikales Hüpfen)
+
+Erkennt übermäßige vertikale Schwingung des Beckens — ein Zeichen für springende oder fersenbelastete Bewegung statt der geerdeten, ebenen Haltung im WCS.
+
+- Puffer: `aZPDynHistory` — 50 Samples (~1 s) von `(pAz − 1,0)` (Schwerkraft abgezogen)
+- Metrik: `aZVar = variance(aZPDynHistory)`
+
+| Zustand | Bedingung | Farbe |
+| :--- | :--- | :--- |
+| GROUNDED | `aZVar < 0,006` | Grün |
+| SLIGHT BOUNCE | `aZVar < 0,020` | Gelb |
+| BOUNCY | `aZVar ≥ 0,020` | Rot |
+
+### Anchor Settle (Anker-Einschwingen)
+
+Bewertet die Qualität des Abbremsens und Einschwingens des Beckens nach jedem Rückwärtsschritt — der entscheidende Moment, in dem WCS-Dehnung in geerdet kontrollierten Gewichtstransfer umgewandelt wird.
+
+**Auslöser:** Jeder bestätigte BACKWARD-Schritt. Fensterdauer skaliert mit dem Tempo:
+
+$$\text{anchorWindowMs} = \min(500,\; \max(280,\; \text{stepDurationMs}))$$
+
+Im Fenster gesammelte Signale: sagittale Beckenbeschleunigung `aYP` und Hüftgier-Rate `gYawP`.
+
+**Score-Zusammensetzung (skaliert 0–100):**
+
+$$\text{score} = \text{decelScore} \times 0{,}35 + \text{yawDampScore} \times 0{,}35 + \text{stabilScore} \times 0{,}30$$
+
+| Komponente | Formel | Bedeutung |
+| :--- | :--- | :--- |
+| **decelScore** | `(earlyAYMag − lateAYMag + 0,05) / 0,25`, begrenzt 0–1 | Sagittales Abbremsen: Becken bremst Vorwärtsmomentum |
+| **yawDampScore** | `(earlyYawMean − lateYawMean) / 25`, begrenzt 0–1 | Gier-Dämpfung: Hüftrotation stoppt nach Landung |
+| **stabilScore** | `max(0, 1 − lateYawVariance / 400)` | Spät-Phasen-Stabilität: geringe Gier-Varianz in zweiter Fensterhälfte |
+
+| Zustand | Bedingung | Farbe |
+| :--- | :--- | :--- |
+| ANCHORED | score ≥ 60 | Grün |
+| SETTLING | score ≥ 30 | Gelb |
+| UNSTABLE | score < 30 | Rot |
+
+### Hip Settle (Hüft-Einschwingen)
+
+Wird am Ende des Anchor-Settle-Fensters ausgewertet. Verwendet laterale Beckenbeschleunigung (`pAx`) aus der ersten Fensterhälfte, um die charakteristische seitliche Gewichtsverlagerung eines gelungenen Ankers zu erkennen.
+
+- `earlyLatPeak` = maximaler Betrag von `pAx` in der ersten Fensterhälfte
+- `lateLatVar` = Varianz von `pAx` in der zweiten Fensterhälfte
+
+| Zustand | Bedingung | Farbe |
+| :--- | :--- | :--- |
+| OVERSWING ⚠ | `earlyLatPeak > 0,30 g` | Gelb |
+| HIP SETTLE ✓ | `earlyLatPeak > 0,10 g` UND `lateLatVar < 0,015` | Grün |
+| SLIGHT SETTLE | `earlyLatPeak > 0,05 g` | Gelb |
+| NO HIP SETTLE | `earlyLatPeak ≤ 0,05 g` | Rot |
 
