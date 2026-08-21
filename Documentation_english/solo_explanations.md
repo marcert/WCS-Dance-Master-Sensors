@@ -262,7 +262,54 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Rigid Lever** | pronation $> 8°/\text{s}$ AND sign reversal in 200 ms | `RIGID LEVER` (Green) | None |
 | **Ankle Shock Absorption** | rollIntegral $> 4°$ (no reversal) | `ANKLE FLEX` (Green) | None |
 | **Ankle Stiffness** | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | None |
+| **Hitch & Go — detected** | $|aZ| < 0.35\,g$ for 50–380 ms within 700 ms of last step | `✓ HITCH (L/R)` (Green) | None |
+| **Ball→Heel — optimal** | earlyMean $< -2°$, rise $> 3°$ | `BALL→HEEL ✓` (Green) | None |
+| **Ball→Heel — partial** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Yellow) | None |
+| **Ball→Heel — heel-first** | earlyMean $\ge 0°$ | `HEEL-FIRST` (Yellow) | None |
+| **Ball→Heel — ball only** | earlyMean $< 0°$, rise $\le 1°$ | `BALL ONLY ⚠` (Red) | None |
 | **Per-Foot Lockout Window**| $180\text{–}320\text{ ms}$ (cadence-adaptive) + Alternation Guard | Suppresses same-foot re-trigger | None |
+
+---
+
+### H. Hitch & Go Detection
+
+A *hitch* is a brief, voluntary foot-lift on the recently-placed foot — a jazz/blues accent used to syncopate the phrasing. The sensor detects it as a transient loss of ground contact on the active foot within 80–700 ms of the last step on that foot.
+
+**Detection logic:**
+
+| State | Condition | Transition |
+| :--- | :--- | :--- |
+| `ground` → `lifted` | $|aZ| < 0.35\,g$ AND $80\,\text{ms} < t_{\text{since step}} < 700\,\text{ms}$ | Start lift timer |
+| `lifted` → `ground` (valid) | $|aZ| \ge 0.55\,g$ AND $50\,\text{ms} \le t_{\text{lift}} \le 380\,\text{ms}$ | `✓ HITCH (L/R)` (Green) |
+| `lifted` → `ground` (too long) | $t_{\text{lift}} > 380\,\text{ms}$ | Reset silently — weight shift, not a hitch |
+| Sensor offline | — | State reset to `ground` |
+
+The 0.35g lift threshold lies clearly below the normal loaded-foot aZ of ~1.0g while remaining above the electrical noise floor. The 0.55g return threshold (the global ground-contact threshold used throughout the pipeline) provides hysteresis at re-contact.
+
+**Note:** Hitch detection is not level-gated — the badge appears in the Last Step card at all training levels.
+
+---
+
+### I. Ball-to-Heel Anchor Progression
+
+During a well-executed backward anchor, the foot initially contacts on the ball (negative θ — plantarflexion) and then lowers to the heel as bodyweight settles. The sensor quantifies this progression by tracking foot pitch angle θ through a tempo-adaptive window after every backward step.
+
+**Window:** `anchorWindowMs = clamp(stepDurationMs, 280 ms, 500 ms)` — the same window used by the pelvis Anchor Settle metric; independent of whether the pelvis sensor is connected.
+
+**Calculation:**
+
+$$\theta_{\text{early}} = \overline{\theta}_{[0,\,\lfloor n/2 \rfloor]} \qquad \theta_{\text{late}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]}$$
+
+$$\text{rise} = \theta_{\text{late}} - \theta_{\text{early}}$$
+
+| Condition | Badge | Biomechanical Meaning |
+| :---: | :---: | :--- |
+| $\theta_{\text{early}} < -2°$ AND rise $> 3°$ | `BALL→HEEL ✓` (Green) | Classic WCS landing: ball-first then heel lowers — controlled eccentric loading |
+| $\theta_{\text{early}} < 0°$ AND rise $> 1°$ | `PARTIAL ROLL` (Yellow) | Some ball-to-heel movement present but rise is small |
+| $\theta_{\text{early}} \ge 0°$ | `HEEL-FIRST` (Yellow) | Foot arrived flat or heel-first — no initial ball contact |
+| Otherwise | `BALL ONLY ⚠` (Red) | θ stayed negative throughout — foot remained on ball with no heel lowering; typical of rushing or incomplete weight transfer |
+
+**Minimum samples:** The evaluation requires at least 6 samples in the window (~120 ms). If a new step fires before the window closes, `anchorThetaActive` is reset and no badge is issued.
 
 ---
 

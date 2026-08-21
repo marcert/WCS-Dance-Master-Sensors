@@ -409,6 +409,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
                         <span id="delayBadge" class="badge" style="background:#1e272e; color:#8b949e;">— DELAY</span>
                     </div>
+                    <div class="step-lower-badges" style="margin-top:4px;">
+                        <span id="hitchBadge"    class="badge" style="background:#1e272e; color:#8b949e;">— HITCH</span>
+                        <span id="ballHeelBadge" class="badge" style="background:#1e272e; color:#8b949e;">— BALL→HEEL</span>
+                    </div>
                 </div>
 
     </div>
@@ -606,6 +610,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let anchorSettleStartTime = 0;
         let anchorWindowMs        = 500;              // tempo-adaptive: set at trigger, capped 280–500 ms
         let anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
+
+        // Hitch & Go detection — brief foot lift on recently-placed foot
+        let hitchStateL = 'ground', hitchStateR = 'ground';
+        let hitchLiftStartL = 0, hitchLiftStartR = 0;
+        // Ball-to-Heel anchor progression — foot θ during anchor window
+        let anchorThetaActive = false, anchorThetaFoot = '', anchorThetaStart = 0;
+        let anchorThetaSamples = [];
 
         function fetchStream() {
             fetch('/data')
@@ -1038,6 +1049,17 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             if (hse) { hse.className = 'badge'; hse.style.cssText = 'background:#1e272e;color:#8b949e;'; hse.innerText = 'MEASURING...'; }
                         }
 
+                        // Ball-to-Heel anchor progression — always triggered on backward step (no pelvis required)
+                        if (activeDirection === "BACKWARD") {
+                            anchorThetaActive  = true;
+                            anchorThetaFoot    = activeFoot;
+                            anchorThetaStart   = now;
+                            anchorThetaSamples = [];
+                            anchorWindowMs     = Math.min(500, Math.max(280, stepDurationMs));
+                            let bh = document.getElementById('ballHeelBadge');
+                            if (bh) { bh.className = 'badge'; bh.style.cssText = 'background:#1e272e;color:#8b949e;'; bh.innerText = 'MEASURING...'; }
+                        }
+
                         // Visuelles Aufblinken der Kachel bei jedem erkannten Schritt
                         let stepCard = document.getElementById('stepCard');
                         stepCard.classList.remove('card-flash');
@@ -1183,6 +1205,76 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             }
                         } else {
                             brushPending = false; // window expired — keep current quality badge
+                        }
+                    }
+
+                    // E. Hitch & Go — brief foot lift (50–380 ms) on recently-placed foot
+                    const HITCH_UP  = 0.35;  // aZ below this = foot lifted
+                    const HITCH_DN  = 0.55;  // aZ above this = foot back down
+                    const HITCH_MIN = 50;    // minimum lift duration ms
+                    const HITCH_MAX = 380;   // maximum lift duration ms
+                    const HITCH_WIN = 700;   // must occur within 700 ms of last step
+
+                    if (leftOk) {
+                        let aZLabs = Math.abs(aZL);
+                        if (hitchStateL === 'ground') {
+                            let sinceStep = now - lastStepTimeLeft;
+                            if (aZLabs < HITCH_UP && sinceStep > 80 && sinceStep < HITCH_WIN) {
+                                hitchStateL = 'lifted'; hitchLiftStartL = now;
+                            }
+                        } else if (hitchStateL === 'lifted') {
+                            let liftMs = now - hitchLiftStartL;
+                            if (aZLabs >= HITCH_DN) {
+                                if (liftMs >= HITCH_MIN && liftMs <= HITCH_MAX) {
+                                    let hb = document.getElementById('hitchBadge');
+                                    if (hb) { hb.className = 'badge badge-green'; hb.style.cssText = ''; hb.innerText = '✓ HITCH (L)'; }
+                                }
+                                hitchStateL = 'ground';
+                            } else if (liftMs > HITCH_MAX) { hitchStateL = 'ground'; }
+                        }
+                    } else { hitchStateL = 'ground'; }
+
+                    if (rightOk) {
+                        let aZRabs = Math.abs(aZR);
+                        if (hitchStateR === 'ground') {
+                            let sinceStep = now - lastStepTimeRight;
+                            if (aZRabs < HITCH_UP && sinceStep > 80 && sinceStep < HITCH_WIN) {
+                                hitchStateR = 'lifted'; hitchLiftStartR = now;
+                            }
+                        } else if (hitchStateR === 'lifted') {
+                            let liftMs = now - hitchLiftStartR;
+                            if (aZRabs >= HITCH_DN) {
+                                if (liftMs >= HITCH_MIN && liftMs <= HITCH_MAX) {
+                                    let hb = document.getElementById('hitchBadge');
+                                    if (hb) { hb.className = 'badge badge-green'; hb.style.cssText = ''; hb.innerText = '✓ HITCH (R)'; }
+                                }
+                                hitchStateR = 'ground';
+                            } else if (liftMs > HITCH_MAX) { hitchStateR = 'ground'; }
+                        }
+                    } else { hitchStateR = 'ground'; }
+
+                    // F. Ball-to-Heel anchor progression — sample foot θ during anchor window
+                    if (anchorThetaActive) {
+                        let thetaAnch = anchorThetaFoot === 'L'
+                            ? (pitchLeftAngleRaw  - leftMountOffset)
+                            : (pitchRightAngleRaw - rightMountOffset);
+                        anchorThetaSamples.push(thetaAnch);
+                        if (now - anchorThetaStart >= anchorWindowMs) {
+                            anchorThetaActive = false;
+                            let n = anchorThetaSamples.length;
+                            if (n >= 6) {
+                                let half      = Math.floor(n / 2);
+                                let earlyMean = anchorThetaSamples.slice(0, half).reduce((a, b) => a + b, 0) / half;
+                                let lateMean  = anchorThetaSamples.slice(half).reduce((a, b) => a + b, 0) / (n - half);
+                                let rise = lateMean - earlyMean;
+                                let bh = document.getElementById('ballHeelBadge');
+                                if (bh) {
+                                    if      (earlyMean < -2 && rise >  3) { bh.className = 'badge badge-green';  bh.style.cssText = ''; bh.innerText = 'BALL→HEEL ✓'; }
+                                    else if (earlyMean <  0 && rise >  1) { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'PARTIAL ROLL'; }
+                                    else if (earlyMean >= 0)              { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'HEEL-FIRST'; }
+                                    else                                  { bh.className = 'badge badge-red';    bh.style.cssText = ''; bh.innerText = 'BALL ONLY ⚠'; }
+                                }
+                            }
                         }
                     }
 
