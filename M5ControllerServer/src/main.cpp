@@ -336,11 +336,6 @@ void loop() {
     currentError = NONE;
   }
 
-  uint16_t leftBg  = (currentError == ERR_LEFT  || currentError == ERR_BOTH) ? (uint16_t)RED   : (uint16_t)BLACK;
-  uint16_t rightBg = (currentError == ERR_RIGHT || currentError == ERR_BOTH) ? (uint16_t)RED   : (uint16_t)BLACK;
-  uint16_t leftFg  = (currentError == ERR_LEFT  || currentError == ERR_BOTH) ? (uint16_t)WHITE : (uint16_t)BLUE;
-  uint16_t rightFg = (currentError == ERR_RIGHT || currentError == ERR_BOTH) ? (uint16_t)WHITE : (uint16_t)RED;
-
   uint32_t now = millis();
   bool leftOnline   = (now - lastSeenLeft   < SENSOR_TIMEOUT_MS);
   bool rightOnline  = (now - lastSeenRight  < SENSOR_TIMEOUT_MS);
@@ -349,24 +344,22 @@ void loop() {
 
   M5.Display.setTextSize(2);
 
-  // Sentinels — only track online/error state (no live values needed on display).
   static bool     dLOn = true, dROn = true, dHOn = true, dPOn = true;
-  static uint16_t dLBg = 0xFFFF, dRBg = 0xFFFF;
   static uint32_t lastBatUpdate = 0;
 
   // --- DISPLAY LEFT FOOT (only on status change) ---
-  if (leftOnline != dLOn || leftBg != dLBg) {
-    dLOn = leftOnline; dLBg = leftBg;
+  if (leftOnline != dLOn) {
+    dLOn = leftOnline;
     M5.Display.setCursor(5, 5);
-    M5.Display.setTextColor(leftFg, leftBg);
+    M5.Display.setTextColor(BLUE, BLACK);
     M5.Display.printf("L: %-14s", leftOnline ? "ONLINE" : "OFFLINE");
   }
 
   // --- DISPLAY RIGHT FOOT (only on status change) ---
-  if (rightOnline != dROn || rightBg != dRBg) {
-    dROn = rightOnline; dRBg = rightBg;
+  if (rightOnline != dROn) {
+    dROn = rightOnline;
     M5.Display.setCursor(5, 30);
-    M5.Display.setTextColor(rightFg, rightBg);
+    M5.Display.setTextColor(RED, BLACK);
     M5.Display.printf("R: %-14s", rightOnline ? "ONLINE" : "OFFLINE");
   }
 
