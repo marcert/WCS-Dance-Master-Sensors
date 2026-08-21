@@ -37,7 +37,7 @@ Das Solo-Training-System arbeitet als hochfrequenter biomechanischer Feedback-Kr
 ```
 
 * **Fußknoten (IDs 1 & 2):** M5Stick-S3-Einheiten mit 6-Achsen-IMUs (Inertial Measurement Units, BMI270 / MPU6886). Die Firmware arbeitet mit **200 Hz (5 ms Abtastintervall)**, um ultraschnelle transiente Impulsspitzen bei Fersenaufsatz und Zehenlandungen zu erfassen.
-* **Beckenknoten (ID 4, optional):** Gleiche Hardware, am Kreuzbein auf einem Gürtel getragen. Überträgt 3-Achsen-Beschleunigung (`pA`, `pAy`, `pAx`) und Gier-Gyro (`pYaw`, `pG`) bei 200 Hz. Ermöglicht Hüftaktivierung, seitliche Stabilität, Anchor Settle und Hip Settle. Fehlt der Sensor, arbeitet das Dashboard normal ohne Beckenkarten.
+* **Beckenknoten (ID 4, optional):** Gleiche Hardware, am Kreuzbein auf einem Gürtel getragen. Überträgt 3-Achsen-Beschleunigung (`pA`, `pAy`, `pAx`) und Gier-Gyro (`pYaw`, `pG`) bei 200 Hz. Ermöglicht Hüftaktivierung, seitliche Stabilität, Hüft-Fuß-Kopplung, vertikales Hüpfen, Beckenneigung, Anchor Settle und Hip Settle. Fehlt der Sensor, arbeitet das Dashboard normal ohne Beckenkarten.
 * **Zentrale Master-Einheit:** Aggregiert ESP-NOW-Streams und liefert JSON-Datenpakete (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optional `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) über den `/data`-Endpunkt an den Browser.
 * **Web-Dashboard (`/solo`):** Clientseitiges JavaScript führt Zustandsmaschinen-Filterung, Richtungszuordnung, Neigungsintegration, Standphasen-Berechnungen und Web-Audio-API-Feedback aus.
 
@@ -298,6 +298,12 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Ball→Ferse — partiell** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
 | **Ball→Ferse — Ferse zuerst** | earlyMean $\ge 0°$ | `HEEL-FIRST` (Gelb) | Kein |
 | **Ball→Ferse — nur Ballen** | earlyMean $< 0°$, rise $\le 1°$ | `BALL ONLY ⚠` (Rot) | Kein |
+| **Ferse→Ball — optimal** | earlyMean $> 2°$, drop $> 3°$ | `HEEL→BALL ✓` (Grün) | Kein |
+| **Ferse→Ball — partiell** | earlyMean $> 0°$, drop $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
+| **Ferse→Ball — blockiert** | earlyMean $> 2°$, drop $\le 1°$ | `HEEL STUCK ⚠` (Rot) | Kein |
+| **Zehe→Ferse — optimal (Ballensch.)** | earlyMean $< -2°$, rise $> 3°$ | `TOE→HEEL ✓` (Grün) | Kein |
+| **Zehe→Ferse — partiell (Ballensch.)** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
+| **Ferse→Ball — Flachfuß** | earlyMean $\le 0°$, rise $\le 1°$ | `FLAT-FOOT` (Gelb) | Kein |
 | **Pro-Fuß-Sperrzeitfenster** | $180\text{–}320\text{ ms}$ (kadenzadaptiv) + Alternierungswächter | Unterdrückt Doppelauslösung | Kein |
 
 ---
@@ -341,6 +347,32 @@ $$\text{rise} = \theta_{\text{spät}} - \theta_{\text{früh}}$$
 | Sonst | `BALL ONLY ⚠` (Rot) | θ blieb durchgehend negativ — Fuß blieb auf dem Ballen; typisch bei Hetzen oder unvollständigem Gewichtstransfer |
 
 **Mindestanzahl Samples:** Die Auswertung erfordert mindestens 6 Samples im Fenster (~120 ms). Wenn ein neuer Schritt auslöst, bevor das Fenster schließt, wird `anchorThetaActive` zurückgesetzt und kein Badge ausgegeben.
+
+---
+
+### K. Ferse-zu-Ballen / Zehe-zu-Ferse Vorwärts-Progression
+
+Die Vorwärtsschritt-Rollmetrik erkennt das sagittale Sprunggelenk-Artikulationsmuster nach jedem Vorwärtsschritt. Im WCS gibt es zwei gültige Muster — Fersenschritt (Dorsalflexion beim Kontakt, θ > 0°) und Ballenschritt (Plantarflexion beim Kontakt, θ < 0°) — und das Badge identifiziert, welches vorlag und ob das Abrollen vollständig war.
+
+**Fenster:** `heelBallWindowMs = clamp(stepDurationMs, 280 ms, 500 ms)`.
+
+**Berechnung:**
+
+$$\theta_{\text{früh}} = \overline{\theta}_{[0,\,\lfloor n/2 \rfloor]} \qquad \theta_{\text{spät}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]}$$
+
+$$\text{drop} = \theta_{\text{früh}} - \theta_{\text{spät}} \quad \text{(positiv = θ sank = Ferse rollt zum Ballen)}$$
+$$\text{rise} = \theta_{\text{spät}} - \theta_{\text{früh}} \quad \text{(positiv = θ stieg = Ballen rollt zur Ferse)}$$
+
+| Bedingung | Badge | Biomechanische Bedeutung |
+| :---: | :---: | :--- |
+| **Fersenschritt:** $\theta_{\text{früh}} > 2°$ UND drop $> 3°$ | `HEEL→BALL ✓` (Grün) | Ferse kontaktiert zuerst, Sprunggelenk rollt nach vorne ab — korrekter Fersenschritt-WCS-Gang |
+| **Fersenschritt:** $\theta_{\text{früh}} > 0°$ UND drop $> 1°$ | `PARTIAL ROLL` (Gelb) | Etwas Vorwärtsrollen vorhanden, aber unvollständig |
+| **Fersenschritt:** $\theta_{\text{früh}} > 2°$ UND drop $\le 1°$ | `HEEL STUCK ⚠` (Rot) | Ferse kontaktiert, aber Fuß blieb dorsalflektiert — blockiertes Sprunggelenk |
+| **Ballenschritt:** $\theta_{\text{früh}} < -2°$ UND rise $> 3°$ | `TOE→HEEL ✓` (Grün) | Ballen/Zehe kontaktiert zuerst, Ferse senkt sich ab — korrekter Ballenschritt (Triple Step, Coaster, Tap) |
+| **Ballenschritt:** $\theta_{\text{früh}} < 0°$ UND rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Ballenkontakt vorhanden, aber Fersenabsenken unvollständig |
+| Sonst | `FLAT-FOOT` (Gelb) | Kein eindeutiges Kontaktmuster — flache oder mehrdeutige Landung |
+
+**Mindestanzahl Samples:** Mindestens 6 Samples erforderlich (~120 ms). Ein neuer Schritt setzt `heelBallActive` zurück.
 
 ---
 
@@ -447,6 +479,23 @@ Erkennt übermäßige vertikale Schwingung des Beckens — ein Zeichen für spri
 | GROUNDED | `aZVar < 0,006` | Grün |
 | SLIGHT BOUNCE | `aZVar < 0,020` | Gelb |
 | BOUNCY | `aZVar ≥ 0,020` | Rot |
+
+### Pelvic Tilt (Beckenneigung)
+
+Erkennt Anterior Tilt (Hohlkreuz / Lordose) als kontinuierliche Haltungsmetrik. Der sagittale Neigungswinkel wird aus den Beckenbeschleunigungsachsen `pAy` (sagittal) und `pA` (vertikal) abgeleitet — dasselbe Prinzip wie beim Fußneigungswinkel:
+
+$$\theta_{\text{Becken}} = \arctan2(aY_P,\; aZ_P) \cdot \frac{180°}{\pi} - \theta_{\text{Offset}}$$
+
+Der Offset wird beim Drücken von `📐 ZERO` erfasst (Tänzer steht in neutraler Tanzposition). Der Rohwinkel wird IIR-geglättet (α = 0,08, τ ≈ 250 ms) um Schritterschütterungen zu unterdrücken.
+
+| Zustand | Bedingung | Farbe | Biomechanische Bedeutung |
+| :--- | :--- | :--- | :--- |
+| ALIGNED | $|\theta_{\text{Becken}}| \le 6°$ | Grün | Neutrales Becken — Lendenwirbelsäule geschützt, Core aktiv |
+| SLIGHT ARCH | $6° < \theta_{\text{Becken}} \le 12°$ | Gelb | Leichter Anterior Tilt — Verbindung noch funktional, aber Core-Spannung reduziert |
+| LORDOSIS ⚠ | $\theta_{\text{Becken}} > 12°$ | Rot | Deutliche Überstreckung — Partnerverbindung gestört, Verletzungsrisiko |
+| TUCKED | $\theta_{\text{Becken}} < -6°$ | Gelb | Übermäßiger Posterior Tilt — Überkorrektur reduziert Hüftbeweglichkeit und Schwung |
+
+**Kalibrierung:** `📐 ZERO` muss in neutraler Tanzposition gedrückt werden (aufrecht, Gewicht ausgeglichen). Der Becken-Offset wird gleichzeitig mit den Fuß-Offsets genullt.
 
 ### Anchor Settle (Anker-Einschwingen)
 

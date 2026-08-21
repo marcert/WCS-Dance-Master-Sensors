@@ -324,6 +324,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         <span style="font-size:0.78rem;color:#8b949e;">Vertical Bounce</span>
                         <span id="bounceBadge" class="badge" style="background:#1e272e;color:#8b949e;">— BOUNCE</span>
                     </div>
+                    <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                        <span style="font-size:0.78rem;color:#8b949e;">Pelvic Tilt</span>
+                        <span id="pelvicTiltBadge" class="badge" style="background:#1e272e;color:#8b949e;">— TILT</span>
+                    </div>
                     <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:0.78rem;color:#8b949e;">Anchor Settle</span>
                         <span id="anchorSettleBadge" class="badge" style="background:#1e272e;color:#8b949e;">— ANCHOR</span>
@@ -412,6 +416,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     <div class="step-lower-badges" style="margin-top:4px;">
                         <span id="hitchBadge"    class="badge" style="background:#1e272e; color:#8b949e;">— HITCH</span>
                         <span id="ballHeelBadge" class="badge" style="background:#1e272e; color:#8b949e;">— BALL→HEEL</span>
+                        <span id="heelBallBadge" class="badge" style="background:#1e272e; color:#8b949e;">— HEEL→BALL</span>
                     </div>
                 </div>
 
@@ -549,6 +554,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     // Sync CF integration to the same reference so the graph re-centres too.
                     pitchLeftAngleRaw  = leftMountOffset;
                     pitchRightAngleRaw = rightMountOffset;
+                    // Also zero the pelvis sagittal tilt
+                    pelvicPitchOffset   = Math.atan2(lastPelvicSagP, lastPelvicVertP) * (180 / Math.PI);
+                    pelvicPitchSmoothed = 0;
         
             let btn = document.getElementById('tareBtn');
             btn.innerText = "📐 ZEROED! ✓";
@@ -605,6 +613,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let aZPDynHistory  = new Array(50).fill(0);   // rolling (aZP−1) — 1s, for vertical bounce
         let gYawTimedBuf   = [];                      // {t, v} pairs — last 600ms, for hip-foot coupling
         let hipActSmoothed = 0;                       // IIR-smoothed hip activation amplitude
+        let pelvicPitchOffset   = 0;                  // zeroed at ZERO press, sagittal tilt reference
+        let pelvicPitchSmoothed = 0;                  // IIR-smoothed pelvis pitch deviation
+        let lastPelvicSagP  = 0, lastPelvicVertP = 1.0; // last known accel values for tare
 
         let anchorSettleActive    = false;            // true while collecting post-anchor pelvis window
         let anchorSettleStartTime = 0;
@@ -617,6 +628,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         // Ball-to-Heel anchor progression — foot θ during anchor window
         let anchorThetaActive = false, anchorThetaFoot = '', anchorThetaStart = 0;
         let anchorThetaSamples = [];
+        // Heel-to-Ball forward progression — foot θ during forward step window
+        let heelBallActive = false, heelBallFoot = '', heelBallStart = 0, heelBallWindowMs = 500;
+        let heelBallSamples = [];
 
         function fetchStream() {
             fetch('/data')
@@ -734,6 +748,20 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             if      (aZVar < 0.006)  { bounceBadge.className = 'badge badge-green';  bounceBadge.style.cssText = ''; bounceBadge.innerText = 'GROUNDED'; }
                             else if (aZVar < 0.020)  { bounceBadge.className = 'badge badge-yellow'; bounceBadge.style.cssText = ''; bounceBadge.innerText = 'SLIGHT BOUNCE'; }
                             else                     { bounceBadge.className = 'badge badge-red';    bounceBadge.style.cssText = ''; bounceBadge.innerText = 'BOUNCY'; }
+                        }
+
+                        // Pelvic Tilt — sagittal angle from accel, IIR-smoothed, zeroed at ZERO press
+                        lastPelvicSagP  = aSagP;
+                        lastPelvicVertP = aVertP;
+                        let pelvicPitchRaw = Math.atan2(aSagP, aVertP) * (180 / Math.PI) - pelvicPitchOffset;
+                        pelvicPitchSmoothed = pelvicPitchSmoothed * 0.92 + pelvicPitchRaw * 0.08;
+                        let tiltBadge = document.getElementById('pelvicTiltBadge');
+                        if (tiltBadge) {
+                            let t = pelvicPitchSmoothed;
+                            if      (Math.abs(t) <= 6) { tiltBadge.className = 'badge badge-green';  tiltBadge.style.cssText = ''; tiltBadge.innerText = 'ALIGNED'; }
+                            else if (t >  6 && t <= 12){ tiltBadge.className = 'badge badge-yellow'; tiltBadge.style.cssText = ''; tiltBadge.innerText = 'SLIGHT ARCH'; }
+                            else if (t > 12)           { tiltBadge.className = 'badge badge-red';    tiltBadge.style.cssText = ''; tiltBadge.innerText = 'LORDOSIS ⚠'; }
+                            else                       { tiltBadge.className = 'badge badge-yellow'; tiltBadge.style.cssText = ''; tiltBadge.innerText = 'TUCKED'; }
                         }
 
                         // Hip-Foot Coupling timed ring — {t, v} pairs, 600ms window
@@ -1060,6 +1088,17 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             if (bh) { bh.className = 'badge'; bh.style.cssText = 'background:#1e272e;color:#8b949e;'; bh.innerText = 'MEASURING...'; }
                         }
 
+                        // Heel-to-Ball progression — always triggered on forward step
+                        if (activeDirection === "FORWARD") {
+                            heelBallActive   = true;
+                            heelBallFoot     = activeFoot;
+                            heelBallStart    = now;
+                            heelBallWindowMs = Math.min(500, Math.max(280, stepDurationMs));
+                            heelBallSamples  = [];
+                            let hb = document.getElementById('heelBallBadge');
+                            if (hb) { hb.className = 'badge'; hb.style.cssText = 'background:#1e272e;color:#8b949e;'; hb.innerText = 'MEASURING...'; }
+                        }
+
                         // Visuelles Aufblinken der Kachel bei jedem erkannten Schritt
                         let stepCard = document.getElementById('stepCard');
                         stepCard.classList.remove('card-flash');
@@ -1273,6 +1312,36 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                     else if (earlyMean <  0 && rise >  1) { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'PARTIAL ROLL'; }
                                     else if (earlyMean >= 0)              { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'HEEL-FIRST'; }
                                     else                                  { bh.className = 'badge badge-red';    bh.style.cssText = ''; bh.innerText = 'BALL ONLY ⚠'; }
+                                }
+                            }
+                        }
+                    }
+
+                    // G. Heel-to-Ball forward progression — sample foot θ during forward step window
+                    if (heelBallActive) {
+                        let thetaFwd = heelBallFoot === 'L'
+                            ? (pitchLeftAngleRaw  - leftMountOffset)
+                            : (pitchRightAngleRaw - rightMountOffset);
+                        heelBallSamples.push(thetaFwd);
+                        if (now - heelBallStart >= heelBallWindowMs) {
+                            heelBallActive = false;
+                            let n = heelBallSamples.length;
+                            if (n >= 6) {
+                                let half      = Math.floor(n / 2);
+                                let earlyMean = heelBallSamples.slice(0, half).reduce((a, b) => a + b, 0) / half;
+                                let lateMean  = heelBallSamples.slice(half).reduce((a, b) => a + b, 0) / (n - half);
+                                let drop = earlyMean - lateMean;   // positive = θ dropped (heel → ball)
+                                let rise = lateMean - earlyMean;   // positive = θ rose   (ball → heel)
+                                let hb = document.getElementById('heelBallBadge');
+                                if (hb) {
+                                    // Heel-lead forward step
+                                    if      (earlyMean >  2 && drop >  3) { hb.className = 'badge badge-green';  hb.style.cssText = ''; hb.innerText = 'HEEL→BALL ✓'; }
+                                    else if (earlyMean >  0 && drop >  1) { hb.className = 'badge badge-yellow'; hb.style.cssText = ''; hb.innerText = 'PARTIAL ROLL'; }
+                                    else if (earlyMean >  2)              { hb.className = 'badge badge-red';    hb.style.cssText = ''; hb.innerText = 'HEEL STUCK ⚠'; }
+                                    // Ball-lead forward step
+                                    else if (earlyMean < -2 && rise >  3) { hb.className = 'badge badge-green';  hb.style.cssText = ''; hb.innerText = 'TOE→HEEL ✓'; }
+                                    else if (earlyMean <  0 && rise >  1) { hb.className = 'badge badge-yellow'; hb.style.cssText = ''; hb.innerText = 'PARTIAL ROLL'; }
+                                    else                                  { hb.className = 'badge badge-yellow'; hb.style.cssText = ''; hb.innerText = 'FLAT-FOOT'; }
                                 }
                             }
                         }

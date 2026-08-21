@@ -37,7 +37,7 @@ The Solo Training System operates as a high-frequency biomechanical feedback loo
 ```
 
 * **Foot Nodes (IDs 1 & 2):** M5Stick S3 units equipped with 6-axis IMUs (BMI270 / MPU6886). Firmware operates at **200 Hz (5 ms sampling interval)** to capture ultra-fast transient impact peaks during heel-strikes and toe-landings.
-* **Pelvis Node (ID 4, optional):** Same hardware worn on a belt at the sacrum. Streams 3-axis accelerometer (`pA`, `pAy`, `pAx`) and yaw gyroscope (`pYaw`, `pG`) at 200 Hz. Enables hip activation, lateral stability, Anchor Settle, and Hip Settle analysis. When absent, the dashboard operates normally without pelvis cards.
+* **Pelvis Node (ID 4, optional):** Same hardware worn on a belt at the sacrum. Streams 3-axis accelerometer (`pA`, `pAy`, `pAx`) and yaw gyroscope (`pYaw`, `pG`) at 200 Hz. Enables hip activation, lateral stability, hip–foot coupling, vertical bounce, pelvic tilt, Anchor Settle, and Hip Settle analysis. When absent, the dashboard operates normally without pelvis cards.
 * **Central Master Unit:** Aggregates ESP-NOW streams and delivers JSON data packets (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optionally `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) to the browser via the `/data` endpoint.
 * **Web Dashboard (`/solo`):** Client-side JavaScript executes state machine filtering, direction mapping, pitch integration, stance timeline calculations, and Web Audio API feedback.
 
@@ -267,6 +267,12 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Ball→Heel — partial** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Yellow) | None |
 | **Ball→Heel — heel-first** | earlyMean $\ge 0°$ | `HEEL-FIRST` (Yellow) | None |
 | **Ball→Heel — ball only** | earlyMean $< 0°$, rise $\le 1°$ | `BALL ONLY ⚠` (Red) | None |
+| **Heel→Ball — optimal** | earlyMean $> 2°$, drop $> 3°$ | `HEEL→BALL ✓` (Green) | None |
+| **Heel→Ball — partial** | earlyMean $> 0°$, drop $> 1°$ | `PARTIAL ROLL` (Yellow) | None |
+| **Heel→Ball — stuck** | earlyMean $> 2°$, drop $\le 1°$ | `HEEL STUCK ⚠` (Red) | None |
+| **Toe→Heel — optimal (ball-lead)** | earlyMean $< -2°$, rise $> 3°$ | `TOE→HEEL ✓` (Green) | None |
+| **Toe→Heel — partial (ball-lead)** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Yellow) | None |
+| **Heel→Ball — flat-foot** | earlyMean $\le 0°$, rise $\le 1°$ | `FLAT-FOOT` (Yellow) | None |
 | **Per-Foot Lockout Window**| $180\text{–}320\text{ ms}$ (cadence-adaptive) + Alternation Guard | Suppresses same-foot re-trigger | None |
 
 ---
@@ -310,6 +316,32 @@ $$\text{rise} = \theta_{\text{late}} - \theta_{\text{early}}$$
 | Otherwise | `BALL ONLY ⚠` (Red) | θ stayed negative throughout — foot remained on ball with no heel lowering; typical of rushing or incomplete weight transfer |
 
 **Minimum samples:** The evaluation requires at least 6 samples in the window (~120 ms). If a new step fires before the window closes, `anchorThetaActive` is reset and no badge is issued.
+
+---
+
+### J. Heel-to-Ball / Toe-to-Heel Forward Progression
+
+The forward-step roll metric detects the sagittal ankle articulation pattern after every forward step. Two valid patterns exist in WCS — heel-lead (dorsiflexion at contact, θ > 0°) and ball-lead (plantarflexion at contact, θ < 0°) — and the badge identifies which occurred and whether the roll-through completed correctly.
+
+**Window:** `heelBallWindowMs = clamp(stepDurationMs, 280 ms, 500 ms)`.
+
+**Calculation:**
+
+$$\theta_{\text{early}} = \overline{\theta}_{[0,\,\lfloor n/2 \rfloor]} \qquad \theta_{\text{late}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]}$$
+
+$$\text{drop} = \theta_{\text{early}} - \theta_{\text{late}} \quad \text{(positive = θ fell = heel rolling to ball)}$$
+$$\text{rise} = \theta_{\text{late}} - \theta_{\text{early}} \quad \text{(positive = θ rose = ball rolling to heel)}$$
+
+| Condition | Badge | Biomechanical Meaning |
+| :---: | :---: | :--- |
+| **Heel-lead:** $\theta_{\text{early}} > 2°$ AND drop $> 3°$ | `HEEL→BALL ✓` (Green) | Heel contacts first, ankle rolls forward as weight transfers — correct heel-lead WCS walk |
+| **Heel-lead:** $\theta_{\text{early}} > 0°$ AND drop $> 1°$ | `PARTIAL ROLL` (Yellow) | Some forward roll but incomplete — weight transferred before ankle fully unrolled |
+| **Heel-lead:** $\theta_{\text{early}} > 2°$ AND drop $\le 1°$ | `HEEL STUCK ⚠` (Red) | Heel contacted but foot stayed dorsiflexed — ankle blocked, no roll-through |
+| **Ball-lead:** $\theta_{\text{early}} < -2°$ AND rise $> 3°$ | `TOE→HEEL ✓` (Green) | Ball/toe contacts first, heel lowers as weight settles — correct ball-lead (triple step, coaster, tap variation) |
+| **Ball-lead:** $\theta_{\text{early}} < 0°$ AND rise $> 1°$ | `PARTIAL ROLL` (Yellow) | Ball contact present but heel lowering incomplete |
+| Otherwise | `FLAT-FOOT` (Yellow) | No clear contact pattern or roll — flat/ambiguous landing |
+
+**Minimum samples:** At least 6 samples required (~120 ms). A new step resets `heelBallActive`.
 
 ---
 
@@ -414,6 +446,23 @@ Detects excessive vertical oscillation of the pelvis — a sign of bouncy or hee
 | GROUNDED | `aZVar < 0.006` | Green |
 | SLIGHT BOUNCE | `aZVar < 0.020` | Yellow |
 | BOUNCY | `aZVar ≥ 0.020` | Red |
+
+### Pelvic Tilt
+
+Detects anterior pelvic tilt (Hohlkreuz / lordosis) as a continuous postural metric. The sagittal tilt angle is derived from the pelvis accelerometer axes `pAy` (sagittal) and `pA` (vertical) — the same approach used for foot pitch, but for the pelvis:
+
+$$\theta_{\text{pelvis}} = \arctan2(aY_P,\; aZ_P) \cdot \frac{180°}{\pi} - \theta_{\text{offset}}$$
+
+The offset is captured at `📐 ZERO` press (dancer stands in neutral dance position). The raw angle is IIR-smoothed (α = 0.08, τ ≈ 250 ms) to suppress step-impact vibration.
+
+| State | Condition | Colour | Biomechanical Meaning |
+| :--- | :--- | :--- | :--- |
+| ALIGNED | $|\theta_{\text{pelvis}}| \le 6°$ | Green | Neutral pelvis — lumbar spine protected, core engaged |
+| SLIGHT ARCH | $6° < \theta_{\text{pelvis}} \le 12°$ | Yellow | Mild anterior tilt — connection still functional but core tension reduced |
+| LORDOSIS ⚠ | $\theta_{\text{pelvis}} > 12°$ | Red | Significant hyperextension — partner connection disrupted, injury risk |
+| TUCKED | $\theta_{\text{pelvis}} < -6°$ | Yellow | Excessive posterior tilt — over-correction reduces hip mobility and swing |
+
+**Calibration note:** `📐 ZERO` must be pressed in neutral dance stance (upright, weight balanced). The pelvis offset is zeroed simultaneously with the foot offsets.
 
 ### Anchor Settle
 
