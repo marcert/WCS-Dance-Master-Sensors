@@ -293,7 +293,54 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Rigid Lever** | Pronation $> 8°/\text{s}$ UND Vorzeichenumkehr in 200 ms | `RIGID LEVER` (Grün) | Kein |
 | **Sprunggelenk-Stoßdämpfung** | rollIntegral $> 4°$ (keine Umkehr) | `ANKLE FLEX` (Grün) | Kein |
 | **Sprunggelenk-Steifigkeit** | rollIntegral $< 1°$ | `STIFF ANKLE` (Gelb) | Kein |
+| **Hitch & Go — erkannt** | $|aZ| < 0{,}35\,g$ für 50–380 ms innerhalb 700 ms nach letztem Schritt | `✓ HITCH (L/R)` (Grün) | Kein |
+| **Ball→Ferse — optimal** | earlyMean $< -2°$, rise $> 3°$ | `BALL→HEEL ✓` (Grün) | Kein |
+| **Ball→Ferse — partiell** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
+| **Ball→Ferse — Ferse zuerst** | earlyMean $\ge 0°$ | `HEEL-FIRST` (Gelb) | Kein |
+| **Ball→Ferse — nur Ballen** | earlyMean $< 0°$, rise $\le 1°$ | `BALL ONLY ⚠` (Rot) | Kein |
 | **Pro-Fuß-Sperrzeitfenster** | $180\text{–}320\text{ ms}$ (kadenzadaptiv) + Alternierungswächter | Unterdrückt Doppelauslösung | Kein |
+
+---
+
+### I. Hitch & Go Erkennung
+
+Ein *Hitch* ist ein kurzes, bewusstes Anheben des gerade aufgesetzten Fußes — ein Jazz/Blues-Akzent zur Phrasierungssynchronisation. Der Sensor erkennt ihn als kurzzeitigen Bodenkontaktverlust am aktiven Fuß innerhalb von 80–700 ms nach dem letzten Schritt auf diesem Fuß.
+
+**Erkennungslogik:**
+
+| Zustand | Bedingung | Übergang |
+| :--- | :--- | :--- |
+| `ground` → `lifted` | $|aZ| < 0{,}35\,g$ UND $80\,\text{ms} < t_{\text{seit Schritt}} < 700\,\text{ms}$ | Liftzeit-Start |
+| `lifted` → `ground` (gültig) | $|aZ| \ge 0{,}55\,g$ UND $50\,\text{ms} \le t_{\text{lift}} \le 380\,\text{ms}$ | `✓ HITCH (L/R)` (Grün) |
+| `lifted` → `ground` (zu lang) | $t_{\text{lift}} > 380\,\text{ms}$ | Reset ohne Badge — Gewichtsverlagerung, kein Hitch |
+| Sensor offline | — | Zustand auf `ground` zurückgesetzt |
+
+Der 0,35g-Schwellenwert liegt klar unterhalb des normalen belasteten Fuß-aZ von ~1,0g und oberhalb des Rauschpegels. Der 0,55g-Rückkehrschwellenwert entspricht dem globalen Bodenkontakt-Schwellenwert des Pipelines und sorgt für Hysterese beim Wiederaufsetzen.
+
+**Hinweis:** Hitch-Erkennung ist nicht levelabhängig — das Badge erscheint in der Letzter-Schritt-Kachel bei allen Trainingslevels.
+
+---
+
+### J. Ball-to-Heel Anker-Progression
+
+Bei einem gut ausgeführten Rückwärts-Anker setzt der Fuß zunächst auf dem Ballen auf (θ negativ — Plantarflexion) und senkt sich dann zur Ferse, während das Körpergewicht einsinkt. Der Sensor quantifiziert diese Progression durch Tracking des Fußneigungswinkels θ während eines tempoadaptiven Fensters nach jedem Rückwärtsschritt.
+
+**Fenster:** `anchorWindowMs = clamp(stepDurationMs, 280 ms, 500 ms)` — dasselbe Fenster wie beim Becken-Anchor-Settle; unabhängig davon, ob der Beckensensor angeschlossen ist.
+
+**Berechnung:**
+
+$$\theta_{\text{früh}} = \overline{\theta}_{[0,\,\lfloor n/2 \rfloor]} \qquad \theta_{\text{spät}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]}$$
+
+$$\text{rise} = \theta_{\text{spät}} - \theta_{\text{früh}}$$
+
+| Bedingung | Badge | Biomechanische Bedeutung |
+| :---: | :---: | :--- |
+| $\theta_{\text{früh}} < -2°$ UND rise $> 3°$ | `BALL→HEEL ✓` (Grün) | Klassische WCS-Landung: Ballen-zuerst, Ferse senkt sich — kontrollierte exzentrische Belastung |
+| $\theta_{\text{früh}} < 0°$ UND rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Etwas Ballen-zu-Ferse-Bewegung erkannt, aber geringer Anstieg |
+| $\theta_{\text{früh}} \ge 0°$ | `HEEL-FIRST` (Gelb) | Fuß kam flach oder Ferse-zuerst an — kein initialer Ballenkontakt |
+| Sonst | `BALL ONLY ⚠` (Rot) | θ blieb durchgehend negativ — Fuß blieb auf dem Ballen; typisch bei Hetzen oder unvollständigem Gewichtstransfer |
+
+**Mindestanzahl Samples:** Die Auswertung erfordert mindestens 6 Samples im Fenster (~120 ms). Wenn ein neuer Schritt auslöst, bevor das Fenster schließt, wird `anchorThetaActive` zurückgesetzt und kein Badge ausgegeben.
 
 ---
 
