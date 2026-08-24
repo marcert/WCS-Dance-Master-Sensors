@@ -617,8 +617,8 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         // Step trigger (same thresholds as solo.h)
         let preJerkL_s = Math.abs(aZL_s - prevAzLeft)  / 0.005;
         let preJerkR_s = Math.abs(aZR_s - prevAzRight) / 0.005;
-        let leftSig  = targetLOk && (Math.abs(aZL_s) > 1.08 || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
-        let rightSig = targetROk && (Math.abs(aZR_s) > 1.08 || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
+        let leftSig  = targetLOk && (Math.abs(aZL_s) > 1.00 || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
+        let rightSig = targetROk && (Math.abs(aZR_s) > 1.00 || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
         if (cfWarmupFrames > 0) { leftSig = false; rightSig = false; }
         let detFoot = null;
         if      (leftSig && rightSig) detFoot = (Math.abs(aZL_s) >= Math.abs(aZR_s)) ? "L" : "R";

@@ -88,7 +88,7 @@ In WCS **forward steps** all three rockers are present: heel strike → ankle ad
 
    $$\theta_{\text{raw}}(t) = \alpha \cdot \bigl(\theta_{\text{raw}}(t-\Delta t) + \omega_{\text{pitch}} \cdot \Delta t\bigr) + (1-\alpha) \cdot \theta_{\text{accel}}, \quad \alpha = 0.94$$
 
-   **T-1 Snapshot for step classification:** At the moment of impact, the angle from the *previous frame* (T-1) is used — not the instantaneous value. The aZ > 1.08 g trigger fires after partial weight loading when roll-through has already begun; the T-1 frame captures pre-contact foot orientation before distortion.
+   **T-1 Snapshot for step classification:** At the moment of impact, the angle from the *previous frame* (T-1) is used — not the instantaneous value. The aZ > 1.00 g trigger fires after partial weight loading when roll-through has already begun; the T-1 frame captures pre-contact foot orientation before distortion.
 
 2. **Zero-Tare Compensation ($\theta_{\text{calibrated}}$):**
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -171,14 +171,21 @@ $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\
 ---
 
 ### E. Double Stance Overlap ($\Delta t_{\text{double-stance}}$) & Grounding Ratio
-West Coast Swing emphasizes a continuous, grounded "rolling" weight transfer rather than abrupt hopping or lifting off the floor prematurely. Ground contact is registered when vertical acceleration exceeds static gravity baseline ($|aZ| > 0.55g$).
+West Coast Swing emphasizes a continuous, grounded "rolling" weight transfer rather than abrupt hopping or lifting off the floor prematurely. Ground contact is detected via a **hysteresis algorithm**: a foot transitions to "on ground" (●) when $|aZ| > 0.65\,g$ and back to "airborne" (○) when $|aZ| <$ exitAZ **OR** $|\omega_{\text{pitch}}| > 80\,°/\text{s}$ **OR** $|\omega_{\text{roll}}| > 80\,°/\text{s}$, after a minimum contact time has elapsed.
 
-> **Signal note:** $|aZ| > 0.55g$ is a sensor heuristic for bilateral ground contact — not a direct force measurement. Dynamic foot rotations can shift $aZ$ independently of actual floor contact. The thresholds below are calibrated empirically for this constraint.
+> **Signal note:** The $|aZ|$ threshold is a sensor heuristic for ground reaction force — not a direct force measurement. Dynamic foot rotations can shift $aZ$ independently of actual floor contact. The gyro-exit guard (80 °/s) prevents premature ○ during normal push-off roll, which typically reaches 60–75 °/s. The thresholds are calibrated empirically.
+
+> **Implementation detail — hysteresis parameters:**
+> * **Entry:** $|aZ| > 0.65\,g$ → foot marked ● (landed); `landedAt` timer starts
+> * **Exit threshold (exitAZ):** $0.48\,g$ when opposing foot $|aZ| > 0.75\,g$ (bearing load), else $0.45\,g$
+> * **Minimum contact time (minGnd):** $\text{clamp}(t_{\text{step}} \times 0.40,\;150\,\text{ms},\;300\,\text{ms})$ — exit condition is gated until this time elapses after landing
+> * **Maximum contact time (Timed-Exit):** $\text{clamp}(t_{\text{step}} \times 0.75,\;350\,\text{ms},\;600\,\text{ms})$ — foot forced to ○ after this duration regardless of $aZ$
+> * **Step interval smoothing (EMA):** $t_{\text{step}} = 0.45 \times t_{\text{step,prev}} + 0.55 \times t_{\text{step,current}}$ — fast-converging EMA (α = 0.55) prevents a single anomalous interval from distorting the DS% denominator
 
 $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{step}}} \right) \times 100\%$$
 
 #### Why Overlap Matters in WCS Mechanics:
-* **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles touch the ground ($|aZ| > 0.55g$).
+* **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles register ground contact ($|aZ| > 0.65\,g$ entry threshold).
 * **Elastic Extension & Timing:** A healthy overlap ratio ($18\%\text{ to }38\%$) creates the characteristic "elastic" stretch and smooth momentum transfer in WCS. Too little overlap indicates rushing or bouncing, while too much overlap results in heavy, sluggish transitions.
 * **Note on scientific literature:** Classic gait analysis (Perry & Burnfield, 2010 — cited in §2A; Winter, D.A., 1990: *Biomechanics and Motor Control of Human Gait*, University of Waterloo Press) establishes stance phase at ~60% and swing phase at ~40% of the gait cycle at comfortable walking speed. This is a different measurement — it describes how long *one* foot stays on the ground during a single gait cycle. The metric here measures the *simultaneous bilateral contact* ratio (both feet on the floor at the same time within one step interval), which is a subset of and distinctly different from the single-foot stance phase. Free overview of gait cycle phases: [Wikipedia — Gait#Phases of gait](https://en.wikipedia.org/wiki/Gait#Phases_of_gait).
 
@@ -290,7 +297,7 @@ A *hitch* is a brief, voluntary foot-lift on the recently-placed foot — a jazz
 | `lifted` → `ground` (too long) | $t_{\text{lift}} > 380\,\text{ms}$ | Reset silently — weight shift, not a hitch |
 | Sensor offline | — | State reset to `ground` |
 
-The 0.35g lift threshold lies clearly below the normal loaded-foot aZ of ~1.0g while remaining above the electrical noise floor. The 0.55g return threshold (the global ground-contact threshold used throughout the pipeline) provides hysteresis at re-contact.
+The 0.35g lift threshold lies clearly below the normal loaded-foot aZ of ~1.0g while remaining above the electrical noise floor. The 0.55g return threshold provides hysteresis at re-contact (note: the DS ground-contact entry threshold is 0.65g; this 0.55g is specific to hitch re-contact detection).
 
 **Note:** Hitch detection is not level-gated — the badge appears in the Last Step card at all training levels.
 
@@ -351,13 +358,14 @@ To prevent false secondary step triggers caused by micro-taps, foot unweighting,
 
 1. **Transient Signal Candidate Sensing:**
    Each foot independently qualifies as an impact candidate via OR-logic:
-   $$\text{signal}_{\text{foot}} = \bigl(|aZ| > 1.08\,g\bigr) \;\mathbf{OR}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{AND}\; \text{preJerk} > 8\bigr)$$
+   $$\text{signal}_{\text{foot}} = \bigl(|aZ| > 1.00\,g\bigr) \;\mathbf{OR}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{AND}\; \text{preJerk} > 8\bigr)$$
    The `preJerk` gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) on the gyro path suppresses liftoff rotation artefacts that would otherwise ghost as step triggers. When both feet signal in the same frame, the dominant foot is selected by peak ground reaction force: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
 2. **Per-Foot Cadence-Adaptive Lockout & Alternation Guard:**
    * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than the dynamic lockout window.
    * **Cadence-Adaptive Window:** The lockout scales with the current step period: $t_{\text{lockout}} = \text{clamp}(t_{\text{step}} \times 0.55,\ 180\text{ ms},\ 320\text{ ms})$. At 120 BPM ($t_{\text{step}} = 500\text{ ms}$) this yields 275 ms; at 160 BPM (375 ms) → 206 ms; at 200 BPM (300 ms) → 180 ms (floor). This prevents both ghost triggers at slow tempos and missed steps at high tempos.
    * **Alternation Guard:** Steps must alternate (`Left -> Right -> Left`). If the same foot fires twice without the opposite foot making contact in between, it is discarded as a liftoff re-detection or vibration ghost.
+   * **Global 130 ms Cross-Foot Lockout:** Any step trigger — regardless of which foot — is rejected if it arrives within 130 ms of the last confirmed step. This cross-foot guard catches the case where the non-stepping foot oscillates near 1.00 g shortly after a real step: the per-foot lockout on the opposite foot is stale (its last-step time is old) and would not block it. `lastStepTimestamp` is updated on every confirmed step and shared across both feet.
 
 ---
 

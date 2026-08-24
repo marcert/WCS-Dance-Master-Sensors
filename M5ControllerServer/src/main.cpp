@@ -344,7 +344,7 @@ void loop() {
 
   M5.Display.setTextSize(2);
 
-  static bool     dLOn = true, dROn = true, dHOn = true, dPOn = true;
+  static bool     dLOn = !leftOnline, dROn = !rightOnline, dHOn = !handOnline, dPOn = !pelvicOnline;
   static uint32_t lastBatUpdate = 0;
 
   // --- DISPLAY LEFT FOOT (only on status change) ---

@@ -89,7 +89,7 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
 
    $$\theta_{\text{raw}}(t) = \alpha \cdot \bigl(\theta_{\text{raw}}(t-\Delta t) + \omega_{\text{pitch}} \cdot \Delta t\bigr) + (1-\alpha) \cdot \theta_{\text{accel}}, \quad \alpha = 0.94$$
 
-   **T-1-Schnappschuss für Schrittklassifikation:** Zum Zeitpunkt des Aufpralls wird der Winkel vom *vorherigen Frame* (T-1) verwendet — nicht der Momentanwert. Der aZ > 1,08 g-Auslöser feuert nach teilweiser Gewichtsbelastung, wenn das Abrollen bereits begonnen hat; der T-1-Frame erfasst die Fußausrichtung vor dem Kontakt, bevor Verzerrungen auftreten.
+   **T-1-Schnappschuss für Schrittklassifikation:** Zum Zeitpunkt des Aufpralls wird der Winkel vom *vorherigen Frame* (T-1) verwendet — nicht der Momentanwert. Der aZ > 1,00 g-Auslöser feuert nach teilweiser Gewichtsbelastung, wenn das Abrollen bereits begonnen hat; der T-1-Frame erfasst die Fußausrichtung vor dem Kontakt, bevor Verzerrungen auftreten.
 
 2. **Nullpunkt-Tarierung ($\theta_{\text{calibrated}}$):**
    Zur Anpassung individueller Schuhabsatz-Neigungen erfasst der `📐 ZERO`-Button statische Montageversätze ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -175,14 +175,21 @@ $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\
 
 ### E. Doppelstandphasen-Überlappung ($\Delta t_{\text{double-stance}}$) & Bodenkontakt-Verhältnis
 
-West Coast Swing betont einen kontinuierlichen, gegrundeten „Abroll"-Gewichtstransfer anstelle von abruptem Hüpfen oder verfrühtem Abheben vom Boden. Bodenkontakt wird registriert, wenn die vertikale Beschleunigung den statischen Schwerkraft-Basiswert überschreitet ($|aZ| > 0.55g$).
+West Coast Swing betont einen kontinuierlichen, gegrundeten „Abroll"-Gewichtstransfer anstelle von abruptem Hüpfen oder verfrühtem Abheben vom Boden. Bodenkontakt wird über einen **Hysterese-Algorithmus** erkannt: Ein Fuß wechselt auf „am Boden" (●) wenn $|aZ| > 0{,}65\,g$, und auf „abgehoben" (○) wenn $|aZ| <$ exitAZ **ODER** $|\omega_{\text{pitch}}| > 80\,°/\text{s}$ **ODER** $|\omega_{\text{roll}}| > 80\,°/\text{s}$, nach Ablauf einer Mindest-Kontaktzeit.
 
-> **Signalhinweis:** $|aZ| > 0.55g$ ist eine Sensor-Heuristik für bilateralen Bodenkontakt — keine direkte Kraftmessung. Dynamische Fußrotationen können $aZ$ unabhängig vom tatsächlichen Bodenkontakt verschieben. Die folgenden Schwellenwerte wurden empirisch kalibriert.
+> **Signalhinweis:** Der $|aZ|$-Schwellenwert ist eine Sensor-Heuristik für die Bodenreaktionskraft — keine direkte Kraftmessung. Dynamische Fußrotationen können $aZ$ unabhängig vom tatsächlichen Bodenkontakt verschieben. Der Gyro-Exit-Guard (80 °/s) verhindert vorzeitiges ○ beim normalen Push-off-Abrollen, das typischerweise 60–75 °/s erreicht. Die Schwellenwerte sind empirisch kalibriert.
+
+> **Implementierungsdetail — Hysterese-Parameter:**
+> * **Eintritt:** $|aZ| > 0{,}65\,g$ → Fuß wird ● (gelandet); `landedAt`-Timer startet
+> * **Austrittsschwelle (exitAZ):** $0{,}48\,g$ wenn Gegenfuß $|aZ| > 0{,}75\,g$ (trägt Last), sonst $0{,}45\,g$
+> * **Mindest-Kontaktzeit (minGnd):** $\text{clamp}(t_{\text{step}} \times 0{,}40,\;150\,\text{ms},\;300\,\text{ms})$ — Austritts-Bedingung wird bis zum Ablauf dieser Zeit nach Landung gesperrt
+> * **Maximale Kontaktzeit (Timed-Exit):** $\text{clamp}(t_{\text{step}} \times 0{,}75,\;350\,\text{ms},\;600\,\text{ms})$ — Fuß wird nach dieser Dauer unabhängig von $aZ$ zwangsweise ○
+> * **Schrittintervall-Glättung (EMA):** $t_{\text{step}} = 0{,}45 \times t_{\text{step,prev}} + 0{,}55 \times t_{\text{step,aktuell}}$ — schnell konvergierende EMA (α = 0,55) verhindert, dass ein einzelnes Ausreißer-Intervall den DS%-Nenner verfälscht
 
 $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{step}}} \right) \times 100\%$$
 
 #### Warum Überlappung in der WCS-Mechanik wichtig ist:
-* **Geerdetes Abrollen:** Im West Coast Swing ist der Gewichtstransfer graduell. Während ein Fuß den Boden verlässt, nimmt der andere das Gewicht auf und erzeugt eine natürliche bilaterale Überlappungsphase ($|aZ| > 0.55g$).
+* **Geerdetes Abrollen:** Im West Coast Swing ist der Gewichtstransfer graduell. Während ein Fuß den Boden verlässt, nimmt der andere das Gewicht auf und erzeugt eine natürliche bilaterale Überlappungsphase (Bodenkontakt-Eintritt bei $|aZ| > 0{,}65\,g$).
 * **Elastische Ausdehnung & Timing:** Ein gesundes Überlappungsverhältnis ($18\%\text{ bis }38\%$) erzeugt die charakteristische „elastische" Dehnung und den reibungslosen Impulsübergang im WCS. Zu wenig Überlappung zeigt Hetzen oder Springen an, zu viel führt zu schwerfälligen Übergängen.
 * **Hinweis zur Fachliteratur:** Die klassische Ganganalyse (Perry & Burnfield, 2010 — zitiert in §2A; Winter, D.A., 1990: *Biomechanics and Motor Control of Human Gait*, University of Waterloo Press) gibt die Standphase mit ~60 % und die Schwungphase mit ~40 % des Gangzyklus bei komfortabler Gehgeschwindigkeit an. Dies ist eine andere Messung — sie beschreibt, wie lange *ein* Fuß während eines Gangzyklus auf dem Boden bleibt. Die hiesige Metrik misst das *gleichzeitige bilaterale Kontaktverhältnis* innerhalb eines Schrittintervalls, was ein Subset der Einzel-Fuß-Standphase ist. Freier Überblick über Gangphasendefinitionen: [Wikipedia — Ganganalyse](https://de.wikipedia.org/wiki/Ganganalyse).
 
@@ -321,7 +328,7 @@ Ein *Hitch* ist ein kurzes, bewusstes Anheben des gerade aufgesetzten Fußes —
 | `lifted` → `ground` (zu lang) | $t_{\text{lift}} > 380\,\text{ms}$ | Reset ohne Badge — Gewichtsverlagerung, kein Hitch |
 | Sensor offline | — | Zustand auf `ground` zurückgesetzt |
 
-Der 0,35g-Schwellenwert liegt klar unterhalb des normalen belasteten Fuß-aZ von ~1,0g und oberhalb des Rauschpegels. Der 0,55g-Rückkehrschwellenwert entspricht dem globalen Bodenkontakt-Schwellenwert des Pipelines und sorgt für Hysterese beim Wiederaufsetzen.
+Der 0,35g-Schwellenwert liegt klar unterhalb des normalen belasteten Fuß-aZ von ~1,0g und oberhalb des Rauschpegels. Der 0,55g-Rückkehrschwellenwert sorgt für Hysterese beim Wiederaufsetzen (Hinweis: der DS-Bodenkontakt-Eintrittsschwellenwert beträgt 0,65g; der 0,55g-Wert ist spezifisch für die Hitch-Wiederaufsetz-Erkennung).
 
 **Hinweis:** Hitch-Erkennung ist nicht levelabhängig — das Badge erscheint in der Letzter-Schritt-Kachel bei allen Trainingslevels.
 
@@ -383,7 +390,7 @@ Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder B
 1. **Transientes Signal-Kandidaten-Sensing:**
    Jeder Fuß qualifiziert sich unabhängig als Aufprallkandidat über ODER-Logik:
 
-   $$\text{signal}_{\text{foot}} = \bigl(\lvert aZ\rvert > 1.08\,g\bigr) \quad\mathbf{ODER}\quad \bigl(\lvert\omega_{\text{pitch}}\rvert > 80\,\text{deg/s} \quad\mathbf{UND}\quad \text{preJerk} > 8\bigr)$$
+   $$\text{signal}_{\text{foot}} = \bigl(\lvert aZ\rvert > 1.00\,g\bigr) \quad\mathbf{ODER}\quad \bigl(\lvert\omega_{\text{pitch}}\rvert > 80\,\text{deg/s} \quad\mathbf{UND}\quad \text{preJerk} > 8\bigr)$$
 
    Das `preJerk`-Gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) auf dem Gyro-Pfad unterdrückt Abhebebewegungs-Artefakte. Wenn beide Füße im gleichen Frame signalisieren, wird der dominante Fuß nach maximaler Bodenreaktionskraft ausgewählt: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
@@ -391,6 +398,7 @@ Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder B
    * **Sperrzeitkonzept:** Das System verwaltet unabhängige Letztschritt-Zeitstempel für jedes Bein (`lastStepTimeLeft` und `lastStepTimeRight`). Wenn ein Schrittkandidat erkannt wird, prüft die Zustandsmaschine, ob die seit dem letzten Schritt *an diesem spezifischen Bein* verstrichene Zeit kleiner als das dynamische Sperrzeitfenster ist.
    * **Kadenz-Adaptives Fenster:** $t_{\text{lockout}} = \text{clamp}(t_{\text{step}} \times 0.55,\ 180\text{ ms},\ 320\text{ ms})$. Bei 120 BPM → 275 ms; bei 160 BPM → 206 ms; bei 200 BPM → 180 ms (Untergrenze).
    * **Alternierungswächter:** Schritte müssen alternieren (`Links → Rechts → Links`). Gleicher Fuß zweimal ohne Gegenfuß-Kontakt dazwischen wird als Artefakt verworfen.
+   * **Globaler Cross-Fuß-Lockout (130 ms):** Jeder Schrittauslöser — unabhängig vom Fuß — wird verworfen, wenn er innerhalb von 130 ms nach dem letzten bestätigten Schritt eintrifft. Dieser übergreifende Lockout verhindert False-Trigger des ruhenden Fußes (~1,00 g Oszillation) kurz nach einem echten Schritt: Das per-Fuß-Sperrzeitfenster des Gegenfußes ist veraltet und würde ihn nicht blockieren. `lastStepTimestamp` wird bei jedem bestätigten Schritt aktualisiert und gilt für beide Füße.
 
 ---
 

@@ -107,7 +107,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             display: block;
         }
 
-        .bar-container { height: 16px; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; margin-top: 6px; }
+        .bar-container { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 4px; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.1s ease; }
 
         /* STANCE TIMELINE */
@@ -231,7 +231,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             .card { padding: 5px 8px; height: 100%; box-sizing: border-box; }
             .metric-value { font-size: 1.4rem; }
             .stance-timeline { height: 22px; margin-top: 4px; }
-            .bar-container { margin-top: 4px; }
+            .bar-container { margin-top: 2px; }
         }
 
         /* --- LEVEL-BASED VISIBILITY --- */
@@ -241,7 +241,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         main.level-beginner #asiCard,
         main.level-beginner .jerk-section,
         main.level-beginner .bar-container { display: none !important; }
-        .step-lower-badges { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:5px; }
+        .step-lower-badges { display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-top:3px; }
         .step-lower-badges .badge { display:block; text-align:center; margin-left:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; font-size:min(2.9vw,11px); }
 
         /* BEGINNER: push sole visible card to bottom-right */
@@ -353,6 +353,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         <div id="stanceBarDouble" class="stance-indicator stance-double" style="width: 0%;"></div>
                         <div id="stanceBarRight" class="stance-indicator stance-right" style="width: 0%;"></div>
                     </div>
+                    <div id="dsDebugCard" style="display:none; margin-top:6px; font-size:min(3.5vw,14px); font-family:monospace; letter-spacing:0.03em;">
+                        <span style="color:#4fc3f7;">L <strong id="dbgAzL2">0.00</strong>g <span id="dbgGndL2" style="font-size:1.1em;">○</span></span>
+                        <span style="margin-left:14px; color:#ef5350;">R <strong id="dbgAzR2">0.00</strong>g <span id="dbgGndR2" style="font-size:1.1em;">○</span></span>
+                        <span style="margin-left:14px; color:#ffa726;">acc:<strong id="dbgDsAcc2">0</strong>ms</span>
+                    </div>
                 </div>
 
                                 <!-- BOTTOM-LEFT: ASI (SYMMETRY) & SMOOTHNESS -->
@@ -387,6 +392,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             <span>L&nbsp;z:<strong id="dbgLOff" style="color:#888;">0.0</strong>°&nbsp;θ:<strong id="dbgLTheta" style="color:#4fc3f7;">0.0</strong>°&nbsp;a:<strong id="dbgAccL" style="color:#4fc3f7;">0.0</strong>°</span>
                             <span style="margin-left:12px;">R&nbsp;z:<strong id="dbgROff" style="color:#888;">0.0</strong>°&nbsp;θ:<strong id="dbgRTheta" style="color:#ef5350;">0.0</strong>°&nbsp;a:<strong id="dbgAccR" style="color:#ef5350;">0.0</strong>°</span>
                         </div>
+                        <div id="dbgDsRow" style="margin-top:3px; color:#555;">
+                            <span>L&nbsp;aZ:<strong id="dbgAzL" style="color:#4fc3f7;">0.00</strong>g&nbsp;<span id="dbgGndL">○</span></span>
+                            <span style="margin-left:12px;">R&nbsp;aZ:<strong id="dbgAzR" style="color:#ef5350;">0.00</strong>g&nbsp;<span id="dbgGndR">○</span></span>
+                            <span style="margin-left:12px;">DS_acc:<strong id="dbgDsAcc" style="color:#ffa726;">0</strong>ms</span>
+                        </div>
                         <div id="dbgPelvisRow" style="margin-top:3px; color:#555; display:none;">
                             <span style="color:#ce93d8;">P&nbsp;</span>
                             <span>sag:<strong id="dbgPAY" style="color:#ce93d8;">0.00</strong>g</span>
@@ -400,7 +410,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             Impact Jerk: <strong id="jerkVal" style="color:#fff;">0</strong> g/s
                         </div>
                     </div>
-                    <div>
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
                         <span id="strikeAngleVal" class="metric-value">0°</span>
                         <span id="strikeBadge" class="badge badge-green" style="min-width:7.5rem; text-align:center; display:inline-block;">OPTIMAL</span>
                     </div>
@@ -412,11 +422,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
                         <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
                         <span id="delayBadge" class="badge" style="background:#1e272e; color:#8b949e;">— DELAY</span>
-                    </div>
-                    <div class="step-lower-badges" style="margin-top:4px;">
                         <span id="hitchBadge"    class="badge" style="background:#1e272e; color:#8b949e;">— HITCH</span>
                         <span id="ballHeelBadge" class="badge" style="background:#1e272e; color:#8b949e;">— BALL→HEEL</span>
-                        <span id="heelBallBadge" class="badge" style="background:#1e272e; color:#8b949e;">— HEEL→BALL</span>
+                        <span id="heelBallBadge" class="badge" style="background:#1e272e; color:#8b949e; grid-column:1/-1;">— HEEL→BALL</span>
                     </div>
                 </div>
 
@@ -498,6 +506,24 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         osc.stop(audioCtx.currentTime + 0.08);
     }
 
+    function playLostAlert() {
+        if (!audioCtx) return;
+        // Two descending tones: 880 Hz → 440 Hz, 150 ms each — clearly distinct from impact click.
+        [880, 440].forEach((freq, i) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            let t = audioCtx.currentTime + i * 0.18;
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.25, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(t);
+            osc.stop(t + 0.15);
+        });
+    }
+
     // --- STREAM & DSP PROCESSING ---
     const canvas = document.getElementById('chartPitch');
     const ctx = canvas.getContext('2d');
@@ -530,6 +556,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 let lastStepTimeLeft = 0;
                 let lastStepTimeRight = 0;
                 let lastActiveFoot = "";
+                let leftWasOnGround = false, rightWasOnGround = false;
+                let leftLandedAt = 0, rightLandedAt = 0;
                 let lastPowerPushTime = 0;
                 let prevPitchLeftAngle  = -28.0; // T-1 CF angle saved before each frame's CF update
                 let prevPitchRightAngle =   0.0;
@@ -540,8 +568,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                 let doubleStanceMs = 0;
         let currentStepOverlap = 0;
+        let dsEpisodeStart = 0, dsEpisodeActive = false;
+        let lastCompletedDsMs = 0, dsEpisodeEndTime = 0;
+        let dsEpisodeGated = false; // true after timeout fires — blocks restart until next step clears it
+        let peakDsThisStep = 0;    // v20 max-hold: max DS episode ms since last step event
         let lastStepTimestamp = Date.now();
         let stepDurationMs = 500; // Standard 500ms ~= 120 BPM
+        let prevLeftOk = true, prevRightOk = true; // for sensor-lost alert
         // -- delay ramp monitor (tempo-normalised weight transfer timing) --
         let delayMonActive = false, delayMonFoot = null, delayMonDir = null;
         let delayMonStartTime = 0, delayMonConsec = 0;
@@ -652,6 +685,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let leftOk   = data.lOk === true;
                     let rightOk  = data.rOk === true;
                     let pelvicOk = data.pOk === true;
+
+                    // Sensor-lost alert: play descending tone on offline transition
+                    if (!leftOk  && prevLeftOk)  playLostAlert();
+                    if (!rightOk && prevRightOk) playLostAlert();
+                    prevLeftOk  = leftOk;
+                    prevRightOk = rightOk;
                     let gPitchP  = data.pG   ?? 0;
                     let aVertP   = data.pA   ?? 1.0;   // accel_z = vertical  (+1.0g at rest)
                     let aSagP    = data.pAy  ?? 0.0;   // accel_y = sagittal  (anterior-posterior)
@@ -845,8 +884,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 // liftoff/rotation ghosts that have high gyro but no vertical impact signature.
                                                                                 let preJerkL = Math.abs(aZL - prevAccelZLeft)  / 0.005;
                                                                                 let preJerkR = Math.abs(aZR - prevAccelZRight) / 0.005;
-                                                                                let leftSignal  = leftOk  && (Math.abs(aZL) > 1.08 || (Math.abs(gPitchL) > 80 && preJerkL > 8));
-                                                                                let rightSignal = rightOk && (Math.abs(aZR) > 1.08 || (Math.abs(gPitchR) > 80 && preJerkR > 8));
+                                                                                // Step trigger v18: aZ lowered 1.08→1.00g — soft walk-backs (Count 1/2) had peaks 1.01–1.07g and were missed.
+                                                                                // v23 preJerk filter reverted (v24): preJerkL > 4 caused missed steps → inflated stepDurationMs → DS% halved.
+                                                                                // Lockout (180–320 ms) + alternation guard remain the false-trigger protection.
+                                                                                let leftSignal  = leftOk  && (Math.abs(aZL) > 1.00 || (Math.abs(gPitchL) > 80 && preJerkL > 8));
+                                                                                let rightSignal = rightOk && (Math.abs(aZR) > 1.00 || (Math.abs(gPitchR) > 80 && preJerkR > 8));
                                                                                 if (cfWarmupFrames > 0) { leftSignal = false; rightSignal = false; }
 
                                                                                 let detectedFoot = null;
@@ -861,6 +903,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 } else if (rightSignal) {
                                                                                     detectedFoot = "R";
                                                                                 }
+
+                                                                                // v25 Global lockout: reject any trigger within 130 ms of the last confirmed step.
+                                                                                // Per-foot lockout misses the case where the OPPOSITE foot false-triggers shortly after a
+                                                                                // real step (e.g. R oscillates at ~1.0g and triggers 70 ms after real L: lastStepTimeRight
+                                                                                // is stale, per-foot lockout does not block it). lastStepTimestamp is updated on every
+                                                                                // confirmed step, so this catches cross-foot false triggers.
+                                                                                if (detectedFoot !== null && (now - lastStepTimestamp) < 130) detectedFoot = null;
 
                                                                                                                                                                 // 2. Per-Foot cadence-aware lockout + Alternation Guard
                                                                                 // Lockout = 55% of the last measured step period, clamped 180–320 ms.
@@ -970,7 +1019,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                 // Determine step duration t_step since last step; update cadence estimate for lockout
                         let currentStepDuration = Math.max(200, Math.min(1500, now - lastStepTimestamp));
                         lastStepTimestamp = now;
-                        stepDurationMs = currentStepDuration;
+                        // v19: EMA smooth — prevents single anomalous interval from corrupting DS% denominator.
+                        // v25: α raised 0.40→0.55 (new sample weight) — faster convergence on tempo changes (v24 analysis: 2 opening rows showed −16% from stale EMA).
+                        stepDurationMs = Math.round(stepDurationMs * 0.45 + currentStepDuration * 0.55);
+                        // v19: reset both landedAt — timed-exit clock starts fresh for both feet from the step event.
+                        leftLandedAt = now; rightLandedAt = now;
 
                         let dirBadge = document.getElementById('dirBadge');
                         let badge = document.getElementById('strikeBadge');
@@ -1125,10 +1178,21 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         let dBadge = document.getElementById('delayBadge');
                         if (dBadge) { dBadge.className = "badge"; dBadge.style.cssText = "background:#1e272e;color:#8b949e;"; dBadge.innerText = "— DELAY"; }
                     
-                        // Dynamic Tempo-Adaptive Doppelstand-Ratio (%)
-                        let stanceRatio = Math.round((currentStepOverlap / currentStepDuration) * 100);
-                        document.getElementById('doubleStanceVal').innerText = Math.round(currentStepOverlap) + " ms";
+                        // Force-close any running DS episode so it is not unboundedly accumulated
+                        // across multiple steps (v12 fix for bimodal 0%/800%+ failure from v11).
+                        if (dsEpisodeActive) {
+                            lastCompletedDsMs = Math.min(now - dsEpisodeStart, stepDurationMs);
+                            peakDsThisStep = Math.max(peakDsThisStep, lastCompletedDsMs); // v20 max-hold
+                            dsEpisodeEndTime = now;
+                            dsEpisodeActive = false;
+                        }
+                        dsEpisodeGated = false; // clear timeout gate — episode may start fresh after this step
+
+                        // v20 max-hold: use peak DS reached in this step interval (prevents overwrite by later short episode).
+                        let stanceRatio = Math.round((peakDsThisStep / stepDurationMs) * 100);
+                        document.getElementById('doubleStanceVal').innerText = Math.round(peakDsThisStep) + " ms";
                         document.getElementById('stanceRatioVal').innerText = "(" + stanceRatio + "%)";
+                        peakDsThisStep = 0; // reset for next interval
 
                                                 let stanceBadge = document.getElementById('stanceBadge');
                         if (stanceRatio >= 18 && stanceRatio <= 38) {
@@ -1143,8 +1207,22 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     }
 
                     // 3. Stance-Phasen & Überlappung — offline sensors never count as grounded
-                    let leftOnGround  = leftOk  && Math.abs(aZL) > 0.55;
-                    let rightOnGround = rightOk && Math.abs(aZR) > 0.55;
+                    // Hysteresis (v23): entry >0.65g, exit <exitAZ OR |gPitch|>80 OR |gRoll|>80.
+                    // v20: gyro exit raised 40→60°/s; v23: raised 60→80°/s — normal push-off roll hits 60–75°/s,
+                    // so 60°/s was still causing premature ○ at Count 4 / Count 1 (H1 confirmed in v22 analysis).
+                    // v26 tested 90°/s but reverted: exits in practice happen via aZ path (heel unload), not gyro.
+                    let minGnd = Math.max(150, Math.min(300, stepDurationMs * 0.4));
+                    let exitAZL = (Math.abs(aZR) > 0.75) ? 0.48 : 0.45;
+                    let exitAZR = (Math.abs(aZL) > 0.75) ? 0.48 : 0.45;
+                    if (leftOk)  { if (Math.abs(aZL) > 0.65) { if (!leftWasOnGround)  leftLandedAt  = now; leftWasOnGround  = true; } else if ((Math.abs(aZL) < exitAZL || Math.abs(gPitchL) > 80 || Math.abs(gRollL) > 80) && (now - leftLandedAt)  > minGnd) leftWasOnGround  = false; } else { leftWasOnGround  = false; leftLandedAt  = 0; }
+                    if (rightOk) { if (Math.abs(aZR) > 0.65) { if (!rightWasOnGround) rightLandedAt = now; rightWasOnGround = true; } else if ((Math.abs(aZR) < exitAZR || Math.abs(gPitchR) > 80 || Math.abs(gRollR) > 80) && (now - rightLandedAt) > minGnd) rightWasOnGround = false; } else { rightWasOnGround = false; rightLandedAt = 0; }
+                    // v19 Timed exit: if a foot has been ● for >75% of step interval since last step event, force ○.
+                    // Handles aZR 0.50–0.85g "stuck ●" that bypasses both the aZ-exit (< 0.40g) and gyro-exit thresholds.
+                    let maxGndMs = Math.max(350, Math.min(600, stepDurationMs * 0.75));
+                    if (leftWasOnGround  && (now - leftLandedAt)  > maxGndMs) leftWasOnGround  = false;
+                    if (rightWasOnGround && (now - rightLandedAt) > maxGndMs) rightWasOnGround = false;
+                    let leftOnGround  = leftWasOnGround;
+                    let rightOnGround = rightWasOnGround;
 
                     // A. Weight Transfer Gradient — 12 samples (~240 ms) after impact
                     // earlyMean vs lateMean: positive rise = progressive loading (smooth weight transfer)
@@ -1200,7 +1278,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     if (delayMonActive) {
                         let monAz = delayMonFoot === "L" ? aZL : aZR;
                         let monGy = delayMonFoot === "L" ? gPitchL : gPitchR;
-                        if (Math.abs(monAz - 1.0) < 0.08 && Math.abs(monGy) < 15) {
+                        if (Math.abs(monAz - 1.0) < 0.15 && Math.abs(monGy) < 40) {
                             delayMonConsec++;
                         } else {
                             delayMonConsec = 0;
@@ -1347,8 +1425,50 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
                     }
 
+                    // DS episode tracking — captures full ●● duration independent of step detection timing.
+                    // This eliminates the ~100ms undercount from step detection firing late relative to first ground contact.
+                    let bothGround = leftOnGround && rightOnGround;
+                    if (bothGround && !dsEpisodeActive && !dsEpisodeGated) { dsEpisodeStart = now; dsEpisodeActive = true; }
+                    if (!bothGround && dsEpisodeActive) { lastCompletedDsMs = now - dsEpisodeStart; peakDsThisStep = Math.max(peakDsThisStep, lastCompletedDsMs); dsEpisodeEndTime = now; dsEpisodeActive = false; dsEpisodeGated = false; }
+
+                    // Hard timeout: if neither aZ nor gPitch/gRoll fires a natural exit (smooth glide),
+                    // cap the episode at 38% of the previous step duration — the upper OPTIMAL boundary.
+                    // Gate prevents episode from immediately restarting (which caused post-timeout force-close to
+                    // capture only the tiny ~46ms since restart, showing 9% instead of the real value).
+                    let maxDsMs = Math.max(100, stepDurationMs * 0.38);
+                    if (dsEpisodeActive && (now - dsEpisodeStart) > maxDsMs) {
+                        lastCompletedDsMs = maxDsMs;
+                        peakDsThisStep = Math.max(peakDsThisStep, maxDsMs); // v20 max-hold
+                        dsEpisodeEndTime = now;
+                        dsEpisodeActive = false;
+                        dsEpisodeGated = true; // block restart until next step event
+                    }
+
                     if (leftOnGround && rightOnGround) {
                         currentStepOverlap += dt * 1000;
+                    }
+
+                    if (debugMode) {
+                        let azLEl = document.getElementById('dbgAzL');
+                        let azREl = document.getElementById('dbgAzR');
+                        let gLEl  = document.getElementById('dbgGndL');
+                        let gREl  = document.getElementById('dbgGndR');
+                        let dsEl  = document.getElementById('dbgDsAcc');
+                        if (azLEl) azLEl.innerText = Math.abs(aZL).toFixed(2);
+                        if (azREl) azREl.innerText = Math.abs(aZR).toFixed(2);
+                        if (gLEl)  { gLEl.innerText = leftOnGround  ? '●' : '○'; gLEl.style.color = leftOnGround  ? '#4fc3f7' : '#444'; }
+                        if (gREl)  { gREl.innerText = rightOnGround ? '●' : '○'; gREl.style.color = rightOnGround ? '#ef5350' : '#444'; }
+                        if (dsEl)  dsEl.innerText = dsEpisodeActive ? Math.round(now - dsEpisodeStart) : Math.round(lastCompletedDsMs);
+                        let azL2 = document.getElementById('dbgAzL2');
+                        let azR2 = document.getElementById('dbgAzR2');
+                        let gL2  = document.getElementById('dbgGndL2');
+                        let gR2  = document.getElementById('dbgGndR2');
+                        let ds2  = document.getElementById('dbgDsAcc2');
+                        if (azL2) azL2.innerText = Math.abs(aZL).toFixed(2);
+                        if (azR2) azR2.innerText = Math.abs(aZR).toFixed(2);
+                        if (gL2)  { gL2.innerText = leftOnGround  ? '●' : '○'; gL2.style.color = leftOnGround  ? '#4fc3f7' : '#444'; }
+                        if (gR2)  { gR2.innerText = rightOnGround ? '●' : '○'; gR2.style.color = rightOnGround ? '#ef5350' : '#444'; }
+                        if (ds2)  ds2.innerText = dsEpisodeActive ? Math.round(now - dsEpisodeStart) : Math.round(lastCompletedDsMs);
                     }
 
                     // Rolling 2-second proportional stance timeline (left / double / right)
@@ -1517,14 +1637,17 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         debugMode = !debugMode;
         const btn = document.getElementById('dbgBtn');
         const row = document.getElementById('debugRow');
+        const card = document.getElementById('dsDebugCard');
         if (debugMode) {
             btn.style.background  = 'rgba(255,140,0,0.75)';
             btn.innerText         = '🔍 DBG ON';
-            if (row) row.style.display = 'flex';
+            if (row)  row.style.display  = 'flex';
+            if (card) card.style.display = 'block';
         } else {
             btn.style.background  = 'rgba(80,80,80,0.5)';
             btn.innerText         = '🔍 DBG';
-            if (row) row.style.display = 'none';
+            if (row)  row.style.display  = 'none';
+            if (card) card.style.display = 'none';
         }
     }
 
