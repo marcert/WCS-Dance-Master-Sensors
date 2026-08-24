@@ -16,21 +16,23 @@
 
 // --- DATA STRUCTURE FOR FEET (ID 1 & 2) ---
 typedef struct struct_imu_data {
-  uint8_t foot_id;  // 1 = Left, 2 = Right
-  float gyro_x;     // Pitch rotation (gy — roll-off)
-  float accel_z;    // Z-acceleration (impact)
-  float accel_y;    // Longitudinal acceleration (forward/backward)
-  float gyro_roll;  // Lateral roll rotation (gx — pronation/supination)
-  float accel_x;    // Lateral acceleration (for 3D impact magnitude)
+  uint8_t foot_id;       // 1 = Left, 2 = Right, 4 = Pelvic
+  float gyro_x;          // Pitch rotation (gy — roll-off)
+  float accel_z;         // Z-acceleration (impact)
+  float accel_y;         // Longitudinal acceleration (forward/backward)
+  float gyro_roll;       // Lateral roll rotation (gx — pronation/supination)
+  float accel_x;         // Lateral acceleration (for 3D impact magnitude)
+  uint8_t battery_level; // 0–100 %; updated every ~30 s, 0 = not yet read
 } struct_imu_data;
 
 // --- DATA STRUCTURE FOR HAND/SCALE (ID 3) ---
 typedef struct struct_hand_data {
-  uint8_t hand_id; // 3 = Hand / Scale
-  float weight;    // Push/Pull in grams
+  uint8_t hand_id;       // 3 = Hand / Scale
+  float weight;          // Push/Pull in grams
   float accel_x;
   float accel_y;
   float accel_z;
+  uint8_t battery_level; // 0–100 %; updated every ~5 s, 0 = not yet read
 } struct_hand_data;
 
 // --- DATA STRUCTURE FOR HANDSHAKE / CHANNEL CONFIRMATION ---
@@ -50,6 +52,7 @@ float leftGyro = 0, leftAccel = 0, leftAccelY = 0, leftGyroRoll = 0, leftAccelX 
 float rightGyro = 0, rightAccel = 0, rightAccelY = 0, rightGyroRoll = 0, rightAccelX = 0;
 float pelvicGyro = 0, pelvicAccel = 0, pelvicAccelY = 0, pelvicYaw = 0, pelvicAccelX = 0;
 float handWeight = 0, handAx = 0, handAy = 0, handAz = 0;
+uint8_t leftBatt = 0, rightBatt = 0, pelvicBatt = 0, masterBatt = 0, handBatt = 0;
 
 // --- TIMEOUT TRACKING FOR CONNECTED SENSORS ---
 uint32_t lastSeenLeft   = 0;
@@ -116,14 +119,15 @@ void handleData() {
     float sendAy   = handOk  ? handAy     : 0.0f;
     float sendAz   = handOk  ? handAz     : 1.0f;
 
-    char buf[550];
+    char buf[640];
     snprintf(buf, sizeof(buf),
-      "{\"lG\":%.1f,\"lA\":%.2f,\"lAy\":%.2f,\"lGr\":%.1f,\"lAx\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"rAy\":%.2f,\"rGr\":%.1f,\"rAx\":%.2f,\"pG\":%.1f,\"pA\":%.2f,\"pAy\":%.2f,\"pYaw\":%.1f,\"pAx\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"pOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s}",
+      "{\"lG\":%.1f,\"lA\":%.2f,\"lAy\":%.2f,\"lGr\":%.1f,\"lAx\":%.2f,\"rG\":%.1f,\"rA\":%.2f,\"rAy\":%.2f,\"rGr\":%.1f,\"rAx\":%.2f,\"pG\":%.1f,\"pA\":%.2f,\"pAy\":%.2f,\"pYaw\":%.1f,\"pAx\":%.2f,\"hW\":%.1f,\"hAx\":%.2f,\"hAy\":%.2f,\"hAz\":%.2f,\"lOk\":%s,\"rOk\":%s,\"pOk\":%s,\"hOk\":%s,\"err\":%d,\"jerk\":%s,\"lBatt\":%d,\"rBatt\":%d,\"pBatt\":%d,\"mBatt\":%d,\"hBatt\":%d}",
       sendLG, sendLA, sendLAy, sendLGr, sendLAx, sendRG, sendRA, sendRAy, sendRGr, sendRAx,
       sendPG, sendPA, sendPAy, sendPYaw, sendPAx, sendHW, sendAx, sendAy, sendAz,
       leftOk ? "true" : "false", rightOk ? "true" : "false",
       pelvicOk ? "true" : "false", handOk ? "true" : "false",
-      (int)currentError, isJerkAlert ? "true" : "false"
+      (int)currentError, isJerkAlert ? "true" : "false",
+      (int)leftBatt, (int)rightBatt, (int)pelvicBatt, (int)masterBatt, (int)handBatt
     );
     server.send(200, "application/json", buf);
 }
@@ -137,15 +141,18 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
   const uint8_t *src_mac = mac_addr;
 #endif
 
-      // --- DATA PROCESSING ---
-  if (len == sizeof(struct_hand_data)) {
+      // --- DATA PROCESSING — dispatch by sensor ID (first byte) ---
+  if (len >= 1 && data[0] == 3) {
+    // Hand/Scale sensor (ID 3)
     struct_hand_data handData;
-    memcpy(&handData, data, sizeof(handData));
+    memset(&handData, 0, sizeof(handData));
+    memcpy(&handData, data, std::min((size_t)len, sizeof(handData)));
 
     handWeight   = handData.weight;
     handAx       = handData.accel_x;
     handAy       = handData.accel_y;
     handAz       = handData.accel_z;
+    if (handData.battery_level > 0) handBatt = handData.battery_level;
     lastSeenHand = millis();
 
     // --- CALCULATE LEAD SMOOTHNESS / JERK FOR THE HAND ---
@@ -183,6 +190,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       leftAccelY   = footData.accel_y;
       leftGyroRoll = footData.gyro_roll;
       leftAccelX   = footData.accel_x;
+      if (footData.battery_level > 0) leftBatt = footData.battery_level;
       lastSeenLeft = millis();
     } else if (footData.foot_id == 4) {
       pelvicGyro   = footData.gyro_roll;
@@ -190,6 +198,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       pelvicAccelY = footData.accel_y;
       pelvicYaw    = footData.gyro_x;
       pelvicAccelX = footData.accel_x;
+      if (footData.battery_level > 0) pelvicBatt = footData.battery_level;
       lastSeenPelvic = millis();
     } else {
       rightGyro     = footData.gyro_x;
@@ -197,6 +206,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int len) {
       rightAccelY   = footData.accel_y;
       rightGyroRoll = footData.gyro_roll;
       rightAccelX   = footData.accel_x;
+      if (footData.battery_level > 0) rightBatt = footData.battery_level;
       lastSeenRight = millis();
     }
 
@@ -345,44 +355,58 @@ void loop() {
   M5.Display.setTextSize(2);
 
   static bool     dLOn = !leftOnline, dROn = !rightOnline, dHOn = !handOnline, dPOn = !pelvicOnline;
+  static uint8_t  dLBatt = 255, dRBatt = 255, dPBatt = 255, dHBatt = 255;
   static uint32_t lastBatUpdate = 0;
 
-  // --- DISPLAY LEFT FOOT (only on status change) ---
-  if (leftOnline != dLOn) {
-    dLOn = leftOnline;
+  // --- DISPLAY LEFT FOOT (on status change or battery change) ---
+  if (leftOnline != dLOn || (leftOnline && leftBatt != dLBatt)) {
+    dLOn = leftOnline; dLBatt = leftBatt;
     M5.Display.setCursor(5, 5);
     M5.Display.setTextColor(BLUE, BLACK);
-    M5.Display.printf("L: %-14s", leftOnline ? "ONLINE" : "OFFLINE");
+    if (leftOnline && leftBatt > 0)
+      M5.Display.printf("L: %3d%%          ", (int)leftBatt);
+    else
+      M5.Display.printf("L: %-14s", leftOnline ? "ONLINE" : "OFFLINE");
   }
 
-  // --- DISPLAY RIGHT FOOT (only on status change) ---
-  if (rightOnline != dROn) {
-    dROn = rightOnline;
+  // --- DISPLAY RIGHT FOOT (on status change or battery change) ---
+  if (rightOnline != dROn || (rightOnline && rightBatt != dRBatt)) {
+    dROn = rightOnline; dRBatt = rightBatt;
     M5.Display.setCursor(5, 30);
     M5.Display.setTextColor(RED, BLACK);
-    M5.Display.printf("R: %-14s", rightOnline ? "ONLINE" : "OFFLINE");
+    if (rightOnline && rightBatt > 0)
+      M5.Display.printf("R: %3d%%          ", (int)rightBatt);
+    else
+      M5.Display.printf("R: %-14s", rightOnline ? "ONLINE" : "OFFLINE");
   }
 
-  // --- DISPLAY HAND (only on status change) ---
-  if (handOnline != dHOn) {
-    dHOn = handOnline;
+  // --- DISPLAY PELVIS (on status change or battery change) ---
+  if (pelvicOnline != dPOn || (pelvicOnline && pelvicBatt != dPBatt)) {
+    dPOn = pelvicOnline; dPBatt = pelvicBatt;
     M5.Display.setCursor(5, 55);
-    M5.Display.setTextColor(GREEN, BLACK);
-    M5.Display.printf("H: %-14s", handOnline ? "ONLINE" : "OFFLINE");
+    M5.Display.setTextColor(MAGENTA, BLACK);
+    if (pelvicOnline && pelvicBatt > 0)
+      M5.Display.printf("P: %3d%%          ", (int)pelvicBatt);
+    else
+      M5.Display.printf("P: %-14s", pelvicOnline ? "ONLINE" : "OFFLINE");
   }
 
-  // --- DISPLAY PELVIS (only on status change) ---
-  if (pelvicOnline != dPOn) {
-    dPOn = pelvicOnline;
+  // --- DISPLAY HAND (on status change or battery change) ---
+  if (handOnline != dHOn || (handOnline && handBatt != dHBatt)) {
+    dHOn = handOnline; dHBatt = handBatt;
     M5.Display.setCursor(5, 80);
-    M5.Display.setTextColor(MAGENTA, BLACK);
-    M5.Display.printf("P: %-14s", pelvicOnline ? "ONLINE" : "OFFLINE");
+    M5.Display.setTextColor(GREEN, BLACK);
+    if (handOnline && handBatt > 0)
+      M5.Display.printf("H: %3d%%          ", (int)handBatt);
+    else
+      M5.Display.printf("H: %-14s", handOnline ? "ONLINE" : "OFFLINE");
   }
 
   // --- BATTERY (every 10 s — level changes on the order of minutes) ---
   if (millis() - lastBatUpdate > 10000) {
     lastBatUpdate = millis();
     int batLevel = M5.Power.getBatteryLevel();
+    masterBatt = (uint8_t)batLevel;
     M5.Display.setCursor(5, 105);
     M5.Display.setTextColor(YELLOW, BLACK);
     M5.Display.printf("BAT: %3d%%        ", batLevel);

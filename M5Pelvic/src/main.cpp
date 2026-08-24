@@ -21,11 +21,12 @@ uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 //   accel_x   = ax  — lateral acceleration
 typedef struct struct_imu_data {
   uint8_t foot_id;
-  float gyro_x;    // Sagittal pitch rate (gy)
-  float accel_z;   // Vertical acceleration
-  float accel_y;   // Anterior-posterior acceleration
-  float gyro_roll; // Yaw rate (gz — transverse rotation)
-  float accel_x;   // Lateral acceleration
+  float gyro_x;          // Sagittal pitch rate (gy)
+  float accel_z;         // Vertical acceleration
+  float accel_y;         // Anterior-posterior acceleration
+  float gyro_roll;       // Yaw rate (gz — transverse rotation)
+  float accel_x;         // Lateral acceleration
+  uint8_t battery_level; // 0–100 %; updated every ~30 s, 0 = not yet read
 } struct_imu_data;
 
 // --- DATA STRUCTURE RECEIVE PACKET (HANDSHAKE ACK FROM MASTER) ---
@@ -70,6 +71,7 @@ void updateChannelDisplay() {
 
 void updateBatteryDisplay() {
   int level = M5.Power.getBatteryLevel();
+  sensorData.battery_level = (uint8_t)level;
   M5.Display.setTextSize(2);
   M5.Display.setTextColor(WHITE, PURPLE);
   char battBuf[16];
@@ -313,6 +315,9 @@ void loop() {
   sensorData.accel_y   = ay;   // Currently vertical (correct mounting)
   sensorData.gyro_roll = gz;   // Yaw rate (transverse rotation)
   sensorData.accel_x   = ax;   // Sagittal (A/P) axis — ~0g at rest when worn, small values during weight shifts
+
+  static uint16_t battCounter = 0;
+  if (++battCounter >= 6000) { battCounter = 0; sensorData.battery_level = (uint8_t)M5.Power.getBatteryLevel(); }
 
   esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
 

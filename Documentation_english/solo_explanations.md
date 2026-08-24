@@ -41,6 +41,8 @@ The Solo Training System operates as a high-frequency biomechanical feedback loo
 * **Central Master Unit:** Aggregates ESP-NOW streams and delivers JSON data packets (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optionally `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) to the browser via the `/data` endpoint.
 * **Web Dashboard (`/solo`):** Client-side JavaScript executes state machine filtering, direction mapping, pitch integration, stance timeline calculations, and Web Audio API feedback.
 
+> 📸 **[Screenshot: Solo Dashboard showing all four sensor nodes connected and live telemetry streaming to the browser]**
+
 ---
 
 ## 2. Mathematical & Biomechanical Definitions
@@ -88,7 +90,7 @@ In WCS **forward steps** all three rockers are present: heel strike → ankle ad
 
    $$\theta_{\text{raw}}(t) = \alpha \cdot \bigl(\theta_{\text{raw}}(t-\Delta t) + \omega_{\text{pitch}} \cdot \Delta t\bigr) + (1-\alpha) \cdot \theta_{\text{accel}}, \quad \alpha = 0.94$$
 
-   **T-1 Snapshot for step classification:** At the moment of impact, the angle from the *previous frame* (T-1) is used — not the instantaneous value. The aZ > 1.00 g trigger fires after partial weight loading when roll-through has already begun; the T-1 frame captures pre-contact foot orientation before distortion.
+   **T-1 Snapshot for step classification:** At the moment of impact, the angle from the *previous frame* (T-1) is used — not the instantaneous value. The aZ > 0.95–0.97 g trigger (tempo-adaptive) fires after partial weight loading when roll-through has already begun; the T-1 frame captures pre-contact foot orientation before distortion.
 
 2. **Zero-Tare Compensation ($\theta_{\text{calibrated}}$):**
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -226,7 +228,7 @@ $$\text{loadRise} = \overline{aZ}_{[160\text{–}240\,\text{ms}]} - \overline{aZ
 
 **Ankle Shock Absorption + Roll Reversal** (200 ms window, 10 samples of `gRoll`):
 
-> **Measurement note:** `gRoll` measures rotation of the *shoe segment* around the sensor's roll axis, not directly the subtalar joint eversion angle. `rollIntegral` is a foot-rotation proxy for pronatory shock absorption; the reversal check is a proxy for the pronation→supination cycle that pre-loads the Windlass Mechanism. Both are validated as training indicators, not anatomical joint measurements.
+> **Measurement note:** `gRoll` measures rotation of the *shoe segment* around the sensor's roll axis, not directly the subtalar joint eversion angle. `rollIntegral` is a foot-rotation proxy for pronatory shock absorption; the reversal check is a proxy for the pronation→supination cycle that pre-loads the Windlass Mechanism. Both serve as training indicators, not anatomical joint measurements.
 
 Foot roll integral over first 100 ms (samples 0–4):
 $$\text{rollIntegral} = \left|\sum_{i=0}^{4} \omega_{\text{roll},i} \times 0.02\,\text{s}\right| \quad [\text{degrees}]$$
@@ -354,18 +356,24 @@ $$\text{rise} = \theta_{\text{late}} - \theta_{\text{early}} \quad \text{(positi
 
 ## 4. Signal Filtering & Lockout Concept
 
-To prevent false secondary step triggers caused by micro-taps, foot unweighting, or floor vibrations, the DSP pipeline executes a **Dual-Stage Filtering & Lockout Concept**:
+To prevent false secondary step triggers caused by micro-taps, foot unweighting, or floor vibrations, the DSP pipeline executes a **Triple-Stage Filtering & Lockout Concept**:
 
 1. **Transient Signal Candidate Sensing:**
    Each foot independently qualifies as an impact candidate via OR-logic:
-   $$\text{signal}_{\text{foot}} = \bigl(|aZ| > 1.00\,g\bigr) \;\mathbf{OR}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{AND}\; \text{preJerk} > 8\bigr)$$
+   $$\text{signal}_{\text{foot}} = \bigl(|aZ| > \theta_{\text{thr}} \;\mathbf{AND}\; \text{preJerk} > 2\bigr) \;\mathbf{OR}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{AND}\; \text{preJerk} > 8\bigr)$$
+   where $\theta_{\text{thr}} = 0.95\,g$ when $t_{\text{step}} > 800\,\text{ms}$ (slow practice, $< 75\,\text{BPM}$), and $0.97\,g$ otherwise. The `preJerk > 2` gate on the aZ path suppresses gradual stance-foot weight drift (typical preJerk 0.5–2) while passing real foot impacts (preJerk typically 5–30+). This tempo-adaptive threshold captures soft deliberate weight transfers in slow footwork training while suppressing brush artefacts at dance tempo.
    The `preJerk` gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) on the gyro path suppresses liftoff rotation artefacts that would otherwise ghost as step triggers. When both feet signal in the same frame, the dominant foot is selected by peak ground reaction force: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
-2. **Per-Foot Cadence-Adaptive Lockout & Alternation Guard:**
+   > **Note:** The gyro path correctly resolves flat ball-of-foot contacts (aZ below threshold) via `|gPitch| > 80°/s`. Observed preJerk minimum in real WCS steps: **6.0** — well above the 2.0 gate. Step balance in practice: L/R counts remain equal across single steps and triple steps.
+
+2. **Opposing-Foot Plausibility Check (Phantom Trigger Suppression):**
+   After candidate selection, the trigger is discarded if the detected foot shows $|aZ| < 0.90\,g$ while the opposing foot shows $|aZ| > 1.1\,g$ (clearly the loaded stance leg). This eliminates swing-phase artefacts — brush, scuff, or abrupt liftoff events that generate a high jerk signal without real weight transfer. Without this check, a scuff during the swing phase can produce a false `HARD IMPACT ⚠` badge despite zero ground loading (confirmed in analysis: 48 g/s phantom trigger at second 18 with stance foot bearing full load).
+
+3. **Per-Foot Cadence-Adaptive Lockout & Alternation Guard:**
    * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than the dynamic lockout window.
    * **Cadence-Adaptive Window:** The lockout scales with the current step period: $t_{\text{lockout}} = \text{clamp}(t_{\text{step}} \times 0.55,\ 180\text{ ms},\ 320\text{ ms})$. At 120 BPM ($t_{\text{step}} = 500\text{ ms}$) this yields 275 ms; at 160 BPM (375 ms) → 206 ms; at 200 BPM (300 ms) → 180 ms (floor). This prevents both ghost triggers at slow tempos and missed steps at high tempos.
    * **Alternation Guard:** Steps must alternate (`Left -> Right -> Left`). If the same foot fires twice without the opposite foot making contact in between, it is discarded as a liftoff re-detection or vibration ghost.
-   * **Global 130 ms Cross-Foot Lockout:** Any step trigger — regardless of which foot — is rejected if it arrives within 130 ms of the last confirmed step. This cross-foot guard catches the case where the non-stepping foot oscillates near 1.00 g shortly after a real step: the per-foot lockout on the opposite foot is stale (its last-step time is old) and would not block it. `lastStepTimestamp` is updated on every confirmed step and shared across both feet.
+   * **Global 130 ms Cross-Foot Lockout:** Any step trigger — regardless of which foot — is rejected if it arrives within 130 ms of the last confirmed step. This cross-foot guard catches the case where the non-stepping foot oscillates near 0.95–0.97 g shortly after a real step: the per-foot lockout on the opposite foot is stale (its last-step time is old) and would not block it. `lastStepTimestamp` is updated on every confirmed step and shared across both feet.
 
 ---
 
@@ -384,6 +392,8 @@ The Solo Training Dashboard is optimized for mobile browser use (tablets/smartph
   * `📐 ZERO`: Recalibrates static instep pitch angles for both feet.
   * `🔊 Audio`: Toggles Web Audio API synthesized biofeedback tones ON/OFF.
 
+> 📸 **[Screenshot: Solo Dashboard with camera HUD active showing semi-transparent data cards overlaying the live body view in landscape mode]**
+
 ---
 
 ## 6. Pelvis Metrics (Solo Dashboard)
@@ -393,6 +403,8 @@ When the pelvis sensor (ID 4) is connected, the Solo Dashboard displays six addi
 ### gYaw Curve in the Live Roll-off Dynamics Graph
 
 A **dashed yellow line** in the Live Roll-off Dynamics graph shows the measured hip yaw rate (`pYaw` from the pelvis sensor), scaled to the same display range as the foot pitch curves. This curve is visible whenever the pelvis sensor is connected and provides a real-time reference for how hip rotation timing aligns with foot roll-off events.
+
+> 📸 **[Screenshot: Roll-off Dynamics graph showing left (cyan) and right (magenta) foot pitch curves with the dashed yellow pelvis yaw rate curve overlaid]**
 
 ### Hip Activation
 
@@ -497,6 +509,8 @@ $$\text{score} = \text{decelScore} \times 0.35 + \text{yawDampScore} \times 0.35
 | ANCHORED | score ≥ 60 | Green |
 | SETTLING | score ≥ 30 | Yellow |
 | UNSTABLE | score < 30 | Red |
+
+> 📸 **[Screenshot: Pelvis card Anchor Settle badge showing a numeric score (e.g. ANCHORED 74) in green after a backward anchor step]**
 
 ### Hip Settle
 

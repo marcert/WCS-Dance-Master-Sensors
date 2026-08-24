@@ -15,11 +15,12 @@ uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 // --- DATA STRUCTURE TRANSMIT PACKET (IMU) ---
 typedef struct struct_imu_data {
   uint8_t foot_id;
-  float gyro_x;    // Pitch rotation (gy — roll-off)
-  float accel_z;   // Vertical acceleration (impact)
-  float accel_y;   // Longitudinal acceleration (forward/backward)
-  float gyro_roll; // Lateral roll rotation (gx — pronation/supination)
-  float accel_x;   // Lateral acceleration (for 3D impact magnitude)
+  float gyro_x;          // Pitch rotation (gy — roll-off)
+  float accel_z;         // Vertical acceleration (impact)
+  float accel_y;         // Longitudinal acceleration (forward/backward)
+  float gyro_roll;       // Lateral roll rotation (gx — pronation/supination)
+  float accel_x;         // Lateral acceleration (for 3D impact magnitude)
+  uint8_t battery_level; // 0–100 %; updated every ~30 s, 0 = not yet read
 } struct_imu_data;
 
 // --- DATA STRUCTURE RECEIVE PACKET (HANDSHAKE ACK FROM MASTER) ---
@@ -66,10 +67,11 @@ void updateChannelDisplay() {
 
 void updateBatteryDisplay() {
   int level = M5.Power.getBatteryLevel();
-  
+  sensorData.battery_level = (uint8_t)level;
+
   M5.Display.setTextSize(2);
   M5.Display.setTextColor(WHITE, bgColour);
-  
+
   char battBuf[16];
   snprintf(battBuf, sizeof(battBuf), "BATT: %d%% ", level);
   M5.Display.drawString(battBuf, M5.Display.width() / 2, 95);
@@ -330,6 +332,9 @@ void loop() {
   sensorData.accel_y   = ay;
   sensorData.gyro_roll = gx;
   sensorData.accel_x   = ax;
+
+  static uint16_t battCounter = 0;
+  if (++battCounter >= 6000) { battCounter = 0; sensorData.battery_level = (uint8_t)M5.Power.getBatteryLevel(); }
 
     esp_now_send(broadcastAddress, (uint8_t *)&sensorData, sizeof(sensorData));
 
