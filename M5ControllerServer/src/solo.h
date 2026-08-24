@@ -298,7 +298,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
                 <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
                 <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5); display:none;" onclick="toggleDebug()">🔍 DBG</button>
-                <span id="phantomCntBadge" style="font-size:min(3.2vw,13px);color:#aaa;padding:3px 8px;background:rgba(0,0,0,0.5);border-radius:10px;align-self:center;font-weight:bold;">🛡 0</span>
             </div>
         </header>
 
@@ -587,7 +586,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let lastStepTimestamp = Date.now();
         let stepDurationMs = 500; // Standard 500ms ~= 120 BPM
         let prevLeftOk = true, prevRightOk = true; // for sensor-lost alert
-        let phantomSuppressCount = 0; // counts triggers suppressed by opposing-foot plausibility check
+        let phantomSuppressCount = 0;
         // -- delay ramp monitor (tempo-normalised weight transfer timing) --
         let delayMonActive = false, delayMonFoot = null, delayMonDir = null;
         let delayMonStartTime = 0, delayMonConsec = 0;
@@ -933,8 +932,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                                                                 // Opposing-foot plausibility: suppress brush/scuff phantom triggers.
                                                                                 // Stance foot clearly loaded (>1.1g) while detected foot is unloaded (<0.90g) → no real weight transfer.
-                                                                                if (detectedFoot === "L" && Math.abs(aZR) > 1.1 && Math.abs(aZL) < 0.90) { detectedFoot = null; phantomSuppressCount++; document.getElementById('phantomCntBadge').innerText = '🛡 ' + phantomSuppressCount; }
-                                                                                if (detectedFoot === "R" && Math.abs(aZL) > 1.1 && Math.abs(aZR) < 0.90) { detectedFoot = null; phantomSuppressCount++; document.getElementById('phantomCntBadge').innerText = '🛡 ' + phantomSuppressCount; }
+                                                                                if (detectedFoot === "L" && Math.abs(aZR) > 1.1 && Math.abs(aZL) < 0.90) { detectedFoot = null; phantomSuppressCount++; }
+                                                                                if (detectedFoot === "R" && Math.abs(aZL) > 1.1 && Math.abs(aZR) < 0.90) { detectedFoot = null; phantomSuppressCount++; }
 
                                                                                 // Global lockout: reject any trigger within 130 ms of the last confirmed step.
                                                                                 // Per-foot lockout misses the case where the OPPOSITE foot false-triggers shortly after a
