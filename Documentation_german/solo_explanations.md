@@ -41,6 +41,8 @@ Das Solo-Training-System arbeitet als hochfrequenter biomechanischer Feedback-Kr
 * **Zentrale Master-Einheit:** Aggregiert ESP-NOW-Streams und liefert JSON-Datenpakete (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optional `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) über den `/data`-Endpunkt an den Browser.
 * **Web-Dashboard (`/solo`):** Clientseitiges JavaScript führt Zustandsmaschinen-Filterung, Richtungszuordnung, Neigungsintegration, Standphasen-Berechnungen und Web-Audio-API-Feedback aus.
 
+> 📸 **[Screenshot: Solo-Dashboard mit allen vier verbundenen Sensorknoten und laufendem Live-Telemetrie-Stream im Browser]**
+
 ---
 
 ## 2. Mathematische & Biomechanische Definitionen
@@ -89,7 +91,7 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
 
    $$\theta_{\text{raw}}(t) = \alpha \cdot \bigl(\theta_{\text{raw}}(t-\Delta t) + \omega_{\text{pitch}} \cdot \Delta t\bigr) + (1-\alpha) \cdot \theta_{\text{accel}}, \quad \alpha = 0.94$$
 
-   **T-1-Schnappschuss für Schrittklassifikation:** Zum Zeitpunkt des Aufpralls wird der Winkel vom *vorherigen Frame* (T-1) verwendet — nicht der Momentanwert. Der aZ > 1,00 g-Auslöser feuert nach teilweiser Gewichtsbelastung, wenn das Abrollen bereits begonnen hat; der T-1-Frame erfasst die Fußausrichtung vor dem Kontakt, bevor Verzerrungen auftreten.
+   **T-1-Schnappschuss für Schrittklassifikation:** Zum Zeitpunkt des Aufpralls wird der Winkel vom *vorherigen Frame* (T-1) verwendet — nicht der Momentanwert. Der aZ > 0,95–0,97 g-Auslöser (tempo-adaptiv) feuert nach teilweiser Gewichtsbelastung, wenn das Abrollen bereits begonnen hat; der T-1-Frame erfasst die Fußausrichtung vor dem Kontakt, bevor Verzerrungen auftreten.
 
 2. **Nullpunkt-Tarierung ($\theta_{\text{calibrated}}$):**
    Zur Anpassung individueller Schuhabsatz-Neigungen erfasst der `📐 ZERO`-Button statische Montageversätze ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -97,7 +99,7 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
 
 3. **Richtungsanzeige & Landungsqualitäts-Badge:**
 
-   **Validierte Einschränkung:** Empirische Tests (n=15 Rückwärtsschritte im Flat-Walk, inklusive Beckensensor) bestätigten, dass WCS-Rückwärtsschritte im Flat-Walk konsistent bei θ = +2° bis +9° landen — identisch mit der mehrdeutigen Zone. Weder der dθ-Neigungstrend noch die sagittale Beckenbeschleunigung (durchschnittlicher Richtungsunterschied < 0,03 g über alle Achsen) können in diesem Bereich zuverlässig zwischen Rückwärts und Vorwärts unterscheiden. Das Richtungs-Badge wird daher nur angezeigt, wenn θ eindeutige physikalische Evidenz liefert:
+   **Messtechnische Einschränkung:** Messungen (n=15 Rückwärtsschritte im Flat-Walk, inklusive Beckensensor) zeigen, dass WCS-Rückwärtsschritte im Flat-Walk konsistent bei θ = +2° bis +9° landen — identisch mit der mehrdeutigen Zone. Weder der dθ-Neigungstrend noch die sagittale Beckenbeschleunigung (durchschnittlicher Richtungsunterschied < 0,03 g über alle Achsen) können in diesem Bereich zuverlässig zwischen Rückwärts und Vorwärts unterscheiden. Das Richtungs-Badge wird daher nur angezeigt, wenn θ eindeutige physikalische Evidenz liefert:
 
    | θ bei T-1 | Richtungs-Badge |
    | :---: | :--- |
@@ -231,7 +233,7 @@ $$\text{loadRise} = \overline{aZ}_{[160-240\text{ ms}]} - \overline{aZ}_{[0-80\t
 
 **Sprunggelenk-Stoßdämpfung + Abrollumkehr** (200-ms-Fenster, 10 Samples von `gRoll`):
 
-> **Messtechnischer Hinweis:** `gRoll` misst die Rotation des *Schuhsegments* um die Roll-Achse des Sensors, nicht direkt den Subtalargelenk-Eversionswinkel. `rollIntegral` ist ein Fußrotations-Proxy für Pronations-Stoßdämpfung; die Umkehrprüfung ist ein Proxy für den Pronation→Supination-Zyklus, der den Windlass-Mechanismus vorspannt. Beide sind als Trainingsindikatoren validiert, keine anatomischen Gelenkmessungen.
+> **Messtechnischer Hinweis:** `gRoll` misst die Rotation des *Schuhsegments* um die Roll-Achse des Sensors, nicht direkt den Subtalargelenk-Eversionswinkel. `rollIntegral` ist ein Fußrotations-Proxy für Pronations-Stoßdämpfung; die Umkehrprüfung ist ein Proxy für den Pronation→Supination-Zyklus, der den Windlass-Mechanismus vorspannt. Beide dienen als Trainingsindikatoren, keine anatomischen Gelenkmessungen.
 
 Fußroll-Integral über die ersten 100 ms (Samples 0–4):
 
@@ -385,20 +387,27 @@ $$\text{rise} = \theta_{\text{spät}} - \theta_{\text{früh}} \quad \text{(posit
 
 ## 4. Signalfilterung & Sperrzeitkonzept (Lockout)
 
-Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder Bodenschwingungen zu verhindern, führt die DSP-Pipeline (Digital Signal Processing) ein **Zweistufiges Filterungs- & Sperrzeitkonzept** aus:
+Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder Bodenschwingungen zu verhindern, führt die DSP-Pipeline (Digital Signal Processing) ein **Dreistufiges Filterungs- & Sperrzeitkonzept** aus:
 
 1. **Transientes Signal-Kandidaten-Sensing:**
    Jeder Fuß qualifiziert sich unabhängig als Aufprallkandidat über ODER-Logik:
 
-   $$\text{signal}_{\text{foot}} = \bigl(\lvert aZ\rvert > 1.00\,g\bigr) \quad\mathbf{ODER}\quad \bigl(\lvert\omega_{\text{pitch}}\rvert > 80\,\text{deg/s} \quad\mathbf{UND}\quad \text{preJerk} > 8\bigr)$$
+   $$\text{signal}_{\text{foot}} = \bigl(\lvert aZ\rvert > \theta_{\text{thr}} \quad\mathbf{UND}\quad \text{preJerk} > 2\bigr) \quad\mathbf{ODER}\quad \bigl(\lvert\omega_{\text{pitch}}\rvert > 80\,\text{deg/s} \quad\mathbf{UND}\quad \text{preJerk} > 8\bigr)$$
+
+   Dabei gilt $\theta_{\text{thr}} = 0{,}95\,g$ wenn $t_{\text{Schritt}} > 800\,\text{ms}$ (Trainingstempo $< 75\,\text{BPM}$), sonst $0{,}97\,g$. Das `preJerk > 2`-Gate auf dem aZ-Pfad unterdrückt langsame Standfuß-Gewichtsdrift (typischer preJerk 0,5–2), lässt aber echte Aufprallimpulse (preJerk typisch 5–30+) durch.
 
    Das `preJerk`-Gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) auf dem Gyro-Pfad unterdrückt Abhebebewegungs-Artefakte. Wenn beide Füße im gleichen Frame signalisieren, wird der dominante Fuß nach maximaler Bodenreaktionskraft ausgewählt: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
-2. **Pro-Fuß Kadenz-Adaptives Sperrzeitfenster & Alternierungswächter:**
+   > **Hinweis:** Der Gyro-Pfad erkennt korrekt flache Ballenauftrittte (aZ unter Schwellenwert) über `|gPitch| > 80°/s`. Beobachteter Minimalwert preJerk in echten WCS-Schritten: **6,0** — deutlich über dem Gate von 2,0. Schrittbalance in der Praxis: L/R-Zähler bleiben bei Einzel- und Triple-Steps ausgeglichen.
+
+2. **Gegenfuß-Plausibilitätsprüfung (Phantom-Trigger-Unterdrückung):**
+   Nach der Kandidatenauswahl wird der Auslöser verworfen, wenn der erkannte Fuß $|aZ| < 0{,}90\,g$ zeigt, während der Gegenfuß $|aZ| > 1{,}1\,g$ aufweist (klar das belastete Standbein). Dadurch werden Schwungphasenartefakte eliminiert — Wischbewegungen, Bodentipps oder abrupte Abhebbewegungen, die einen hohen Jerk-Impuls ohne echte Gewichtsübertragung erzeugen. Ohne diese Prüfung kann ein kurzes Streifen des Schwungfußes ein falsches `HARD IMPACT ⚠`-Badge auslösen (Beispiel: 48 g/s Phantom-Trigger bei Sekunde 18, während der Standfuß die volle Last trug).
+
+3. **Pro-Fuß Kadenz-Adaptives Sperrzeitfenster & Alternierungswächter:**
    * **Sperrzeitkonzept:** Das System verwaltet unabhängige Letztschritt-Zeitstempel für jedes Bein (`lastStepTimeLeft` und `lastStepTimeRight`). Wenn ein Schrittkandidat erkannt wird, prüft die Zustandsmaschine, ob die seit dem letzten Schritt *an diesem spezifischen Bein* verstrichene Zeit kleiner als das dynamische Sperrzeitfenster ist.
    * **Kadenz-Adaptives Fenster:** $t_{\text{lockout}} = \text{clamp}(t_{\text{step}} \times 0.55,\ 180\text{ ms},\ 320\text{ ms})$. Bei 120 BPM → 275 ms; bei 160 BPM → 206 ms; bei 200 BPM → 180 ms (Untergrenze).
    * **Alternierungswächter:** Schritte müssen alternieren (`Links → Rechts → Links`). Gleicher Fuß zweimal ohne Gegenfuß-Kontakt dazwischen wird als Artefakt verworfen.
-   * **Globaler Cross-Fuß-Lockout (130 ms):** Jeder Schrittauslöser — unabhängig vom Fuß — wird verworfen, wenn er innerhalb von 130 ms nach dem letzten bestätigten Schritt eintrifft. Dieser übergreifende Lockout verhindert False-Trigger des ruhenden Fußes (~1,00 g Oszillation) kurz nach einem echten Schritt: Das per-Fuß-Sperrzeitfenster des Gegenfußes ist veraltet und würde ihn nicht blockieren. `lastStepTimestamp` wird bei jedem bestätigten Schritt aktualisiert und gilt für beide Füße.
+   * **Globaler Cross-Fuß-Lockout (130 ms):** Jeder Schrittauslöser — unabhängig vom Fuß — wird verworfen, wenn er innerhalb von 130 ms nach dem letzten bestätigten Schritt eintrifft. Dieser übergreifende Lockout verhindert False-Trigger des ruhenden Fußes (~0,95–0,97 g Oszillation) kurz nach einem echten Schritt: Das per-Fuß-Sperrzeitfenster des Gegenfußes ist veraltet und würde ihn nicht blockieren. `lastStepTimestamp` wird bei jedem bestätigten Schritt aktualisiert und gilt für beide Füße.
 
 ---
 
@@ -417,6 +426,8 @@ Das Solo-Training-Dashboard ist für die mobile Browser-Nutzung optimiert (Table
   * `📐 ZERO`: Kalibriert statische Neigungswinkel beider Füße neu.
   * `🔊 Audio`: Schaltet synthetische Web-Audio-API-Biofeedback-Töne EIN/AUS.
 
+> 📸 **[Screenshot: Solo-Dashboard mit aktivem Kamera-HUD — halbtransparente Datenkarten überlagern die Live-Körperansicht im Querformat]**
+
 ---
 
 ## 6. Becken-Metriken (Solo-Dashboard)
@@ -426,6 +437,8 @@ Wenn der Beckensensor (ID 4) verbunden ist, zeigt das Solo-Dashboard sechs zusä
 ### gYaw-Kurve im Live-Abroll-Dynamik-Graphen
 
 Eine **gestrichelte gelbe Linie** im Live-Abroll-Dynamik-Graphen zeigt die gemessene Hüftgier-Rate (`pYaw` des Beckensensors), auf den gleichen Anzeigebereich wie die Fußneigungskurven skaliert. Die Kurve ist sichtbar, sobald der Beckensensor verbunden ist, und gibt in Echtzeit Aufschluss darüber, wie das Hüftrotations-Timing mit den Fußabroll-Ereignissen zusammenfällt.
+
+> 📸 **[Screenshot: Abroll-Dynamik-Graph mit linker (Cyan) und rechter (Magenta) Fußneigungskurve sowie übergelagerter gestrichelter gelber Hüftgier-Kurve]**
 
 ### Hip Activation (Hüftaktivierung)
 
@@ -530,6 +543,8 @@ $$\text{score} = \text{decelScore} \times 0{,}35 + \text{yawDampScore} \times 0{
 | ANCHORED | score ≥ 60 | Grün |
 | SETTLING | score ≥ 30 | Gelb |
 | UNSTABLE | score < 30 | Rot |
+
+> 📸 **[Screenshot: Beckenkarte mit Anchor-Settle-Badge und numerischem Score (z. B. ANCHORED 74) in Grün nach einem Rückwärts-Ankerschritt]**
 
 ### Hip Settle (Hüft-Einschwingen)
 

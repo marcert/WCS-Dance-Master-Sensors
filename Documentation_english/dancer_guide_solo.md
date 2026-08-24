@@ -42,6 +42,8 @@ In landscape mode the screen is divided into two columns:
 - **Bottom-right**: Last Step card (your primary real-time feedback).
 - **Bottom-centre**: Roll-off Symmetry & Smoothness card.
 
+> 📸 **[Screenshot: Solo Dashboard in landscape mode showing the two-column card layout with camera feed visible in the background]**
+
 ---
 
 ## 3. Choosing Your Training Level
@@ -57,6 +59,8 @@ The **`👤 BEG`** button in the top-right corner of the header cycles through t
 Cards that are not relevant for your level are hidden, giving the camera maximum screen space.
 
 > **Note:** These levels describe the **complexity of feedback shown on screen** — they have nothing to do with your WSDC competition division. A Champion-level dancer starting a new drill should use `👤 BEG` to focus on one thing at a time. An absolute newcomer drilling something specific may benefit from switching to `🏃 INT`. Choose the level that matches what you are currently working on, not your competition résumé.
+
+> 📸 **[Screenshot: Header bar close-up showing the level selector button cycling through BEG (green), INT (orange), and ADV (purple) states]**
 
 ### Beginner view
 
@@ -136,6 +140,8 @@ Use the camera view to check actual direction when the direction badge shows —
 - **Bar past yellow + 1200 Hz click** → `HEEL SLAM ⚠`, `TOE JAM ⚠`, or `HARD IMPACT ⚠` badge — hard landing. Bend the knee on contact and absorb with the ankle.
 - **Full red bar + 500 Hz click** → extreme impact (> 30 g/s) — separate alert from the badge system.
 
+> 📸 **[Screenshot: Step Badge card showing a HEEL STRIKE ✓ result with low Jerk bar, direction badge, and theta angle visible]**
+
 ---
 
 ## 5. Push-Off & Loading Badges
@@ -199,6 +205,8 @@ Visible from **Intermediate** level. This card tells you how long both feet are 
 
 Watch this card during **triple steps and walks**. `HECTIC` on an anchor step often means you are rushing out of the anchor before building connection.
 
+> 📸 **[Screenshot: Double Stance Overlap card showing OPTIMAL ROLL badge with the overlap percentage displayed]**
+
 ---
 
 ## 7. The Roll-off Symmetry & Smoothness Card
@@ -249,6 +257,8 @@ If `aZ` is far from +0.95 (e.g. near 0 or negative), the sensor is not mounted c
 | **Vertical Bounce** | INT+ | How much vertical movement the pelvis generates |
 | **Anchor Settle** | ADV | Quality of the pelvis settle in the 500 ms after each anchor step |
 | **Hip Settle** | ADV | Whether the pelvis shifts into the standing hip after each anchor step (lateral tilt) |
+
+> 📸 **[Screenshot: Pelvis card in the top-left slot showing all badge rows (Hip Activation through Anchor Settle) with sensor active]**
 
 ---
 
@@ -338,7 +348,7 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 
 > **Note:** "Settling into the hip" is a stylistic element — some teaching styles emphasise it strongly, others less so. In WCS, the lateral pelvic movement is intentionally subtler than in Latin dance: the goal is a "grounded arrival", not a visible swing. This badge provides information, not a verdict. If your teacher does not want a lateral settle, disregard this badge.
 >
-> **Thresholds (0.05 / 0.10 / 0.30 g):** These values are initial estimates, not yet validated against real dance data. Thresholds can be adjusted after a first test session with the pelvis sensor.
+> **Thresholds (0.05 / 0.10 / 0.30 g):** These values are based on biomechanical reference data and can be adjusted after a first test session with the pelvis sensor.
 
 ---
 

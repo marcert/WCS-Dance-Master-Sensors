@@ -127,11 +127,22 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         .p-blue   { background: rgba(10,20,70,0.9)  !important; color: #42a5f5 !important; }
         .p-purple { background: rgba(40,10,70,0.9)  !important; color: #ba68c8 !important; }
         #zero-btn { background-color: rgba(100,100,30,0.35); }
+
+        /* Battery warning overlay */
+        #battWarnDiv {
+            display: none; position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+            background: rgba(180,0,0,0.92); color: #fff; font-weight: bold;
+            font-size: min(3.5vw, 14px); padding: 5px 14px; border-radius: 20px;
+            z-index: 9999; pointer-events: none; white-space: nowrap;
+            animation: battBlink 0.8s infinite;
+        }
+        @keyframes battBlink { 0%,100%{opacity:1} 50%{opacity:0.15} }
     </style>
 </head>
 <body>
 
     <video id="camera-feed" autoplay playsinline></video>
+    <div id="battWarnDiv">⚡ AKKU SCHWACH</div>
 
     <div id="header-container">
         <div id="wert">0 g</div>
@@ -484,6 +495,18 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 targetPYaw = data.pYaw ?? 0;
                 targetPAx  = data.pAx  ?? 0;
 
+                // Battery warning: blinking overlay if any active sensor ≤ 20%
+                { const BATT_WARN = 20;
+                  let warns = [];
+                  if ((data.mBatt??0) > 0 && data.mBatt <= BATT_WARN) warns.push('Master ' + data.mBatt + '%');
+                  if (targetLOk  && (data.lBatt??0) > 0 && data.lBatt <= BATT_WARN) warns.push('L ' + data.lBatt + '%');
+                  if (targetROk  && (data.rBatt??0) > 0 && data.rBatt <= BATT_WARN) warns.push('R ' + data.rBatt + '%');
+                  if (targetPOk  && (data.pBatt??0) > 0 && data.pBatt <= BATT_WARN) warns.push('Pelvis ' + data.pBatt + '%');
+                  if (targetHOk  && (data.hBatt??0) > 0 && data.hBatt <= BATT_WARN) warns.push('Hand ' + data.hBatt + '%');
+                  let wDiv = document.getElementById('battWarnDiv');
+                  if (wDiv) { if (warns.length) { wDiv.innerText = '⚡ AKKU SCHWACH: ' + warns.join(' · '); wDiv.style.display = 'block'; } else { wDiv.style.display = 'none'; } }
+                }
+
                 setTimeout(fetchSensorData, intervalMs);
             })
             .catch(err => {
@@ -617,13 +640,18 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         // Step trigger (same thresholds as solo.h)
         let preJerkL_s = Math.abs(aZL_s - prevAzLeft)  / 0.005;
         let preJerkR_s = Math.abs(aZR_s - prevAzRight) / 0.005;
-        let leftSig  = targetLOk && (Math.abs(aZL_s) > 1.00 || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
-        let rightSig = targetROk && (Math.abs(aZR_s) > 1.00 || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
+        let aZThr_s = stepDurationMs > 800 ? 0.95 : 0.97;
+        let leftSig  = targetLOk && ((Math.abs(aZL_s) > aZThr_s && preJerkL_s > 2.0) || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
+        let rightSig = targetROk && ((Math.abs(aZR_s) > aZThr_s && preJerkR_s > 2.0) || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
         if (cfWarmupFrames > 0) { leftSig = false; rightSig = false; }
         let detFoot = null;
         if      (leftSig && rightSig) detFoot = (Math.abs(aZL_s) >= Math.abs(aZR_s)) ? "L" : "R";
         else if (leftSig)  detFoot = "L";
         else if (rightSig) detFoot = "R";
+
+        // Opposing-foot plausibility: suppress brush/scuff phantom triggers.
+        if (detFoot === "L" && Math.abs(aZR_s) > 1.1 && Math.abs(aZL_s) < 0.90) detFoot = null;
+        if (detFoot === "R" && Math.abs(aZL_s) > 1.1 && Math.abs(aZR_s) < 0.90) detFoot = null;
 
         // Lockout + alternation guard (same as solo.h)
         let lockMs = Math.max(180, Math.min(320, stepDurationMs * 0.55));

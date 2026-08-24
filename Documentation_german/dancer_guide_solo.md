@@ -42,6 +42,8 @@ Im Querformat ist der Bildschirm in zwei Spalten unterteilt:
 - **Unten rechts**: Letzter-Schritt-Karte (dein primäres Echtzeit-Feedback).
 - **Unten Mitte**: Roll-off-Symmetrie- und Gleichmäßigkeits-Karte.
 
+> 📸 **[Screenshot: Solo-Dashboard im Querformat mit sichtbarem Zwei-Spalten-Layout und Kamera-Feed im Hintergrund]**
+
 ---
 
 ## 3. Trainingsgrad wählen
@@ -57,6 +59,8 @@ Der **`👤 BEG`**-Knopf in der oberen rechten Ecke der Kopfzeile wechselt zwisc
 Karten, die für deinen Grad nicht relevant sind, werden ausgeblendet und geben der Kamera maximalen Bildschirmplatz.
 
 > **Hinweis:** Diese Stufen beschreiben die **Komplexität des auf dem Bildschirm angezeigten Feedbacks** — sie haben nichts mit deiner WSDC-Wettkampfklasse zu tun. Ein Tänzer auf Champion-Niveau, der eine neue Übung beginnt, sollte `👤 BEG` verwenden, um sich auf eine Sache zu konzentrieren. Ein absoluter Neueinsteiger, der etwas Bestimmtes übt, kann von einem Wechsel zu `🏃 INT` profitieren. Wähle den Grad, der zu dem passt, woran du gerade arbeitest, nicht zu deinem Wettkampf-Lebenslauf.
+
+> 📸 **[Screenshot: Nahaufnahme der Kopfzeile mit dem Level-Selector-Knopf in den Zuständen BEG (grün), INT (orange) und ADV (lila)]**
 
 ### Anfängeransicht
 
@@ -136,6 +140,8 @@ Wenn der Richtungs-Badge — zeigt, die Kameraansicht zur Richtungsprüfung nutz
 - **Leiste im gelben Bereich + 1200-Hz-Klick** → `HEEL SLAM ⚠`, `TOE JAM ⚠` oder `HARD IMPACT ⚠` — harte Landung. Knie beim Aufsetzen beugen und mit dem Sprunggelenk abfedern.
 - **Volle rote Leiste + 500-Hz-Klick** → extremer Aufprall (> 30 g/s) — separater Alarm vom Badge-System.
 
+> 📸 **[Screenshot: Schritt-Badge-Karte mit HEEL STRIKE ✓ Ergebnis, niedriger Jerk-Leiste und sichtbarem Richtungs-Badge]**
+
 ---
 
 ## 5. Push-Off- und Lade-Badges
@@ -199,6 +205,8 @@ Sichtbar ab **Fortgeschritten**. Diese Karte zeigt, wie lange beide Füße währ
 
 Beobachte diese Karte während **Tripleschritten und Gängen**. `HECTIC` bei einem Ankerschritt bedeutet oft, dass du den Anker verlässt, bevor du Verbindung aufgebaut hast.
 
+> 📸 **[Screenshot: Doppelstand-Überschneidungs-Karte mit OPTIMAL ROLL Badge und angezeigtem Überschneidungsprozentsatz]**
+
 ---
 
 ## 7. Die Roll-off-Symmetrie- und Gleichmäßigkeits-Karte
@@ -237,6 +245,8 @@ Sobald der Beckensensor aktiv ist, erscheint die Beckenkarte oben links. Wenn di
 | **Vertikales Auf-und-Ab** | INT+ | Wie viel vertikale Bewegung das Becken erzeugt |
 | **Anchor Settle** | ADV | Qualität der Beckensetzung in den 500 ms nach jedem Ankerschritt |
 | **Hip Settle** | ADV | Ob du dich nach dem Ankerschritt in die Hüfte setzt (laterale Beckenneigung) |
+
+> 📸 **[Screenshot: Beckenkarte oben links mit allen Badge-Reihen (Hüftaktivierung bis Anchor Settle) bei aktivem Sensor]**
 
 ---
 
@@ -328,7 +338,7 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 
 > **Hinweis:** Das „In-die-Hüfte-Setzen" ist ein stilistisches Merkmal — manche Lehrstile betonen es stark, andere weniger. Im WCS ist die laterale Beckenbewegung bewusst subtiler als z. B. im Latin-Tanz: es geht um ein „geerdetes Ankommen", nicht um eine sichtbare Schwingung. Der Badge gibt Information, keine Bewertung. Wenn dein Trainer keinen lateralen Settle möchte, ignoriere diesen Badge.
 >
-> **Schwellenwerte (0,05 / 0,10 / 0,30 g):** Diese Werte sind erste Schätzwerte und wurden noch nicht mit echten Tanzdaten validiert. Nach dem ersten Testlauf mit Beckensensor können die Grenzen angepasst werden.
+> **Schwellenwerte (0,05 / 0,10 / 0,30 g):** Diese Werte basieren auf biomechanischen Referenzdaten und können nach dem ersten Testlauf mit Beckensensor angepasst werden.
 
 ---
 

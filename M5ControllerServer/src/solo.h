@@ -271,11 +271,22 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         @media (orientation: landscape) {
             #pelvicCard { grid-column: 1; grid-row: 1; }
         }
+
+        /* Battery warning overlay */
+        #battWarnDiv {
+            display: none; position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+            background: rgba(180,0,0,0.92); color: #fff; font-weight: bold;
+            font-size: min(3.5vw, 14px); padding: 5px 14px; border-radius: 20px;
+            z-index: 9999; pointer-events: none; white-space: nowrap;
+            animation: battBlink 0.8s infinite;
+        }
+        @keyframes battBlink { 0%,100%{opacity:1} 50%{opacity:0.15} }
     </style>
 </head>
 <body>
 
         <video id="camera-feed" autoplay playsinline></video>
+        <div id="battWarnDiv">⚡ AKKU SCHWACH</div>
 
                 <header>
             <h1>🕺 WCS Solo-Training Dashboard</h1>
@@ -287,6 +298,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
                 <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
                 <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5); display:none;" onclick="toggleDebug()">🔍 DBG</button>
+                <span id="phantomCntBadge" style="font-size:min(3.2vw,13px);color:#aaa;padding:3px 8px;background:rgba(0,0,0,0.5);border-radius:10px;align-self:center;font-weight:bold;">🛡 0</span>
             </div>
         </header>
 
@@ -405,7 +417,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <span id="dirBadge" class="badge" style="background:#30363d; font-size:0.85rem;">➡️ FORWARD</span>
+                        <span id="dirBadge" class="badge" style="background:#30363d; font-size:0.85rem; white-space:nowrap;">—</span>
                         <div class="jerk-section" style="text-align: right; font-size: 0.9rem; color: #8b949e;">
                             Impact Jerk: <strong id="jerkVal" style="color:#fff;">0</strong> g/s
                         </div>
@@ -571,10 +583,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let dsEpisodeStart = 0, dsEpisodeActive = false;
         let lastCompletedDsMs = 0, dsEpisodeEndTime = 0;
         let dsEpisodeGated = false; // true after timeout fires — blocks restart until next step clears it
-        let peakDsThisStep = 0;    // v20 max-hold: max DS episode ms since last step event
+        let peakDsThisStep = 0;    // max DS episode ms since last step event
         let lastStepTimestamp = Date.now();
         let stepDurationMs = 500; // Standard 500ms ~= 120 BPM
         let prevLeftOk = true, prevRightOk = true; // for sensor-lost alert
+        let phantomSuppressCount = 0; // counts triggers suppressed by opposing-foot plausibility check
         // -- delay ramp monitor (tempo-normalised weight transfer timing) --
         let delayMonActive = false, delayMonFoot = null, delayMonDir = null;
         let delayMonStartTime = 0, delayMonConsec = 0;
@@ -686,6 +699,18 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let rightOk  = data.rOk === true;
                     let pelvicOk = data.pOk === true;
 
+                    // Battery warning: show blinking overlay if any active sensor ≤ 20%
+                    { const BATT_WARN = 20;
+                      let warns = [];
+                      if ((data.mBatt??0) > 0 && data.mBatt <= BATT_WARN) warns.push('Master ' + data.mBatt + '%');
+                      if (leftOk  && (data.lBatt??0) > 0 && data.lBatt <= BATT_WARN) warns.push('L ' + data.lBatt + '%');
+                      if (rightOk && (data.rBatt??0) > 0 && data.rBatt <= BATT_WARN) warns.push('R ' + data.rBatt + '%');
+                      if (pelvicOk&& (data.pBatt??0) > 0 && data.pBatt <= BATT_WARN) warns.push('Pelvis ' + data.pBatt + '%');
+                      if (data.hOk && (data.hBatt??0) > 0 && data.hBatt <= BATT_WARN) warns.push('Hand ' + data.hBatt + '%');
+                      let wDiv = document.getElementById('battWarnDiv');
+                      if (wDiv) { if (warns.length) { wDiv.innerText = '⚡ AKKU SCHWACH: ' + warns.join(' · '); wDiv.style.display = 'block'; } else { wDiv.style.display = 'none'; } }
+                    }
+
                     // Sensor-lost alert: play descending tone on offline transition
                     if (!leftOk  && prevLeftOk)  playLostAlert();
                     if (!rightOk && prevRightOk) playLostAlert();
@@ -715,9 +740,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                     // Complementary filter: gyro integration for short-term dynamics,
                     // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction).
-                    // α=0.94 (τ≈78ms) validated. Impact-gated variants tested and reverted:
-                    // α=0.985 compressed dθ; magnitude gate (0.3g/0.6g) fired during swing phase (1.5–2.5g),
-                    // both corrupting the T-8→T-1 dθ window. T-1 snapshot + angle reset at trigger already
+                    // α=0.94 (τ≈78ms). Impact-gated variants (α=0.985 / magnitude gate 0.3g/0.6g) both
+                    // corrupted the T-8→T-1 dθ window — α=0.985 compressed dθ; magnitude gate fired during
+                    // swing phase (1.5–2.5g). T-1 snapshot + angle reset at trigger already
                     // protect θ from impact corruption — no additional gate needed.
                     const CF_ALPHA = 0.94;
                     // Left sensor aY is physically inverted: negate aYL so heel-down gives positive angle
@@ -884,11 +909,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 // liftoff/rotation ghosts that have high gyro but no vertical impact signature.
                                                                                 let preJerkL = Math.abs(aZL - prevAccelZLeft)  / 0.005;
                                                                                 let preJerkR = Math.abs(aZR - prevAccelZRight) / 0.005;
-                                                                                // Step trigger v18: aZ lowered 1.08→1.00g — soft walk-backs (Count 1/2) had peaks 1.01–1.07g and were missed.
-                                                                                // v23 preJerk filter reverted (v24): preJerkL > 4 caused missed steps → inflated stepDurationMs → DS% halved.
+                                                                                // Step trigger: tempo-adaptive threshold — slow practice (stepDurationMs>800ms, <75 BPM) uses 0.95g
+                                                                                // to capture soft weight transfers; dance tempo uses 0.97g to suppress brush artefacts.
+                                                                                // preJerk>2.0 gate on aZ path suppresses stance-foot drift (preJerk~0.5–2); real impacts have preJerk>5.
                                                                                 // Lockout (180–320 ms) + alternation guard remain the false-trigger protection.
-                                                                                let leftSignal  = leftOk  && (Math.abs(aZL) > 1.00 || (Math.abs(gPitchL) > 80 && preJerkL > 8));
-                                                                                let rightSignal = rightOk && (Math.abs(aZR) > 1.00 || (Math.abs(gPitchR) > 80 && preJerkR > 8));
+                                                                                let aZThr = stepDurationMs > 800 ? 0.95 : 0.97;
+                                                                                let leftSignal  = leftOk  && ((Math.abs(aZL) > aZThr && preJerkL > 2.0) || (Math.abs(gPitchL) > 80 && preJerkL > 8));
+                                                                                let rightSignal = rightOk && ((Math.abs(aZR) > aZThr && preJerkR > 2.0) || (Math.abs(gPitchR) > 80 && preJerkR > 8));
                                                                                 if (cfWarmupFrames > 0) { leftSignal = false; rightSignal = false; }
 
                                                                                 let detectedFoot = null;
@@ -904,7 +931,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     detectedFoot = "R";
                                                                                 }
 
-                                                                                // v25 Global lockout: reject any trigger within 130 ms of the last confirmed step.
+                                                                                // Opposing-foot plausibility: suppress brush/scuff phantom triggers.
+                                                                                // Stance foot clearly loaded (>1.1g) while detected foot is unloaded (<0.90g) → no real weight transfer.
+                                                                                if (detectedFoot === "L" && Math.abs(aZR) > 1.1 && Math.abs(aZL) < 0.90) { detectedFoot = null; phantomSuppressCount++; document.getElementById('phantomCntBadge').innerText = '🛡 ' + phantomSuppressCount; }
+                                                                                if (detectedFoot === "R" && Math.abs(aZL) > 1.1 && Math.abs(aZR) < 0.90) { detectedFoot = null; phantomSuppressCount++; document.getElementById('phantomCntBadge').innerText = '🛡 ' + phantomSuppressCount; }
+
+                                                                                // Global lockout: reject any trigger within 130 ms of the last confirmed step.
                                                                                 // Per-foot lockout misses the case where the OPPOSITE foot false-triggers shortly after a
                                                                                 // real step (e.g. R oscillates at ~1.0g and triggers 70 ms after real L: lastStepTimeRight
                                                                                 // is stale, per-foot lockout does not block it). lastStepTimestamp is updated on every
@@ -1019,10 +1051,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                 // Determine step duration t_step since last step; update cadence estimate for lockout
                         let currentStepDuration = Math.max(200, Math.min(1500, now - lastStepTimestamp));
                         lastStepTimestamp = now;
-                        // v19: EMA smooth — prevents single anomalous interval from corrupting DS% denominator.
-                        // v25: α raised 0.40→0.55 (new sample weight) — faster convergence on tempo changes (v24 analysis: 2 opening rows showed −16% from stale EMA).
+                        // EMA smooth — prevents single anomalous interval from corrupting DS% denominator.
+                        // α=0.55 (new sample weight) — fast convergence on tempo changes.
                         stepDurationMs = Math.round(stepDurationMs * 0.45 + currentStepDuration * 0.55);
-                        // v19: reset both landedAt — timed-exit clock starts fresh for both feet from the step event.
+                        // Reset both landedAt — timed-exit clock starts fresh for both feet from the step event.
                         leftLandedAt = now; rightLandedAt = now;
 
                         let dirBadge = document.getElementById('dirBadge');
@@ -1066,10 +1098,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                                 // Direction badge: reliable only at θ-zone extremes
                                                 if (activeTheta >= 8) {
-                                                    dirBadge.innerText = "➡️ FORWARD";
+                                                    dirBadge.innerText = "➡ FWD";
                                                     dirBadge.style.background = "#1f6beb";
                                                 } else if (activeTheta < -8) {
-                                                    dirBadge.innerText = "⬅️ BACK";
+                                                    dirBadge.innerText = "⬅ BWD";
                                                     dirBadge.style.background = "#a371f7";
                                                 } else {
                                                     dirBadge.innerText = "—";
@@ -1139,6 +1171,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             anchorWindowMs     = Math.min(500, Math.max(280, stepDurationMs));
                             let bh = document.getElementById('ballHeelBadge');
                             if (bh) { bh.className = 'badge'; bh.style.cssText = 'background:#1e272e;color:#8b949e;'; bh.innerText = 'MEASURING...'; }
+                            // Cancel any running forward progression — its result would be stale on a backward step
+                            heelBallActive = false;
+                            let hb2 = document.getElementById('heelBallBadge');
+                            if (hb2) { hb2.className = 'badge'; hb2.style.cssText = 'background:#1e272e;color:#8b949e;'; hb2.innerText = '— HEEL→BALL'; }
                         }
 
                         // Heel-to-Ball progression — always triggered on forward step
@@ -1150,6 +1186,20 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             heelBallSamples  = [];
                             let hb = document.getElementById('heelBallBadge');
                             if (hb) { hb.className = 'badge'; hb.style.cssText = 'background:#1e272e;color:#8b949e;'; hb.innerText = 'MEASURING...'; }
+                            // Cancel any running backward progression — prevents BALL ONLY from a previous step overwriting this badge
+                            anchorThetaActive = false;
+                            let bh2 = document.getElementById('ballHeelBadge');
+                            if (bh2) { bh2.className = 'badge'; bh2.style.cssText = 'background:#1e272e;color:#8b949e;'; bh2.innerText = '— BALL→HEEL'; }
+                        }
+
+                        // Ambiguous step — clear both progression badges (neither branch is meaningful)
+                        if (activeDirection === "AMBIGUOUS") {
+                            anchorThetaActive = false;
+                            heelBallActive    = false;
+                            let bh = document.getElementById('ballHeelBadge');
+                            if (bh) { bh.className = 'badge'; bh.style.cssText = 'background:#1e272e;color:#8b949e;'; bh.innerText = '— BALL→HEEL'; }
+                            let hb = document.getElementById('heelBallBadge');
+                            if (hb) { hb.className = 'badge'; hb.style.cssText = 'background:#1e272e;color:#8b949e;'; hb.innerText = '— HEEL→BALL'; }
                         }
 
                         // Visuelles Aufblinken der Kachel bei jedem erkannten Schritt
@@ -1182,13 +1232,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         // across multiple steps (v12 fix for bimodal 0%/800%+ failure from v11).
                         if (dsEpisodeActive) {
                             lastCompletedDsMs = Math.min(now - dsEpisodeStart, stepDurationMs);
-                            peakDsThisStep = Math.max(peakDsThisStep, lastCompletedDsMs); // v20 max-hold
+                            peakDsThisStep = Math.max(peakDsThisStep, lastCompletedDsMs);
                             dsEpisodeEndTime = now;
                             dsEpisodeActive = false;
                         }
                         dsEpisodeGated = false; // clear timeout gate — episode may start fresh after this step
 
-                        // v20 max-hold: use peak DS reached in this step interval (prevents overwrite by later short episode).
+                        // Max-hold: use peak DS reached in this step interval (prevents overwrite by later short episode).
                         let stanceRatio = Math.round((peakDsThisStep / stepDurationMs) * 100);
                         document.getElementById('doubleStanceVal').innerText = Math.round(peakDsThisStep) + " ms";
                         document.getElementById('stanceRatioVal').innerText = "(" + stanceRatio + "%)";
@@ -1207,8 +1257,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     }
 
                     // 3. Stance-Phasen & Überlappung — offline sensors never count as grounded
-                    // Hysteresis (v23): entry >0.65g, exit <exitAZ OR |gPitch|>80 OR |gRoll|>80.
-                    // v20: gyro exit raised 40→60°/s; v23: raised 60→80°/s — normal push-off roll hits 60–75°/s,
+                    // Hysteresis: entry >0.65g, exit <exitAZ OR |gPitch|>80 OR |gRoll|>80.
+                    // Gyro exit at 80°/s — normal push-off roll hits 60–75°/s,
                     // so 60°/s was still causing premature ○ at Count 4 / Count 1 (H1 confirmed in v22 analysis).
                     // v26 tested 90°/s but reverted: exits in practice happen via aZ path (heel unload), not gyro.
                     let minGnd = Math.max(150, Math.min(300, stepDurationMs * 0.4));
@@ -1216,7 +1266,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let exitAZR = (Math.abs(aZL) > 0.75) ? 0.48 : 0.45;
                     if (leftOk)  { if (Math.abs(aZL) > 0.65) { if (!leftWasOnGround)  leftLandedAt  = now; leftWasOnGround  = true; } else if ((Math.abs(aZL) < exitAZL || Math.abs(gPitchL) > 80 || Math.abs(gRollL) > 80) && (now - leftLandedAt)  > minGnd) leftWasOnGround  = false; } else { leftWasOnGround  = false; leftLandedAt  = 0; }
                     if (rightOk) { if (Math.abs(aZR) > 0.65) { if (!rightWasOnGround) rightLandedAt = now; rightWasOnGround = true; } else if ((Math.abs(aZR) < exitAZR || Math.abs(gPitchR) > 80 || Math.abs(gRollR) > 80) && (now - rightLandedAt) > minGnd) rightWasOnGround = false; } else { rightWasOnGround = false; rightLandedAt = 0; }
-                    // v19 Timed exit: if a foot has been ● for >75% of step interval since last step event, force ○.
+                    // Timed exit: if a foot has been ● for >75% of step interval since last step event, force ○.
                     // Handles aZR 0.50–0.85g "stuck ●" that bypasses both the aZ-exit (< 0.40g) and gyro-exit thresholds.
                     let maxGndMs = Math.max(350, Math.min(600, stepDurationMs * 0.75));
                     if (leftWasOnGround  && (now - leftLandedAt)  > maxGndMs) leftWasOnGround  = false;
@@ -1318,7 +1368,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 let badge  = document.getElementById('strikeBadge');
                                 let dirBdg = document.getElementById('dirBadge');
                                 if (badge)  { badge.className = "badge badge-green"; badge.style.cssText = ""; badge.innerText = "BRUSH+HEEL"; }
-                                if (dirBdg) { dirBdg.innerText = "➡️ FORWARD"; dirBdg.style.background = "#1f6beb"; }
+                                if (dirBdg) { dirBdg.innerText = "➡ FWD"; dirBdg.style.background = "#1f6beb"; }
                             }
                         } else {
                             brushPending = false; // window expired — keep current quality badge
@@ -1438,7 +1488,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let maxDsMs = Math.max(100, stepDurationMs * 0.38);
                     if (dsEpisodeActive && (now - dsEpisodeStart) > maxDsMs) {
                         lastCompletedDsMs = maxDsMs;
-                        peakDsThisStep = Math.max(peakDsThisStep, maxDsMs); // v20 max-hold
+                        peakDsThisStep = Math.max(peakDsThisStep, maxDsMs);
                         dsEpisodeEndTime = now;
                         dsEpisodeActive = false;
                         dsEpisodeGated = true; // block restart until next step event

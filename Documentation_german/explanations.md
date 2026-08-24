@@ -20,7 +20,7 @@ Ein **Stampf-Fehler** (vertikaler Cyan/Magenta-Marker) wird ausgelöst, wenn bei
 
 `|accel_z| > ACCEL_MAX`  und  `|gyro_x| < GYRO_MIN`
 
-Die vollständige biomechanische Herleitung dieser Schwellenwerte (Rocker-Modell, Plantarflexionsphasen, empirische Validierung) ist unter [solo_explanations.md](solo_explanations.md) beschrieben.
+Die vollständige biomechanische Herleitung dieser Schwellenwerte (Rocker-Modell, Plantarflexionsphasen, empirische Analyse) ist unter [solo_explanations.md](solo_explanations.md) beschrieben.
 
 ---
 
@@ -76,6 +76,8 @@ Das Frontend stellt Echtzeit-Daten über HTML5-Canvas-Elemente dar, die über `r
         *   **Magenta / Lila:** Rechter Fuß — Aufprall-/Artikulationsfehler.
         *   **Yellow / Orange:** Hand-Jerk / Führungshärte-Spitze.
 
+> 📸 **[Screenshot: Kombiniertes Analyse-Diagramm mit Cyan- und Magenta-Abrollqualitätslinien, gelber Jerk-Kurve und vertikalen Fehler-Markierungen]**
+
 ---
 
 ## 6. Pelvis-Metriken (Partner-Dashboard)
@@ -90,6 +92,8 @@ Wenn der Pelvis-Sensor (`foot_id = 4`) online ist, erscheinen sechs Badge-Metrik
 | **Vertical Bounce** | Varianz der vertikalen Beckenbeschleunigung (Schwerkraft entfernt) über 1 s | < 0,006 → GROUNDED ✅ \| 0,006–0,020 → SLIGHT BOUNCE ⚠ \| > 0,020 → BOUNCY ❌ |
 | **Anchor Settle** | Gewichteter Score (0–100) über tempo-adaptives Fenster nach jedem Rückwärtsschritt | ≥ 60 → ANCHORED ✅ \| 30–59 → SETTLING ⚠ (Score eingeblendet) \| < 30 → UNSTABLE ❌ |
 | **Hip Settle** | Peak der lateralen Beckenbeschleunigung (`earlyLatPeak`) in der ersten Fensterhälfte | > 0,30 g → OVERSWING ⚠ \| 0,10–0,30 g + späte Varianz < 0,015 → HIP SETTLE ✓ ✅ \| 0,05–0,10 g → SLIGHT SETTLE ⚠ \| ≤ 0,05 g → NO HIP SETTLE ❌ |
+
+> 📸 **[Screenshot: Statusleiste im Partner-Dashboard mit allen sechs Becken-Metriken (Hüftaktivierung bis Hip Settle) gleichzeitig aktiv]**
 
 > **Hip Activation — tempoabhängige Schwellenwerte:** Die oben angezeigten Werte (60 °/s / 25 °/s) sind Referenzwerte bei 500 ms/Schritt. Zur Laufzeit skalieren die Schwellenwerte mit dem aktuellen Schrittintervall: `scaleFactor = 500 / max(400, stepDurationMs)`. Effektive Schwellenwerte: ACTIVE ≥ `round(60 × scaleFactor)` °/s, MODERATE ≥ `round(25 × scaleFactor)` °/s. Bei langsamem Tempo (700 ms/Schritt, scaleFactor ≈ 0,71): ACTIVE ≥ 43 °/s, MODERATE ≥ 18 °/s. Bei schnellem Tempo (400 ms/Schritt, scaleFactor = 1,25): ACTIVE ≥ 75 °/s, MODERATE ≥ 31 °/s.
 

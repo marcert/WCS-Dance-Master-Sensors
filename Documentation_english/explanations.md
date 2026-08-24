@@ -20,7 +20,7 @@ A **stomping error** (vertical cyan/magenta marker) fires when both conditions h
 
 `|accel_z| > ACCEL_MAX`  and  `|gyro_x| < GYRO_MIN`
 
-For the full biomechanical derivation (Rocker Model, plantarflexion phases, empirical validation) see [solo_explanations.md](solo_explanations.md).
+For the full biomechanical derivation (Rocker Model, plantarflexion phases, empirical analysis) see [solo_explanations.md](solo_explanations.md).
 
 ---
 
@@ -76,6 +76,8 @@ The frontend renders real-time data using HTML5 Canvas elements updated via `req
         *   **Magenta / Purple:** Right foot impact/articulation error.
         *   **Yellow / Orange:** Hand jerk / lead hardness spike.
 
+> 📸 **[Screenshot: Combined Analysis graph showing cyan and magenta foot-quality lines with a yellow jerk curve and vertical error markers]**
+
 ---
 
 ## 6. Pelvis Metrics (Partner Dashboard)
@@ -90,6 +92,8 @@ When the pelvis sensor (`foot_id = 4`) is online, six badge metrics appear in th
 | **Vertical Bounce** | Variance of vertical pelvic acceleration (gravity removed) over 1 s | < 0.006 → GROUNDED ✅ \| 0.006–0.020 → SLIGHT BOUNCE ⚠ \| > 0.020 → BOUNCY ❌ |
 | **Anchor Settle** | Weighted score (0–100) over a tempo-adaptive window after each backward step | ≥ 60 → ANCHORED ✅ \| 30–59 → SETTLING ⚠ (score shown) \| < 30 → UNSTABLE ❌ |
 | **Hip Settle** | Peak lateral pelvic acceleration (`earlyLatPeak`) in first half of Anchor Settle window | > 0.30 g → OVERSWING ⚠ \| 0.10–0.30 g + late variance < 0.015 → HIP SETTLE ✓ ✅ \| 0.05–0.10 g → SLIGHT SETTLE ⚠ \| ≤ 0.05 g → NO HIP SETTLE ❌ |
+
+> 📸 **[Screenshot: Partner Dashboard status bar showing all six pelvis metric badges (Hip Activation through Hip Settle) simultaneously active]**
 
 > **Hip Activation — tempo-adaptive thresholds:** The 60 °/s / 25 °/s values shown above are reference values at 500 ms/step. At runtime the thresholds scale with the current step interval: `scaleFactor = 500 / max(400, stepDurationMs)`. Effective thresholds: ACTIVE ≥ `round(60 × scaleFactor)` °/s, MODERATE ≥ `round(25 × scaleFactor)` °/s. At slow tempo (700 ms/step, scaleFactor ≈ 0.71): ACTIVE ≥ 43 °/s, MODERATE ≥ 18 °/s. At fast tempo (400 ms/step, scaleFactor = 1.25): ACTIVE ≥ 75 °/s, MODERATE ≥ 31 °/s.
 

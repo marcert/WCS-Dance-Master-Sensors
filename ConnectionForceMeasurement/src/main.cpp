@@ -14,11 +14,12 @@
 
 // --- ESP-NOW DATENSTRUKTUR SENDE-PAKET (HAND / WAAGE) ---
 typedef struct struct_hand_data {
-  uint8_t hand_id; // Immer 3 für Hand
-  float weight;    // Zug/Druck in Gramm/kg
-  float accel_x;   // Beschleunigung X
-  float accel_y;   // Beschleunigung Y
-  float accel_z;   // Beschleunigung Z
+  uint8_t hand_id;       // Immer 3 für Hand
+  float weight;          // Zug/Druck in Gramm/kg
+  float accel_x;         // Beschleunigung X
+  float accel_y;         // Beschleunigung Y
+  float accel_z;         // Beschleunigung Z
+  uint8_t battery_level; // 0–100 %; alle ~5 s aktualisiert, 0 = noch nicht gelesen
 } struct_hand_data;
 
 // --- DATENSTRUKTUR EMPFANGS-PAKET (HANDSHAKE ACK VOM MASTER) ---
@@ -297,10 +298,11 @@ void loop() {
       M5.Display.fillRect(0, 0, 240, 25, BLACK);
     }
 
-    // --- AKKUSTAND ANZEIGEN (alle 5 Sekunden) ---
-  if (millis() - lastBatCheck > 5000 || lastBatCheck == 0) {
+    // --- AKKUSTAND ANZEIGEN (alle 30 Sekunden — gleicher Rhythmus wie Fußsensoren) ---
+  if (millis() - lastBatCheck > 30000 || lastBatCheck == 0) {
     lastBatCheck = millis();
     int batLevel = M5.Power.getBatteryLevel();
+    sendData.battery_level = (uint8_t)batLevel;
 
     uint16_t batColor = GREEN;
     if (batLevel < 20)      batColor = RED;
