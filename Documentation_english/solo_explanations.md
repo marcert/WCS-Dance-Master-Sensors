@@ -309,7 +309,7 @@ The 0.35g lift threshold lies clearly below the normal loaded-foot aZ of ~1.0g w
 
 During a well-executed backward anchor, the foot initially contacts on the ball (negative θ — plantarflexion) and then lowers to the heel as bodyweight settles. The sensor quantifies this progression by tracking foot pitch angle θ through a tempo-adaptive window after every backward step.
 
-**Window:** `anchorWindowMs = clamp(stepDurationMs, 280 ms, 500 ms)` — the same window used by the pelvis Anchor Settle metric; independent of whether the pelvis sensor is connected.
+**Window:** `anchorWindowMs = clamp(stepDurationMs × 1.05, 280 ms, 900 ms)` — tempo-adaptive, independent of the pelvis Anchor Settle metric (which uses a fixed 500 ms gap after the last backward step).
 
 **Calculation:**
 
@@ -490,11 +490,13 @@ The offset is captured at `📐 ZERO` press (dancer stands in neutral dance posi
 
 Evaluates the quality of deceleration and pelvis settling at the end of each backward step — the defining moment where WCS stretch converts into grounded, controlled weight transfer.
 
-**Trigger:** Every confirmed BACKWARD step. Window duration scales with tempo:
+**Trigger:** The first confirmed BACKWARD step in a backward sequence starts fresh sample collection. Each additional backward step (e.g. all three steps of an anchor triple at beats 5–&–6) extends the evaluation deadline without clearing the accumulated samples. Evaluation fires 500 ms after the **last** backward step:
 
-$$\text{anchorWindowMs} = \min(500,\; \max(280,\; \text{stepDurationMs}))$$
+$$t_{\text{eval}} = t_{\text{last BACKWARD step}} + 500\,\text{ms}$$
 
-Samples collected within the window: sagittal pelvis acceleration `aYP` and hip yaw rate `gYawP`.
+This ensures the full anchor triple is captured before scoring, while evaluating promptly once backward movement ends.
+
+Samples collected: sagittal pelvis acceleration `aYP` and hip yaw rate `gYawP`.
 
 **Score composition (scaled 0–100):**
 

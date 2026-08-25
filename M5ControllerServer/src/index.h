@@ -408,7 +408,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let aZPDynHistory  = new Array(50).fill(0);
     let gYawTimedBuf   = [];
     let hipActSmoothed = 0;
-    let anchorSettleActive = false, anchorSettleStartTime = 0, anchorWindowMs = 500;
+    let anchorSettleActive = false, anchorSettleStartTime = 0, anchorSettleLastTrigger = 0, anchorSettleHoldUntil = 0, anchorWindowMs = 500;
     let anchorSettleSamples = { aYP: [], gYawP: [], aLatP: [] };
 
     // -- audio --
@@ -640,7 +640,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         // Step trigger (same thresholds as solo.h)
         let preJerkL_s = Math.abs(aZL_s - prevAzLeft)  / 0.005;
         let preJerkR_s = Math.abs(aZR_s - prevAzRight) / 0.005;
-        let aZThr_s = stepDurationMs > 800 ? 0.95 : 0.97;
+        let aZThr_s = stepDurationMs > 800 ? 0.92 : 0.95;
         let leftSig  = targetLOk && ((Math.abs(aZL_s) > aZThr_s && preJerkL_s > 2.0) || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
         let rightSig = targetROk && ((Math.abs(aZR_s) > aZThr_s && preJerkR_s > 2.0) || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
         if (cfWarmupFrames > 0) { leftSig = false; rightSig = false; }
@@ -696,11 +696,19 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                     else                   { hfEl.className='p-badge p-red';    hfEl.innerText='HIP LAGS'; }
                 }
             }
-            // Anchor Settle trigger (fires on each backward step)
-            if (targetPOk && activeDir === "BACKWARD") {
-                anchorSettleActive = true; anchorSettleStartTime = now;
-                anchorWindowMs = Math.min(500, Math.max(280, stepDurationMs));
-                anchorSettleSamples = { aYP: [], gYawP: [], aLatP: [] };
+            // Anchor Settle — force evaluate when backward phase ends (first non-backward step)
+            if (anchorSettleActive && targetPOk && activeDir !== "BACKWARD") {
+                anchorSettleLastTrigger = 0; // forces evaluation on next setInterval tick
+            }
+
+            // Anchor Settle trigger — start fresh on first backward step, extend deadline on each subsequent one
+            if (targetPOk && activeDir === "BACKWARD" && now >= anchorSettleHoldUntil) {
+                if (!anchorSettleActive) {
+                    anchorSettleActive = true; anchorSettleStartTime = now;
+                    anchorWindowMs = Math.min(500, Math.max(280, stepDurationMs));
+                    anchorSettleSamples = { aYP: [], gYawP: [], aLatP: [] };
+                }
+                anchorSettleLastTrigger = now;
                 let ab = document.getElementById('p-anchorBadge');
                 if (ab) { ab.className='p-badge'; ab.innerText='MEASURING...'; }
                 let hse0 = document.getElementById('p-hipSettleBadge');
@@ -817,7 +825,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 anchorSettleSamples.aYP.push(aYP_p);
                 anchorSettleSamples.gYawP.push(Math.abs(gYawP_p));
                 anchorSettleSamples.aLatP.push(aXP_p);
-                if (now - anchorSettleStartTime >= anchorWindowMs) {
+                if (now - anchorSettleLastTrigger >= anchorWindowMs) {
                     anchorSettleActive = false;
                     let n = anchorSettleSamples.aYP.length;
                     if (n >= 8) {
@@ -853,6 +861,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                             else if (earlyLatPeak > 0.05)                           { hse.className='p-badge p-yellow'; hse.innerText='SLIGHT SETTLE'; }
                             else                                                     { hse.className='p-badge p-red';    hse.innerText='NO HIP SETTLE'; }
                         }
+                        anchorSettleHoldUntil = now + 2000;
                     }
                 }
             }

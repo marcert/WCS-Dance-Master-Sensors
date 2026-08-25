@@ -340,7 +340,7 @@ Der 0,35g-Schwellenwert liegt klar unterhalb des normalen belasteten Fuß-aZ von
 
 Bei einem gut ausgeführten Rückwärts-Anker setzt der Fuß zunächst auf dem Ballen auf (θ negativ — Plantarflexion) und senkt sich dann zur Ferse, während das Körpergewicht einsinkt. Der Sensor quantifiziert diese Progression durch Tracking des Fußneigungswinkels θ während eines tempoadaptiven Fensters nach jedem Rückwärtsschritt.
 
-**Fenster:** `anchorWindowMs = clamp(stepDurationMs, 280 ms, 500 ms)` — dasselbe Fenster wie beim Becken-Anchor-Settle; unabhängig davon, ob der Beckensensor angeschlossen ist.
+**Fenster:** `anchorWindowMs = clamp(stepDurationMs × 1,05; 280 ms; 900 ms)` — tempoadaptiv, unabhängig vom Becken-Anchor-Settle (der einen festen 500-ms-Abstand nach dem letzten Rückwärtsschritt verwendet).
 
 **Berechnung:**
 
@@ -524,11 +524,13 @@ Der Offset wird beim Drücken von `📐 ZERO` erfasst (Tänzer steht in neutrale
 
 Bewertet die Qualität des Abbremsens und Einschwingens des Beckens nach jedem Rückwärtsschritt — der entscheidende Moment, in dem WCS-Dehnung in geerdet kontrollierten Gewichtstransfer umgewandelt wird.
 
-**Auslöser:** Jeder bestätigte BACKWARD-Schritt. Fensterdauer skaliert mit dem Tempo:
+**Auslöser:** Der erste bestätigte BACKWARD-Schritt einer Rückwärtssequenz startet frische Stichprobensammlung. Jeder weitere Rückwärtsschritt (z. B. alle drei Schritte des Anchor-Triples auf Zählung 5–&–6) verlängert die Auswertungsdeadline, ohne die Stichproben zu löschen. Die Auswertung feuert 500 ms nach dem **letzten** Rückwärtsschritt:
 
-$$\text{anchorWindowMs} = \min(500,\; \max(280,\; \text{stepDurationMs}))$$
+$$t_{\text{eval}} = t_{\text{letzter BACKWARD-Schritt}} + 500\,\text{ms}$$
 
-Im Fenster gesammelte Signale: sagittale Beckenbeschleunigung `aYP` und Hüftgier-Rate `gYawP`.
+Dadurch wird das vollständige Anchor-Triple erfasst, bevor der Score berechnet wird, während die Auswertung nach Ende der Rückwärtsbewegung prompt erfolgt.
+
+Gesammelte Signale: sagittale Beckenbeschleunigung `aYP` und Hüftgier-Rate `gYawP`.
 
 **Score-Zusammensetzung (skaliert 0–100):**
 
