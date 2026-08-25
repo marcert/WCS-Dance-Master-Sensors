@@ -93,7 +93,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
         /* METRICS & GAUGES */
         .metric-value { font-size: 2rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 6px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: 6px; text-shadow: 0 1px 3px rgba(0,0,0,0.9); white-space: nowrap; }
         .badge-green { background: var(--ok-color); color: #fff; }
         .badge-yellow { background: var(--warn-color); color: #000; }
         .badge-red { background: var(--danger-color); color: #fff; }
@@ -662,9 +662,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let pelvicPitchSmoothed = 0;                  // IIR-smoothed pelvis pitch deviation
         let lastPelvicSagP  = 0, lastPelvicVertP = 1.0; // last known accel values for tare
 
-        let anchorSettleActive    = false;            // true while collecting post-anchor pelvis window
-        let anchorSettleStartTime = 0;
-        let anchorWindowMs        = 500;              // tempo-adaptive: set at trigger, capped 280–500 ms
+        let anchorSettleActive      = false;            // true while collecting post-anchor pelvis window
+        let anchorSettleStartTime   = 0;
+        let anchorSettleLastTrigger = 0;              // updated on each backward step; evaluates 500ms after the LAST backward step
+        let anchorSettleHoldUntil   = 0;              // score stays visible until this time; no new MEASURING triggers during hold
+        let anchorWindowMs          = 500;            // Ball→Heel window: tempo-adaptive, capped 280–900 ms (1.05× step)
+        let anchorSettleWindowMs    = 500;            // gap after last backward step before Anchor Settle evaluates
         let anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
 
         // Hitch & Go detection — brief foot lift on recently-placed foot
@@ -837,7 +840,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             anchorSettleSamples.aSagP.push(aSagP);
                             anchorSettleSamples.gYawP.push(Math.abs(gYawP));
                             anchorSettleSamples.aLatP.push(aLatP);
-                            if (now - anchorSettleStartTime >= anchorWindowMs) {
+                            if (now - anchorSettleLastTrigger >= anchorSettleWindowMs) {
                                 anchorSettleActive = false;
                                 let n = anchorSettleSamples.aSagP.length;
                                 if (n >= 8) {
@@ -887,6 +890,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         else if (earlyLatPeak > 0.05)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'SLIGHT SETTLE'; }
                                         else                                                        { hse.className = 'badge badge-red';    hse.innerText = 'NO HIP SETTLE'; }
                                     }
+                                    anchorSettleHoldUntil = now + 2000; // hold score visible for 2 s before next cycle
                                 }
                             }
                         }
@@ -909,11 +913,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 // liftoff/rotation ghosts that have high gyro but no vertical impact signature.
                                                                                 let preJerkL = Math.abs(aZL - prevAccelZLeft)  / 0.005;
                                                                                 let preJerkR = Math.abs(aZR - prevAccelZRight) / 0.005;
-                                                                                // Step trigger: tempo-adaptive threshold — slow practice (stepDurationMs>800ms, <75 BPM) uses 0.95g
-                                                                                // to capture soft weight transfers; dance tempo uses 0.97g to suppress brush artefacts.
-                                                                                // preJerk>2.0 gate on aZ path suppresses stance-foot drift (preJerk~0.5–2); real impacts have preJerk>5.
+                                                                                // Step trigger: tempo-adaptive threshold — slow practice (stepDurationMs>800ms, <75 BPM) uses 0.92g
+                                                                                // to capture soft anchor ball-landings (aZ≈0.90–0.93g, preJerk≈3 g/s); dance tempo uses 0.95g to suppress brush artefacts.
+                                                                                // preJerk>2.0 gate on aZ path suppresses stance-foot drift (preJerk~0.5–2); real impacts have preJerk>3.
                                                                                 // Lockout (180–320 ms) + alternation guard remain the false-trigger protection.
-                                                                                let aZThr = stepDurationMs > 800 ? 0.95 : 0.97;
+                                                                                let aZThr = stepDurationMs > 800 ? 0.92 : 0.95;
                                                                                 let leftSignal  = leftOk  && ((Math.abs(aZL) > aZThr && preJerkL > 2.0) || (Math.abs(gPitchL) > 80 && preJerkL > 8));
                                                                                 let rightSignal = rightOk && ((Math.abs(aZR) > aZThr && preJerkR > 2.0) || (Math.abs(gPitchR) > 80 && preJerkR > 8));
                                                                                 if (cfWarmupFrames > 0) { leftSignal = false; rightSignal = false; }
@@ -1150,12 +1154,20 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             }
                         }
 
-                        // Anchor Settle — start tempo-adaptive pelvis measurement window on every backward step
-                        if (pelvicOk && activeDirection === "BACKWARD") {
-                            anchorSettleActive    = true;
-                            anchorSettleStartTime = now;
-                            anchorWindowMs        = Math.min(500, Math.max(280, stepDurationMs));
-                            anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
+                        // Anchor Settle — force evaluate when backward phase ends (first non-backward step)
+                        if (anchorSettleActive && pelvicOk && activeDirection !== "BACKWARD") {
+                            anchorSettleLastTrigger = 0; // forces evaluation on next setInterval tick
+                        }
+
+                        // Anchor Settle — start on first backward step, extend deadline on each subsequent one
+                        if (pelvicOk && activeDirection === "BACKWARD" && now >= anchorSettleHoldUntil) {
+                            if (!anchorSettleActive) {
+                                anchorSettleActive    = true;
+                                anchorSettleStartTime = now;
+                                anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
+                            }
+                            anchorSettleLastTrigger = now;  // extend deadline: evaluate 500ms after THIS step
+                            anchorWindowMs = Math.min(900, Math.max(280, Math.round(stepDurationMs * 1.05)));
                             let ab = document.getElementById('anchorSettleBadge');
                             if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = 'MEASURING...'; }
                             let hse = document.getElementById('hipSettleBadge');
@@ -1169,7 +1181,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             anchorThetaStart       = now;
                             anchorThetaSamples     = [];
                             anchorThetaAtTrigger   = activeTheta;  // capture pre-reset T-1 angle
-                            anchorWindowMs         = Math.min(500, Math.max(280, stepDurationMs));
+                            anchorWindowMs         = Math.min(900, Math.max(280, Math.round(stepDurationMs * 1.05)));
                             let bh = document.getElementById('ballHeelBadge');
                             if (bh) { bh.className = 'badge'; bh.style.cssText = 'background:#1e272e;color:#8b949e;'; bh.innerText = 'MEASURING...'; }
                             // Cancel any running forward progression — its result would be stale on a backward step
@@ -1433,7 +1445,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             if (n >= 6) {
                                 let half      = Math.floor(n / 2);
                                 let earlyMean = anchorThetaAtTrigger;  // T-1 snapshot: pre-reset actual plantarflexion
-                                let lateMean  = anchorThetaSamples.slice(half).reduce((a, b) => a + b, 0) / (n - half);
+                                let qStart    = Math.max(0, n - Math.max(3, Math.floor(n / 4)));
+                                let lateMean  = anchorThetaSamples.slice(qStart).reduce((a, b) => a + b, 0) / (n - qStart);
                                 let bh = document.getElementById('ballHeelBadge');
                                 if (bh) {
                                     if      (earlyMean >= 0)                 { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'HEEL-FIRST'; }
@@ -1653,7 +1666,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         ctx.stroke();
         ctx.strokeStyle = "#ffd600"; ctx.lineWidth = 2; ctx.setLineDash([4,3]); ctx.beginPath();
         for(let i=0; i<maxHistory; i++) {
-            let y = midY - (gYawHistory[i] / 300) * midY;
+            let y = midY - (gYawHistory[i] / 80) * midY;
             if(i===0) ctx.moveTo(0, y); else ctx.lineTo(i * stepX, y);
         }
         ctx.stroke(); ctx.setLineDash([]);
