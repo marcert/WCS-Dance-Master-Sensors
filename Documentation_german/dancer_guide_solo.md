@@ -199,9 +199,9 @@ Sichtbar ab **Fortgeschritten**. Diese Karte zeigt, wie lange beide Füße währ
 
 | Badge | Überschneidungsrate | Was es bedeutet | Trainingsimplikation |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 18 %–38 % | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
-| `HECTIC` ⚠️ | < 18 % | Gehetzt — ein Fuß verlässt den Boden, bevor der andere sicher steht | „Abrollen, nicht abheben" — durch den Fuß rollen, bevor man schreitet |
-| `SLUGGISH` ⚠️ | > 38 % | Verlängerter Doppelkontakt — Zögern oder schwere Stellung | Den Massenschwerpunkt früher verlagern |
+| `OPTIMAL ROLL` ✅ | 15 %–52 % | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
+| `HECTIC` ⚠️ | < 15 % | Gehetzt — ein Fuß verlässt den Boden, bevor der andere sicher steht | „Abrollen, nicht abheben" — durch den Fuß rollen, bevor man schreitet |
+| `SLUGGISH` ⚠️ | > 52 % | Verlängerter Doppelkontakt — Zögern oder schwere Stellung | Den Massenschwerpunkt früher verlagern |
 
 Beobachte diese Karte während **Tripleschritten und Gängen**. `HECTIC` bei einem Ankerschritt bedeutet oft, dass du den Anker verlässt, bevor du Verbindung aufgebaut hast.
 
@@ -215,10 +215,10 @@ Nur auf **Experten**-Stufe sichtbar.
 
 | Anzeige | Was es dir sagt | Grünes Ziel |
 | :--- | :--- | :--- |
-| **ASI %** | Unterschied zwischen linkem und rechtem Fuß-Roll-off | `SYMMETRIC` — unter 10 % |
+| **ASI %** | Unterschied zwischen linkem und rechtem Fuß-Roll-off | `SYMMETRIC` — unter 15 % |
 | **Gleichmäßigkeit** | Flüssigkeit der Sprunggelenks-Artikulation über beide Füße | `SMOOTH` — 65 oder höher |
 
-- Hoher **ASI** (z. B. `ASYMMETRIC` > 25 %) bedeutet meist, dass ein Sprunggelenk steifer ist oder eine Seite eine alte Verletzung kompensiert.
+- Hoher **ASI** (z. B. `ASYMMETRIC` > 35 %) bedeutet meist, dass ein Sprunggelenk steifer ist oder eine Seite eine alte Verletzung kompensiert.
 - Niedrige **Gleichmäßigkeit** bedeutet, dass deine Sprunggelenksbewegungen ruckartig sind. Verlangsame das Tempo und konzentriere dich darauf, durch den ganzen Fuß zu rollen statt flach aufzusetzen.
 
 ---

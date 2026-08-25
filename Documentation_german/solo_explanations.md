@@ -192,14 +192,14 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
 
 #### Warum Überlappung in der WCS-Mechanik wichtig ist:
 * **Geerdetes Abrollen:** Im West Coast Swing ist der Gewichtstransfer graduell. Während ein Fuß den Boden verlässt, nimmt der andere das Gewicht auf und erzeugt eine natürliche bilaterale Überlappungsphase (Bodenkontakt-Eintritt bei $|aZ| > 0{,}65\,g$).
-* **Elastische Ausdehnung & Timing:** Ein gesundes Überlappungsverhältnis ($18\%\text{ bis }38\%$) erzeugt die charakteristische „elastische" Dehnung und den reibungslosen Impulsübergang im WCS. Zu wenig Überlappung zeigt Hetzen oder Springen an, zu viel führt zu schwerfälligen Übergängen.
+* **Elastische Ausdehnung & Timing:** Ein gesundes Überlappungsverhältnis ($15\%\text{ bis }52\%$) erzeugt die charakteristische „elastische" Dehnung und den reibungslosen Impulsübergang im WCS. Zu wenig Überlappung zeigt Hetzen oder Springen an, zu viel führt zu schwerfälligen Übergängen.
 * **Hinweis zur Fachliteratur:** Die klassische Ganganalyse (Perry & Burnfield, 2010 — zitiert in §2A; Winter, D.A., 1990: *Biomechanics and Motor Control of Human Gait*, University of Waterloo Press) gibt die Standphase mit ~60 % und die Schwungphase mit ~40 % des Gangzyklus bei komfortabler Gehgeschwindigkeit an. Dies ist eine andere Messung — sie beschreibt, wie lange *ein* Fuß während eines Gangzyklus auf dem Boden bleibt. Die hiesige Metrik misst das *gleichzeitige bilaterale Kontaktverhältnis* innerhalb eines Schrittintervalls, was ein Subset der Einzel-Fuß-Standphase ist. Freier Überblick über Gangphasendefinitionen: [Wikipedia — Ganganalyse](https://de.wikipedia.org/wiki/Ganganalyse).
 
 | Verhältnisbereich (%) | Badge-Bewertung | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
-| **18% bis 38%** | `OPTIMAL ROLL` | Ideale geerdete Abrollphase für Läufe und Ausdehnung. |
-| **< 18%** | `HECTIC` | Gehetzter Gewichtstransfer; fehlende Abrollartikulierung. |
-| **> 38%** | `SLUGGISH` | Übermäßiger Bodenkontakt; schwerfälliger Tempoübergang. |
+| **15% bis 52%** | `OPTIMAL ROLL` | Ideale geerdete Abrollphase für Läufe und Ausdehnung. |
+| **< 15%** | `HECTIC` | Gehetzter Gewichtstransfer; fehlende Abrollartikulierung. |
+| **> 52%** | `SLUGGISH` | Übermäßiger Bodenkontakt; schwerfälliger Tempoübergang. |
 
 ---
 
@@ -208,7 +208,7 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
 1. **Asymmetrie-Index (ASI):**
    Vergleicht die integrierte Winkelarbeit über linke und rechte Fuß-Abrollzyklen während die Füße aktiv in Bewegung sind ($|\omega_{\text{pitch}}| > 15^\circ/\text{s}$):
    $$\text{ASI} = \frac{2 \cdot \left|\int|\omega_{\text{left}}|\,dt - \int|\omega_{\text{right}}|\,dt\right|}{\int|\omega_{\text{left}}|\,dt + \int|\omega_{\text{right}}|\,dt} \times 100\%$$
-   * **Ziel:** $< 10\%$ (`SYMMETRIC`), $11\text{--}25\%$ (`MINOR ASYM`), $>25\%$ (`ASYMMETRIC`).
+   * **Ziel:** $< 15\%$ (`SYMMETRIC`), $16\text{--}35\%$ (`MINOR ASYM`), $>35\%$ (`ASYMMETRIC`).
 
 2. **Abroll-Glätteindex (Roll-Smoothness Index):**
    Misst den kombinierten Winkelgeschwindigkeits-Jerk beider Füße, geglättet über ein 25-Frame (0,5 s) gleitendes Fenster:
@@ -287,9 +287,9 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Standbein-Abstoß (rückwärts/Anker, optimal)** | FORWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (schwach)** | Beide Richtungen, $120\text{–}159/199^\circ/\text{s}$ UND $aY > 0.15g$ | `↗ PUSH` (Gelb) — hält 400 ms | Kein |
 | **Aufprall-Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Karten-Rand blinkt | 500-Hz-Aufprallklick (80 ms) |
-| **Doppelstandphase — Optimal** | 18% bis 38% | `OPTIMAL ROLL` (Grün) | Kein |
-| **Doppelstandphase — Hetzen** | $< 18\%$ | `HECTIC` (Gelb) | Kein |
-| **Doppelstandphase — Träge** | $> 38\%$ | `SLUGGISH` (Gelb) | Kein |
+| **Doppelstandphase — Optimal** | 15% bis 52% | `OPTIMAL ROLL` (Grün) | Kein |
+| **Doppelstandphase — Hetzen** | $< 15\%$ | `HECTIC` (Gelb) | Kein |
+| **Doppelstandphase — Träge** | $> 52\%$ | `SLUGGISH` (Gelb) | Kein |
 | **Gewichtstransfer — Progressiv** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Grün) | Kein |
 | **Gewichtstransfer — Sofort** | $-0.08 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Gelb) | Kein |
 | **Gewichtstransfer — Frühzeitig** | loadRise $< -0.08\,g$ | `EARLY UNLOAD` (Gelb) | Kein |
@@ -303,10 +303,10 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Sprunggelenk-Stoßdämpfung** | rollIntegral $> 4°$ (keine Umkehr) | `ANKLE FLEX` (Grün) | Kein |
 | **Sprunggelenk-Steifigkeit** | rollIntegral $< 1°$ | `STIFF ANKLE` (Gelb) | Kein |
 | **Hitch & Go — erkannt** | $|aZ| < 0{,}35\,g$ für 50–380 ms innerhalb 700 ms nach letztem Schritt | `✓ HITCH (L/R)` (Grün) | Kein |
-| **Ball→Ferse — optimal** | earlyMean $< -2°$, rise $> 3°$ | `BALL→HEEL ✓` (Grün) | Kein |
-| **Ball→Ferse — partiell** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
-| **Ball→Ferse — Ferse zuerst** | earlyMean $\ge 0°$ | `HEEL-FIRST` (Gelb) | Kein |
-| **Ball→Ferse — nur Ballen** | earlyMean $< 0°$, rise $\le 1°$ | `BALL ONLY ⚠` (Rot) | Kein |
+| **Ball→Ferse — optimal** | $\theta_{T-1} < -2°$, lateMean $> 3°$ | `BALL→HEEL ✓` (Grün) | Kein |
+| **Ball→Ferse — partiell** | $\theta_{T-1} < 0°$, lateMean $> 0°$ | `PARTIAL ROLL` (Gelb) | Kein |
+| **Ball→Ferse — Ferse zuerst** | $\theta_{T-1} \ge 0°$ | `HEEL-FIRST` (Gelb) | Kein |
+| **Ball→Ferse — nur Ballen** | $\theta_{T-1} < 0°$, lateMean $\le 0°$ | `BALL ONLY ⚠` (Rot) | Kein |
 | **Ferse→Ball — optimal** | earlyMean $> 2°$, drop $> 3°$ | `HEEL→BALL ✓` (Grün) | Kein |
 | **Ferse→Ball — partiell** | earlyMean $> 0°$, drop $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
 | **Ferse→Ball — blockiert** | earlyMean $> 2°$, drop $\le 1°$ | `HEEL STUCK ⚠` (Rot) | Kein |
@@ -344,15 +344,17 @@ Bei einem gut ausgeführten Rückwärts-Anker setzt der Fuß zunächst auf dem B
 
 **Berechnung:**
 
-$$\theta_{\text{früh}} = \overline{\theta}_{[0,\,\lfloor n/2 \rfloor]} \qquad \theta_{\text{spät}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]}$$
+Zum Zeitpunkt des Rückwärtsschritt-Auslösers wird der Fußwinkel aus T-1 (vor dem Reset) als $\theta_{T-1}$ gespeichert. Der CF-Winkel wird dann auf 0° zurückgesetzt, um Aufprallverzerrungen zu verhindern. Der Mittelwert der zweiten Fensterhälfte der Post-Reset-Samples ergibt $\theta_{\text{spät}}$ und repräsentiert, wo der Fuß zur Ruhe kommt:
 
-$$\text{rise} = \theta_{\text{spät}} - \theta_{\text{früh}}$$
+$$\theta_{T-1} = \text{Fußwinkel zum Auslösezeitpunkt, vor Reset (T-1-Snapshot)}$$
+
+$$\theta_{\text{spät}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]} \quad \text{(zweite Hälfte des 280–500 ms Post-Reset-Fensters)}$$
 
 | Bedingung | Badge | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
-| $\theta_{\text{früh}} < -2°$ UND rise $> 3°$ | `BALL→HEEL ✓` (Grün) | Klassische WCS-Landung: Ballen-zuerst, Ferse senkt sich — kontrollierte exzentrische Belastung |
-| $\theta_{\text{früh}} < 0°$ UND rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Etwas Ballen-zu-Ferse-Bewegung erkannt, aber geringer Anstieg |
-| $\theta_{\text{früh}} \ge 0°$ | `HEEL-FIRST` (Gelb) | Fuß kam flach oder Ferse-zuerst an — kein initialer Ballenkontakt |
+| $\theta_{T-1} \ge 0°$ | `HEEL-FIRST` (Gelb) | Fuß kam flach oder Ferse-zuerst an — kein initialer Ballenkontakt |
+| $\theta_{T-1} < -2°$ UND $\theta_{\text{spät}} > 3°$ | `BALL→HEEL ✓` (Grün) | Klassische WCS-Landung: Ballen-zuerst, Ferse senkt sich — kontrollierte exzentrische Belastung |
+| $\theta_{T-1} < 0°$ UND $\theta_{\text{spät}} > 0°$ | `PARTIAL ROLL` (Gelb) | Ballenkontakt vorhanden, Ferse senkt sich teilweise im Post-Reset-Fenster |
 | Sonst | `BALL ONLY ⚠` (Rot) | θ blieb durchgehend negativ — Fuß blieb auf dem Ballen; typisch bei Hetzen oder unvollständigem Gewichtstransfer |
 
 **Mindestanzahl Samples:** Die Auswertung erfordert mindestens 6 Samples im Fenster (~120 ms). Wenn ein neuer Schritt auslöst, bevor das Fenster schließt, wird `anchorThetaActive` zurückgesetzt und kein Badge ausgegeben.

@@ -188,14 +188,14 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 #### Why Overlap Matters in WCS Mechanics:
 * **Grounded Rolling Action:** In West Coast Swing, weight transfer is gradual. As one foot leaves the floor, the other receives weight, creating a natural bilateral overlap phase where both soles register ground contact ($|aZ| > 0.65\,g$ entry threshold).
-* **Elastic Extension & Timing:** A healthy overlap ratio ($18\%\text{ to }38\%$) creates the characteristic "elastic" stretch and smooth momentum transfer in WCS. Too little overlap indicates rushing or bouncing, while too much overlap results in heavy, sluggish transitions.
+* **Elastic Extension & Timing:** A healthy overlap ratio ($15\%\text{ to }52\%$) creates the characteristic "elastic" stretch and smooth momentum transfer in WCS. Too little overlap indicates rushing or bouncing, while too much overlap results in heavy, sluggish transitions.
 * **Note on scientific literature:** Classic gait analysis (Perry & Burnfield, 2010 — cited in §2A; Winter, D.A., 1990: *Biomechanics and Motor Control of Human Gait*, University of Waterloo Press) establishes stance phase at ~60% and swing phase at ~40% of the gait cycle at comfortable walking speed. This is a different measurement — it describes how long *one* foot stays on the ground during a single gait cycle. The metric here measures the *simultaneous bilateral contact* ratio (both feet on the floor at the same time within one step interval), which is a subset of and distinctly different from the single-foot stance phase. Free overview of gait cycle phases: [Wikipedia — Gait#Phases of gait](https://en.wikipedia.org/wiki/Gait#Phases_of_gait).
 
 | Ratio Range (%) | Badge Rating | Biomechanical Meaning |
 | :---: | :---: | :--- |
-| **18% to 38%** | `OPTIMAL ROLL` | Ideal grounded roll-off phase for walks and extensions. |
-| **< 18%** | `HECTIC` | Rushed weight transfer; lack of rolling articulation through the foot. |
-| **> 38%** | `SLUGGISH` | Over-invested ground contact; sluggish tempo transition. |
+| **15% to 52%** | `OPTIMAL ROLL` | Ideal grounded roll-off phase for walks and extensions. |
+| **< 15%** | `HECTIC` | Rushed weight transfer; lack of rolling articulation through the foot. |
+| **> 52%** | `SLUGGISH` | Over-invested ground contact; sluggish tempo transition. |
 
 ---
 
@@ -204,7 +204,7 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 1. **Asymmetry Index (ASI):**
    Compares total angular work integrated across Left and Right foot roll-off cycles while feet are actively moving ($|\omega_{\text{pitch}}| > 15^\circ/\text{s}$):
    $$\text{ASI} = \frac{2 \cdot \left|\int|\omega_{\text{left}}|\,dt - \int|\omega_{\text{right}}|\,dt\right|}{\int|\omega_{\text{left}}|\,dt + \int|\omega_{\text{right}}|\,dt} \times 100\%$$
-   * **Target:** $< 10\%$ (`SYMMETRIC`), $11\text{--}25\%$ (`MINOR ASYM`), $>25\%$ (`ASYMMETRIC`).
+   * **Target:** $< 15\%$ (`SYMMETRIC`), $16\text{--}35\%$ (`MINOR ASYM`), $>35\%$ (`ASYMMETRIC`).
 
 2. **Roll-Smoothness Index:**
    Measures combined angular acceleration jerk of both feet smoothed over a 25-frame (0.5 s) sliding window:
@@ -256,9 +256,9 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Trailing Foot Push-off (backward/anchor, optimal)**| FORWARD last step + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
 | **Trailing Foot Push-off (weak)** | Either direction, $120\text{–}159/199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
 | **Impact Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
-| **Double Stance Ratio** | 18% to 38% | `OPTIMAL ROLL` (Green) | None |
-| **Double Stance Hectic** | $< 18\%$ | `HECTIC` (Yellow) | None |
-| **Double Stance Sluggish**| $> 38\%$ | `SLUGGISH` (Yellow) | None |
+| **Double Stance Ratio** | 15% to 52% | `OPTIMAL ROLL` (Green) | None |
+| **Double Stance Hectic** | $< 15\%$ | `HECTIC` (Yellow) | None |
+| **Double Stance Sluggish**| $> 52\%$ | `SLUGGISH` (Yellow) | None |
 | **Weight Transfer — Progressive** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Green) | None |
 | **Weight Transfer — Instant** | $-0.08 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Yellow) | None |
 | **Weight Transfer — Early Unload** | loadRise $< -0.08\,g$ | `EARLY UNLOAD` (Yellow) | None |
@@ -272,10 +272,10 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Ankle Shock Absorption** | rollIntegral $> 4°$ (no reversal) | `ANKLE FLEX` (Green) | None |
 | **Ankle Stiffness** | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | None |
 | **Hitch & Go — detected** | $|aZ| < 0.35\,g$ for 50–380 ms within 700 ms of last step | `✓ HITCH (L/R)` (Green) | None |
-| **Ball→Heel — optimal** | earlyMean $< -2°$, rise $> 3°$ | `BALL→HEEL ✓` (Green) | None |
-| **Ball→Heel — partial** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Yellow) | None |
-| **Ball→Heel — heel-first** | earlyMean $\ge 0°$ | `HEEL-FIRST` (Yellow) | None |
-| **Ball→Heel — ball only** | earlyMean $< 0°$, rise $\le 1°$ | `BALL ONLY ⚠` (Red) | None |
+| **Ball→Heel — optimal** | $\theta_{T-1} < -2°$, lateMean $> 3°$ | `BALL→HEEL ✓` (Green) | None |
+| **Ball→Heel — partial** | $\theta_{T-1} < 0°$, lateMean $> 0°$ | `PARTIAL ROLL` (Yellow) | None |
+| **Ball→Heel — heel-first** | $\theta_{T-1} \ge 0°$ | `HEEL-FIRST` (Yellow) | None |
+| **Ball→Heel — ball only** | $\theta_{T-1} < 0°$, lateMean $\le 0°$ | `BALL ONLY ⚠` (Red) | None |
 | **Heel→Ball — optimal** | earlyMean $> 2°$, drop $> 3°$ | `HEEL→BALL ✓` (Green) | None |
 | **Heel→Ball — partial** | earlyMean $> 0°$, drop $> 1°$ | `PARTIAL ROLL` (Yellow) | None |
 | **Heel→Ball — stuck** | earlyMean $> 2°$, drop $\le 1°$ | `HEEL STUCK ⚠` (Red) | None |
@@ -313,15 +313,17 @@ During a well-executed backward anchor, the foot initially contacts on the ball 
 
 **Calculation:**
 
-$$\theta_{\text{early}} = \overline{\theta}_{[0,\,\lfloor n/2 \rfloor]} \qquad \theta_{\text{late}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]}$$
+At the moment of the backward step trigger, the foot angle from T-1 (pre-reset) is captured as $\theta_{T-1}$. The CF angle is then reset to 0° to prevent impact corruption. The second half of the post-reset window samples gives $\theta_{\text{late}}$, representing where the foot settled:
 
-$$\text{rise} = \theta_{\text{late}} - \theta_{\text{early}}$$
+$$\theta_{T-1} = \text{foot angle at trigger, pre-reset (T-1 snapshot)}$$
+
+$$\theta_{\text{late}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]} \quad \text{(second half of 280–500 ms post-reset window)}$$
 
 | Condition | Badge | Biomechanical Meaning |
 | :---: | :---: | :--- |
-| $\theta_{\text{early}} < -2°$ AND rise $> 3°$ | `BALL→HEEL ✓` (Green) | Classic WCS landing: ball-first then heel lowers — controlled eccentric loading |
-| $\theta_{\text{early}} < 0°$ AND rise $> 1°$ | `PARTIAL ROLL` (Yellow) | Some ball-to-heel movement present but rise is small |
-| $\theta_{\text{early}} \ge 0°$ | `HEEL-FIRST` (Yellow) | Foot arrived flat or heel-first — no initial ball contact |
+| $\theta_{T-1} \ge 0°$ | `HEEL-FIRST` (Yellow) | Foot arrived flat or heel-first — no initial ball contact |
+| $\theta_{T-1} < -2°$ AND $\theta_{\text{late}} > 3°$ | `BALL→HEEL ✓` (Green) | Classic WCS landing: ball-first then heel lowers — controlled eccentric loading |
+| $\theta_{T-1} < 0°$ AND $\theta_{\text{late}} > 0°$ | `PARTIAL ROLL` (Yellow) | Ball contact present, heel lowers partially into the post-reset window |
 | Otherwise | `BALL ONLY ⚠` (Red) | θ stayed negative throughout — foot remained on ball with no heel lowering; typical of rushing or incomplete weight transfer |
 
 **Minimum samples:** The evaluation requires at least 6 samples in the window (~120 ms). If a new step fires before the window closes, `anchorThetaActive` is reset and no badge is issued.
