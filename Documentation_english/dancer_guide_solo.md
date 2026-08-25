@@ -199,9 +199,9 @@ Visible from **Intermediate** level. This card tells you how long both feet are 
 
 | Badge | Overlap ratio | What it means | Training implication |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 18%–38% | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
-| `HECTIC` ⚠️ | < 18% | Rushed — one foot leaves before the other is secure | "Peel, don't lift" — roll through the foot before stepping |
-| `SLUGGISH` ⚠️ | > 38% | Prolonged double contact — hesitation or heavy stance | Commit to the COM shift earlier |
+| `OPTIMAL ROLL` ✅ | 15%–52% | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
+| `HECTIC` ⚠️ | < 15% | Rushed — one foot leaves before the other is secure | "Peel, don't lift" — roll through the foot before stepping |
+| `SLUGGISH` ⚠️ | > 52% | Prolonged double contact — hesitation or heavy stance | Commit to the COM shift earlier |
 
 Watch this card during **triple steps and walks**. `HECTIC` on an anchor step often means you are rushing out of the anchor before building connection.
 
@@ -215,10 +215,10 @@ Visible at **Advanced** level only.
 
 | Display | What it tells you | Green target |
 | :--- | :--- | :--- |
-| **ASI %** | Difference between left and right foot roll-off | `SYMMETRIC` — below 10% |
+| **ASI %** | Difference between left and right foot roll-off | `SYMMETRIC` — below 15% |
 | **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` — 65 or above |
 
-- High **ASI** (e.g. `ASYMMETRIC` > 25%) usually means one ankle is stiffer, or one side is compensating for an old injury.
+- High **ASI** (e.g. `ASYMMETRIC` > 35%) usually means one ankle is stiffer, or one side is compensating for an old injury.
 - Low **Smoothness** means your ankle movements are jerky. Slow the tempo and focus on rolling through the full foot rather than stepping flat.
 
 ---

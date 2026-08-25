@@ -673,6 +673,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         // Ball-to-Heel anchor progression — foot θ during anchor window
         let anchorThetaActive = false, anchorThetaFoot = '', anchorThetaStart = 0;
         let anchorThetaSamples = [];
+        let anchorThetaAtTrigger = 0;  // T-1 snapshot: actual foot angle at impact, pre-reset
         // Heel-to-Ball forward progression — foot θ during forward step window
         let heelBallActive = false, heelBallFoot = '', heelBallStart = 0, heelBallWindowMs = 500;
         let heelBallSamples = [];
@@ -1163,11 +1164,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                         // Ball-to-Heel anchor progression — always triggered on backward step (no pelvis required)
                         if (activeDirection === "BACKWARD") {
-                            anchorThetaActive  = true;
-                            anchorThetaFoot    = activeFoot;
-                            anchorThetaStart   = now;
-                            anchorThetaSamples = [];
-                            anchorWindowMs     = Math.min(500, Math.max(280, stepDurationMs));
+                            anchorThetaActive      = true;
+                            anchorThetaFoot        = activeFoot;
+                            anchorThetaStart       = now;
+                            anchorThetaSamples     = [];
+                            anchorThetaAtTrigger   = activeTheta;  // capture pre-reset T-1 angle
+                            anchorWindowMs         = Math.min(500, Math.max(280, stepDurationMs));
                             let bh = document.getElementById('ballHeelBadge');
                             if (bh) { bh.className = 'badge'; bh.style.cssText = 'background:#1e272e;color:#8b949e;'; bh.innerText = 'MEASURING...'; }
                             // Cancel any running forward progression — its result would be stale on a backward step
@@ -1244,9 +1246,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         peakDsThisStep = 0; // reset for next interval
 
                                                 let stanceBadge = document.getElementById('stanceBadge');
-                        if (stanceRatio >= 18 && stanceRatio <= 38) {
+                        if (stanceRatio >= 15 && stanceRatio <= 52) {
                             stanceBadge.className = "badge badge-green"; stanceBadge.innerText = "OPTIMAL ROLL";
-                        } else if (stanceRatio < 18) {
+                        } else if (stanceRatio < 15) {
                             stanceBadge.className = "badge badge-yellow"; stanceBadge.innerText = "HECTIC";
                         } else {
                             stanceBadge.className = "badge badge-yellow"; stanceBadge.innerText = "SLUGGISH";
@@ -1430,15 +1432,14 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             let n = anchorThetaSamples.length;
                             if (n >= 6) {
                                 let half      = Math.floor(n / 2);
-                                let earlyMean = anchorThetaSamples.slice(0, half).reduce((a, b) => a + b, 0) / half;
+                                let earlyMean = anchorThetaAtTrigger;  // T-1 snapshot: pre-reset actual plantarflexion
                                 let lateMean  = anchorThetaSamples.slice(half).reduce((a, b) => a + b, 0) / (n - half);
-                                let rise = lateMean - earlyMean;
                                 let bh = document.getElementById('ballHeelBadge');
                                 if (bh) {
-                                    if      (earlyMean < -2 && rise >  3) { bh.className = 'badge badge-green';  bh.style.cssText = ''; bh.innerText = 'BALL→HEEL ✓'; }
-                                    else if (earlyMean <  0 && rise >  1) { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'PARTIAL ROLL'; }
-                                    else if (earlyMean >= 0)              { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'HEEL-FIRST'; }
-                                    else                                  { bh.className = 'badge badge-red';    bh.style.cssText = ''; bh.innerText = 'BALL ONLY ⚠'; }
+                                    if      (earlyMean >= 0)                 { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'HEEL-FIRST'; }
+                                    else if (earlyMean < -2 && lateMean > 3) { bh.className = 'badge badge-green';  bh.style.cssText = ''; bh.innerText = 'BALL→HEEL ✓'; }
+                                    else if (earlyMean <  0 && lateMean > 0) { bh.className = 'badge badge-yellow'; bh.style.cssText = ''; bh.innerText = 'PARTIAL ROLL'; }
+                                    else                                     { bh.className = 'badge badge-red';    bh.style.cssText = ''; bh.innerText = 'BALL ONLY ⚠'; }
                                 }
                             }
                         }
@@ -1559,8 +1560,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         document.getElementById('asiVal').innerText = asiRounded + " %";
                         let asiBadge = document.getElementById('asiBadge');
                         if (asiBadge) {
-                            if (asiRounded <= 10)      { asiBadge.className = "badge badge-green";  asiBadge.innerText = "SYMMETRIC"; }
-                            else if (asiRounded <= 25) { asiBadge.className = "badge badge-yellow"; asiBadge.innerText = "MINOR ASYM"; }
+                            if (asiRounded <= 15)      { asiBadge.className = "badge badge-green";  asiBadge.innerText = "SYMMETRIC"; }
+                            else if (asiRounded <= 35) { asiBadge.className = "badge badge-yellow"; asiBadge.innerText = "MINOR ASYM"; }
                             else                       { asiBadge.className = "badge badge-red";    asiBadge.innerText = "ASYMMETRIC"; }
                         }
                     }
