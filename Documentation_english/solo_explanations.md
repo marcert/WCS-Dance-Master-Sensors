@@ -488,15 +488,17 @@ The offset is captured at `📐 ZERO` press (dancer stands in neutral dance posi
 
 ### Anchor Settle
 
-Evaluates the quality of deceleration and pelvis settling at the end of each backward step — the defining moment where WCS stretch converts into grounded, controlled weight transfer.
+Evaluates the quality of deceleration and pelvis settling at the end of each anchor backward step — the defining moment where WCS stretch converts into grounded, controlled weight transfer.
 
-**Trigger:** The first confirmed BACKWARD step in a backward sequence starts fresh sample collection. Each additional backward step (e.g. all three steps of an anchor triple at beats 5–&–6) extends the evaluation deadline without clearing the accumulated samples. Evaluation fires 500 ms after the **last** backward step:
+**Trigger:** Any confirmed BACKWARD step (not gated by pelvis sensor availability) opens a fresh evaluation window. The window stays open while AMBIGUOUS steps follow within 2 seconds and bwd < 2. The timer fires 700 ms after the last relevant backward step:
 
-$$t_{\text{eval}} = t_{\text{last BACKWARD step}} + 500\,\text{ms}$$
+$$t_{\text{eval}} = t_{\text{last BACKWARD step}} + 700\,\text{ms}$$
 
-This ensures the full anchor triple is captured before scoring, while evaluating promptly once backward movement ends.
+In practice the badge appears around Beat 1 of the following phrase (AMBIGUOUS &-steps extend the deadline through the triple; the window closes when the first FORWARD step force-triggers evaluation or the 700 ms timer expires naturally). A 3-second hold keeps the score visible until the next anchor.
 
-Samples collected: sagittal pelvis acceleration `aYP` and hip yaw rate `gYawP`.
+**Minimum samples:** 3 pelvis data points required (pelvis sensor transmits at ~7–12 Hz over WiFi; a 700 ms window yields 5–8 samples under normal conditions).
+
+Samples collected: sagittal pelvis acceleration (`aSagP`) and hip yaw rate (`gYawP`), and lateral pelvis acceleration (`aLatP`) for Hip Settle.
 
 **Score composition (scaled 0–100):**
 
@@ -504,8 +506,8 @@ $$\text{score} = \text{decelScore} \times 0.35 + \text{yawDampScore} \times 0.35
 
 | Component | Formula | What it captures |
 | :--- | :--- | :--- |
-| **decelScore** | `(earlyAYMag − lateAYMag + 0.05) / 0.25`, clipped 0–1 | Sagittal braking: pelvis decelerates forward momentum |
-| **yawDampScore** | `(earlyYawMean − lateYawMean) / 25`, clipped 0–1 | Yaw damping: hip rotation ceases after landing |
+| **decelScore** | `clamp((earlyRMS / (lateRMS + 0.01) − 1.0) / 1.5, 0, 1)` | Sagittal braking: early-phase RMS higher than late-phase |
+| **yawDampScore** | `clamp((earlyYawRMS / (lateYawRMS + 0.5) − 1.0) / 1.5, 0, 1)` | Yaw damping: hip rotation ceases after landing |
 | **stabilScore** | `max(0, 1 − lateYawVariance / 400)` | Late stability: low yaw variance in second half of window |
 
 | State | Condition | Colour |
