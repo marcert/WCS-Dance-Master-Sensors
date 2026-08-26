@@ -522,15 +522,17 @@ Der Offset wird beim Drücken von `📐 ZERO` erfasst (Tänzer steht in neutrale
 
 ### Anchor Settle (Anker-Einschwingen)
 
-Bewertet die Qualität des Abbremsens und Einschwingens des Beckens nach jedem Rückwärtsschritt — der entscheidende Moment, in dem WCS-Dehnung in geerdet kontrollierten Gewichtstransfer umgewandelt wird.
+Bewertet die Qualität des Abbremsens und Einschwingens des Beckens nach jedem Anker-Rückwärtsschritt — der entscheidende Moment, in dem WCS-Dehnung in geerdet kontrollierten Gewichtstransfer umgewandelt wird.
 
-**Auslöser:** Der erste bestätigte BACKWARD-Schritt einer Rückwärtssequenz startet frische Stichprobensammlung. Jeder weitere Rückwärtsschritt (z. B. alle drei Schritte des Anchor-Triples auf Zählung 5–&–6) verlängert die Auswertungsdeadline, ohne die Stichproben zu löschen. Die Auswertung feuert 500 ms nach dem **letzten** Rückwärtsschritt:
+**Auslöser:** Jeder bestätigte BACKWARD-Schritt (unabhängig vom Pelvis-Sensor-Status) öffnet ein frisches Auswertungsfenster. Das Fenster bleibt offen, solange AMBIGUOUS-Schritte innerhalb von 2 Sekunden folgen und bwd < 2. Der Timer feuert 700 ms nach dem letzten relevanten Rückwärtsschritt:
 
-$$t_{\text{eval}} = t_{\text{letzter BACKWARD-Schritt}} + 500\,\text{ms}$$
+$$t_{\text{eval}} = t_{\text{letzter BACKWARD-Schritt}} + 700\,\text{ms}$$
 
-Dadurch wird das vollständige Anchor-Triple erfasst, bevor der Score berechnet wird, während die Auswertung nach Ende der Rückwärtsbewegung prompt erfolgt.
+In der Praxis erscheint der Badge ca. auf Beat 1 der Folgephrase (AMBIGUOUS &-Schritte verlängern die Deadline durch das Triple; das Fenster schließt beim ersten Vorwärtsschritt oder nach Ablauf des 700-ms-Timers). Der Score bleibt 3 Sekunden sichtbar.
 
-Gesammelte Signale: sagittale Beckenbeschleunigung `aYP` und Hüftgier-Rate `gYawP`.
+**Mindest-Samples:** 3 Pelvis-Datenpunkte erforderlich (Pelvis-Sensor überträgt bei ~7–12 Hz über WLAN; ein 700-ms-Fenster liefert unter normalen Bedingungen 5–8 Samples).
+
+Gesammelte Signale: sagittale Beckenbeschleunigung (`aSagP`), Hüftgier-Rate (`gYawP`) und laterale Beckenbeschleunigung (`aLatP`) für Hip Settle.
 
 **Score-Zusammensetzung (skaliert 0–100):**
 
@@ -538,8 +540,8 @@ $$\text{score} = \text{decelScore} \times 0{,}35 + \text{yawDampScore} \times 0{
 
 | Komponente | Formel | Bedeutung |
 | :--- | :--- | :--- |
-| **decelScore** | `(earlyAYMag − lateAYMag + 0,05) / 0,25`, begrenzt 0–1 | Sagittales Abbremsen: Becken bremst Vorwärtsmomentum |
-| **yawDampScore** | `(earlyYawMean − lateYawMean) / 25`, begrenzt 0–1 | Gier-Dämpfung: Hüftrotation stoppt nach Landung |
+| **decelScore** | `clamp((earlyRMS / (lateRMS + 0,01) − 1,0) / 1,5, 0, 1)` | Sagittales Abbremsen: Frühphasen-RMS höher als Spätphase |
+| **yawDampScore** | `clamp((earlyYawRMS / (lateYawRMS + 0,5) − 1,0) / 1,5, 0, 1)` | Gier-Dämpfung: Hüftrotation stoppt nach Landung |
 | **stabilScore** | `max(0, 1 − lateYawVariance / 400)` | Spät-Phasen-Stabilität: geringe Gier-Varianz in zweiter Fensterhälfte |
 
 | Zustand | Bedingung | Farbe |

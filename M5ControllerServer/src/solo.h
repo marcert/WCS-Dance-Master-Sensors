@@ -318,7 +318,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <!-- TOP-LEFT: PELVIS HIP MECHANICS (replaces spacer while sensor is online) -->
                 <div id="pelvicCard" class="card">
                     <div class="card-title">Pelvis — Hip Mechanics</div>
-                    <div id="pelvicRaw" style="display:none;"></div>
+                    <div id="pelvicRaw" style="font-size:0.65rem;color:#666;margin-top:2px;"></div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                         <span style="font-size:0.78rem;color:#8b949e;">Hip Activation</span>
                         <span id="hipActBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP</span>
@@ -628,9 +628,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let thetaBufferL = [];
         let thetaBufferR = [];
 
-        // CF filter warmup — suppress step detection for first 250 frames (~5 s at 50 Hz)
+        // CF filter warmup — suppress step detection for 2 s after page load
         // while the complementary filter converges to the physical mount angle.
-        let cfWarmupFrames = 250;
+        const cfWarmupUntil = Date.now() + 2000;
 
         // Debug mode state
         let lastDirVal  = null;   // most recent direction decision value shown in debug row
@@ -662,12 +662,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let pelvicPitchSmoothed = 0;                  // IIR-smoothed pelvis pitch deviation
         let lastPelvicSagP  = 0, lastPelvicVertP = 1.0; // last known accel values for tare
 
-        let anchorSettleActive      = false;            // true while collecting post-anchor pelvis window
-        let anchorSettleStartTime   = 0;
-        let anchorSettleLastTrigger = 0;              // updated on each backward step; evaluates 500ms after the LAST backward step
-        let anchorSettleHoldUntil   = 0;              // score stays visible until this time; no new MEASURING triggers during hold
+        let anchorSettleActive       = false;            // true while collecting post-anchor pelvis window
+        let anchorSettleStartTime    = 0;
+        let anchorSettleLastTrigger  = 0;              // updated on each backward step; evaluates 500ms after the LAST backward step
+        let anchorSettleHoldUntil    = 0;              // score stays visible until this time; no new MEASURING triggers during hold
+        let anchorSettleBwdCount     = 0;              // consecutive backward steps in current window; evaluation only if >= 3 (anchor triple)
         let anchorWindowMs          = 500;            // Ball→Heel window: tempo-adaptive, capped 280–900 ms (1.05× step)
-        let anchorSettleWindowMs    = 500;            // gap after last backward step before Anchor Settle evaluates
+        let anchorSettleWindowMs    = 700;            // min gap after last backward step before Anchor Settle evaluates; >500ms so beat-& at 60BPM can extend the deadline before timer fires
+        let anchorSettleEvalCount   = 0;              // debug: increments each time the evaluation block is entered
+        let anchorSettleLastScore   = -1;             // debug: last computed score (-1 = no score yet)
         let anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
 
         // Hitch & Go detection — brief foot lift on recently-placed foot
@@ -739,7 +742,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     thetaBufferL.push(pitchLeftAngleRaw  - leftMountOffset);
                     if (thetaBufferR.length >= 10) thetaBufferR.shift();
                     thetaBufferR.push(pitchRightAngleRaw - rightMountOffset);
-                    if (cfWarmupFrames > 0) cfWarmupFrames--;
 
                     // Complementary filter: gyro integration for short-term dynamics,
                     // accel angle for long-term drift correction (2% per frame at 50 Hz ≈ 1°/s max correction).
@@ -835,69 +837,72 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         gYawTimedBuf.push({ t: now, v: Math.abs(gYawP) });
                         while (gYawTimedBuf.length > 0 && now - gYawTimedBuf[0].t > 600) gYawTimedBuf.shift();
 
-                        // Anchor Settle window — collect samples, evaluate after 500ms
+                        // Anchor Settle — collect samples only (timer evaluation is outside pelvicOk to survive brief sensor dropouts)
                         if (anchorSettleActive) {
                             anchorSettleSamples.aSagP.push(aSagP);
                             anchorSettleSamples.gYawP.push(Math.abs(gYawP));
                             anchorSettleSamples.aLatP.push(aLatP);
-                            if (now - anchorSettleLastTrigger >= anchorSettleWindowMs) {
-                                anchorSettleActive = false;
-                                let n = anchorSettleSamples.aSagP.length;
-                                if (n >= 8) {
-                                    let half = Math.floor(n / 2);
-                                    let earlyAY  = anchorSettleSamples.aSagP.slice(0, half);
-                                    let lateAY   = anchorSettleSamples.aSagP.slice(half);
-                                    let earlyYaw = anchorSettleSamples.gYawP.slice(0, half);
-                                    let lateYaw  = anchorSettleSamples.gYawP.slice(half);
-
-                                    // Deceleration: RMS-based settling index — early phase RMS / late phase RMS
-                                    // Ratio > 2.5 = movement clearly damped; ratio < 1.0 = no settling
-                                    let earlyRMS = Math.sqrt(earlyAY.reduce((a,b)=>a+b*b,0) / earlyAY.length);
-                                    let lateRMS  = Math.sqrt(lateAY.reduce((a,b)=>a+b*b,0)  / lateAY.length);
-                                    let settlingRatio = earlyRMS / (lateRMS + 0.01);
-                                    let decelScore = Math.min(1, Math.max(0, (settlingRatio - 1.0) / 1.5));
-
-                                    // Yaw damping: RMS ratio — hip rotation clearly lower in late phase
-                                    let earlyYawRMS = Math.sqrt(earlyYaw.reduce((a,b)=>a+b*b,0) / earlyYaw.length);
-                                    let lateYawRMS  = Math.sqrt(lateYaw.reduce((a,b)=>a+b*b,0)  / lateYaw.length);
-                                    let yawRatio     = earlyYawRMS / (lateYawRMS + 0.5);
-                                    let yawDampScore = Math.min(1, Math.max(0, (yawRatio - 1.0) / 1.5));
-
-                                    // Stability: gyro vector norm variance in late phase (captures pitch + roll + yaw residual wobble)
-                                    let lateYawM    = lateYaw.reduce((a,b)=>a+b,0) / lateYaw.length;
-                                    let lateYawVar  = lateYaw.reduce((a,b)=>a+(b-lateYawM)**2,0) / lateYaw.length;
-                                    let stabilScore = Math.max(0, 1 - lateYawVar / 400);
-
-                                    let anchorScore = Math.round((decelScore * 0.35 + yawDampScore * 0.35 + stabilScore * 0.30) * 100);
-                                    let ab = document.getElementById('anchorSettleBadge');
-                                    if (ab) {
-                                        if      (anchorScore >= 60) { ab.className = 'badge badge-green';  ab.style.cssText = ''; ab.innerText = 'ANCHORED (' + anchorScore + ')'; }
-                                        else if (anchorScore >= 30) { ab.className = 'badge badge-yellow'; ab.style.cssText = ''; ab.innerText = 'SETTLING (' + anchorScore + ')'; }
-                                        else                        { ab.className = 'badge badge-red';    ab.style.cssText = ''; ab.innerText = 'UNSTABLE (' + anchorScore + ')'; }
-                                    }
-
-                                    // Hip Settle — lateral impulse in early half, stable in late half
-                                    let earlyLat = anchorSettleSamples.aLatP.slice(0, half);
-                                    let lateLat  = anchorSettleSamples.aLatP.slice(half);
-                                    let earlyLatPeak = Math.max(...earlyLat.map(v => Math.abs(v)));
-                                    let lateLatMean  = lateLat.reduce((a,b) => a+b, 0) / lateLat.length;
-                                    let lateLatVar   = lateLat.reduce((a,b) => a + (b - lateLatMean)**2, 0) / lateLat.length;
-                                    let hse = document.getElementById('hipSettleBadge');
-                                    if (hse) {
-                                        hse.style.cssText = '';
-                                        if      (earlyLatPeak > 0.30)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'OVERSWING ⚠'; }
-                                        else if (earlyLatPeak > 0.10 && lateLatVar < 0.015)        { hse.className = 'badge badge-green';  hse.innerText = 'HIP SETTLE ✓'; }
-                                        else if (earlyLatPeak > 0.05)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'SLIGHT SETTLE'; }
-                                        else                                                        { hse.className = 'badge badge-red';    hse.innerText = 'NO HIP SETTLE'; }
-                                    }
-                                    anchorSettleHoldUntil = now + 2000; // hold score visible for 2 s before next cycle
-                                }
-                            }
                         }
                     } else {
                         document.getElementById('pelvicCard').style.display = 'none';
                         document.getElementById('pelvicSpacer').style.display = '';
+                    }
+
+                    // Timer evaluation outside pelvicOk — survives brief sensor dropouts
+                    if (anchorSettleActive && now - anchorSettleLastTrigger >= anchorSettleWindowMs) {
                         anchorSettleActive = false;
+                        anchorSettleEvalCount++;
+                        if (anchorSettleBwdCount >= 1) {
+                            let n = anchorSettleSamples.aSagP.length;
+                            if (n >= 3) {
+                                let half = Math.floor(n / 2);
+                                let earlyAY  = anchorSettleSamples.aSagP.slice(0, half);
+                                let lateAY   = anchorSettleSamples.aSagP.slice(half);
+                                let earlyYaw = anchorSettleSamples.gYawP.slice(0, half);
+                                let lateYaw  = anchorSettleSamples.gYawP.slice(half);
+                                let earlyRMS = Math.sqrt(earlyAY.reduce((a,b)=>a+b*b,0) / earlyAY.length);
+                                let lateRMS  = Math.sqrt(lateAY.reduce((a,b)=>a+b*b,0)  / lateAY.length);
+                                let settlingRatio = earlyRMS / (lateRMS + 0.01);
+                                let decelScore = Math.min(1, Math.max(0, (settlingRatio - 1.0) / 1.5));
+                                let earlyYawRMS = Math.sqrt(earlyYaw.reduce((a,b)=>a+b*b,0) / earlyYaw.length);
+                                let lateYawRMS  = Math.sqrt(lateYaw.reduce((a,b)=>a+b*b,0)  / lateYaw.length);
+                                let yawRatio     = earlyYawRMS / (lateYawRMS + 0.5);
+                                let yawDampScore = Math.min(1, Math.max(0, (yawRatio - 1.0) / 1.5));
+                                let lateYawM    = lateYaw.reduce((a,b)=>a+b,0) / lateYaw.length;
+                                let lateYawVar  = lateYaw.reduce((a,b)=>a+(b-lateYawM)**2,0) / lateYaw.length;
+                                let stabilScore = Math.max(0, 1 - lateYawVar / 400);
+                                let anchorScore = Math.round((decelScore * 0.35 + yawDampScore * 0.35 + stabilScore * 0.30) * 100);
+                                anchorSettleLastScore = anchorScore;
+                                let ab = document.getElementById('anchorSettleBadge');
+                                if (ab) {
+                                    if      (anchorScore >= 60) { ab.className = 'badge badge-green';  ab.style.cssText = ''; ab.innerText = 'ANCHORED (' + anchorScore + ')'; }
+                                    else if (anchorScore >= 30) { ab.className = 'badge badge-yellow'; ab.style.cssText = ''; ab.innerText = 'SETTLING (' + anchorScore + ')'; }
+                                    else                        { ab.className = 'badge badge-red';    ab.style.cssText = ''; ab.innerText = 'UNSTABLE (' + anchorScore + ')'; }
+                                }
+                                let earlyLat = anchorSettleSamples.aLatP.slice(0, half);
+                                let lateLat  = anchorSettleSamples.aLatP.slice(half);
+                                let earlyLatPeak = Math.max(...earlyLat.map(v => Math.abs(v)));
+                                let lateLatMean  = lateLat.reduce((a,b) => a+b, 0) / lateLat.length;
+                                let lateLatVar   = lateLat.reduce((a,b) => a + (b - lateLatMean)**2, 0) / lateLat.length;
+                                let hse = document.getElementById('hipSettleBadge');
+                                if (hse) {
+                                    hse.style.cssText = '';
+                                    if      (earlyLatPeak > 0.30)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'OVERSWING ⚠'; }
+                                    else if (earlyLatPeak > 0.10 && lateLatVar < 0.015)        { hse.className = 'badge badge-green';  hse.innerText = 'HIP SETTLE ✓'; }
+                                    else if (earlyLatPeak > 0.05)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'SLIGHT SETTLE'; }
+                                    else                                                        { hse.className = 'badge badge-red';    hse.innerText = 'NO HIP SETTLE'; }
+                                }
+                                anchorSettleHoldUntil = now + 3000;
+                            } else {
+                                let ab = document.getElementById('anchorSettleBadge');
+                                if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = '— ANCHOR'; }
+                                anchorSettleHoldUntil = now + 3000; // hold to prevent immediate re-trigger
+                            }
+                        } else {
+                            let ab = document.getElementById('anchorSettleBadge');
+                            if (ab && ab.innerText === 'MEASURING...') { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = '— ANCHOR'; }
+                            anchorSettleHoldUntil = now + 3000; // hold even on walk-back cancel
+                        }
                     }
 
                     // 2. STEP & HEEL/TOE-STRIKE DETECTION
@@ -920,7 +925,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                 let aZThr = stepDurationMs > 800 ? 0.92 : 0.95;
                                                                                 let leftSignal  = leftOk  && ((Math.abs(aZL) > aZThr && preJerkL > 2.0) || (Math.abs(gPitchL) > 80 && preJerkL > 8));
                                                                                 let rightSignal = rightOk && ((Math.abs(aZR) > aZThr && preJerkR > 2.0) || (Math.abs(gPitchR) > 80 && preJerkR > 8));
-                                                                                if (cfWarmupFrames > 0) { leftSignal = false; rightSignal = false; }
+                                                                                if (Date.now() < cfWarmupUntil) { leftSignal = false; rightSignal = false; }
 
                                                                                 let detectedFoot = null;
 
@@ -1154,19 +1159,38 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             }
                         }
 
-                        // Anchor Settle — force evaluate when backward phase ends (first non-backward step)
-                        if (anchorSettleActive && pelvicOk && activeDirection !== "BACKWARD") {
-                            anchorSettleLastTrigger = 0; // forces evaluation on next setInterval tick
+                        // Anchor Settle — AMBIGUOUS steps extend the window only within the first 2000ms (anchor triple duration at 60BPM)
+                        // After 2000ms the timer fires naturally; this prevents walk-steps classified as AMBIGUOUS from locking the window open indefinitely
+                        if (anchorSettleActive && pelvicOk && activeDirection === "AMBIGUOUS") {
+                            if (now - anchorSettleStartTime < 2000 && anchorSettleBwdCount < 2) {
+                                anchorSettleLastTrigger = now; // extend deadline for beat& arriving within anchor triple (bwd<2 only)
+                            }
+                            // after bwd>=2 (beat6 done) or after 2000ms: ignore, let timer evaluate
+                        }
+                        // Only a clear FORWARD step force-evaluates (≥2 bwd) or cancels (<2 bwd)
+                        if (anchorSettleActive && pelvicOk && activeDirection === "FORWARD") {
+                            if (anchorSettleBwdCount >= 1) {
+                                anchorSettleLastTrigger = 0; // forces evaluation on next setInterval tick
+                            } else {
+                                anchorSettleActive    = false;
+                                anchorSettleBwdCount  = 0;
+                                let ab = document.getElementById('anchorSettleBadge');
+                                if (ab && ab.innerText === 'MEASURING...') { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = '— ANCHOR'; }
+                            }
                         }
 
                         // Anchor Settle — start on first backward step, extend deadline on each subsequent one
-                        if (pelvicOk && activeDirection === "BACKWARD" && now >= anchorSettleHoldUntil) {
+                        if (activeDirection === "BACKWARD" && now >= anchorSettleHoldUntil) {
                             if (!anchorSettleActive) {
                                 anchorSettleActive    = true;
                                 anchorSettleStartTime = now;
                                 anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
+                                anchorSettleBwdCount  = 0;
                             }
-                            anchorSettleLastTrigger = now;  // extend deadline: evaluate 500ms after THIS step
+                            anchorSettleBwdCount++;
+                            if (anchorSettleBwdCount <= 2) {
+                                anchorSettleLastTrigger = now;  // extend deadline only for triple (beat5 + beat6); subsequent backward steps don't reopen window
+                            }
                             anchorWindowMs = Math.min(900, Math.max(280, Math.round(stepDurationMs * 1.05)));
                             let ab = document.getElementById('anchorSettleBadge');
                             if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = 'MEASURING...'; }

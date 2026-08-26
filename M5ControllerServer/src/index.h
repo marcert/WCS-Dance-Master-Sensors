@@ -396,7 +396,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let lastStepTimeLeft = 0, lastStepTimeRight = 0;
     let lastActiveFoot = "", stepDurationMs = 500, lastStepTimestamp = 0;
     let thetaBufferL = [], thetaBufferR = [];
-    let cfWarmupFrames = 250;
+    const cfWarmupUntil = Date.now() + 2000;
     let prevAzLeft = 1.0, prevAzRight = 1.0;
     // -- delay ramp monitor (tempo-normalised weight transfer timing) --
     let delayMonActive = false, delayMonFoot = null, delayMonDir = null;
@@ -408,7 +408,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let aZPDynHistory  = new Array(50).fill(0);
     let gYawTimedBuf   = [];
     let hipActSmoothed = 0;
-    let anchorSettleActive = false, anchorSettleStartTime = 0, anchorSettleLastTrigger = 0, anchorSettleHoldUntil = 0, anchorWindowMs = 500;
+    let anchorSettleActive = false, anchorSettleStartTime = 0, anchorSettleLastTrigger = 0, anchorSettleHoldUntil = 0, anchorSettleBwdCount = 0, anchorWindowMs = 500, anchorSettleWindowMs = 700;
     let anchorSettleSamples = { aYP: [], gYawP: [], aLatP: [] };
 
     // -- audio --
@@ -635,15 +635,14 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         thetaBufferL.push(pitchLeftAngleRaw  - leftMountOffset);
         if (thetaBufferR.length >= 10) thetaBufferR.shift();
         thetaBufferR.push(pitchRightAngleRaw - rightMountOffset);
-        if (cfWarmupFrames > 0) cfWarmupFrames--;
-
+        if (Date.now() < cfWarmupUntil) { leftSig = false; rightSig = false; }
         // Step trigger (same thresholds as solo.h)
         let preJerkL_s = Math.abs(aZL_s - prevAzLeft)  / 0.005;
         let preJerkR_s = Math.abs(aZR_s - prevAzRight) / 0.005;
         let aZThr_s = stepDurationMs > 800 ? 0.92 : 0.95;
         let leftSig  = targetLOk && ((Math.abs(aZL_s) > aZThr_s && preJerkL_s > 2.0) || (Math.abs(gPitchL_s) > 80 && preJerkL_s > 8));
         let rightSig = targetROk && ((Math.abs(aZR_s) > aZThr_s && preJerkR_s > 2.0) || (Math.abs(gPitchR_s) > 80 && preJerkR_s > 8));
-        if (cfWarmupFrames > 0) { leftSig = false; rightSig = false; }
+        if (Date.now() < cfWarmupUntil) { leftSig = false; rightSig = false; }
         let detFoot = null;
         if      (leftSig && rightSig) detFoot = (Math.abs(aZL_s) >= Math.abs(aZR_s)) ? "L" : "R";
         else if (leftSig)  detFoot = "L";
@@ -696,19 +695,35 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                     else                   { hfEl.className='p-badge p-red';    hfEl.innerText='HIP LAGS'; }
                 }
             }
-            // Anchor Settle — force evaluate when backward phase ends (first non-backward step)
-            if (anchorSettleActive && targetPOk && activeDir !== "BACKWARD") {
-                anchorSettleLastTrigger = 0; // forces evaluation on next setInterval tick
+            // Anchor Settle — AMBIGUOUS steps extend the window only within the first 2000ms (anchor triple duration at 60BPM)
+            if (anchorSettleActive && targetPOk && activeDir === "AMBIGUOUS") {
+                if (now - anchorSettleStartTime < 2000 && anchorSettleBwdCount < 2) {
+                    anchorSettleLastTrigger = now;
+                }
+            }
+            // Only a clear FORWARD step force-evaluates (≥2 bwd) or cancels (<2 bwd)
+            if (anchorSettleActive && targetPOk && activeDir === "FORWARD") {
+                if (anchorSettleBwdCount >= 1) {
+                    anchorSettleLastTrigger = 0; // forces evaluation on next setInterval tick
+                } else {
+                    anchorSettleActive = false; anchorSettleBwdCount = 0;
+                    let ab = document.getElementById('p-anchorBadge');
+                    if (ab && ab.innerText === 'MEASURING...') { ab.className='p-badge'; ab.innerText='— ANCHOR'; }
+                }
             }
 
             // Anchor Settle trigger — start fresh on first backward step, extend deadline on each subsequent one
-            if (targetPOk && activeDir === "BACKWARD" && now >= anchorSettleHoldUntil) {
+            if (activeDir === "BACKWARD" && now >= anchorSettleHoldUntil) {
                 if (!anchorSettleActive) {
                     anchorSettleActive = true; anchorSettleStartTime = now;
                     anchorWindowMs = Math.min(500, Math.max(280, stepDurationMs));
                     anchorSettleSamples = { aYP: [], gYawP: [], aLatP: [] };
+                    anchorSettleBwdCount = 0;
                 }
-                anchorSettleLastTrigger = now;
+                anchorSettleBwdCount++;
+                if (anchorSettleBwdCount <= 2) {
+                    anchorSettleLastTrigger = now;
+                }
                 let ab = document.getElementById('p-anchorBadge');
                 if (ab) { ab.className='p-badge'; ab.innerText='MEASURING...'; }
                 let hse0 = document.getElementById('p-hipSettleBadge');
@@ -820,54 +835,64 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             // gYaw timed ring — {t, v} pairs, 600ms window (for hip-foot coupling)
             gYawTimedBuf.push({ t: now, v: Math.abs(gYawP_p) });
             while (gYawTimedBuf.length > 0 && now - gYawTimedBuf[0].t > 600) gYawTimedBuf.shift();
-            // Anchor Settle — collect tempo-adaptive window, evaluate at end
+            // Anchor Settle — collect samples only (timer evaluation is outside pelvicOk to survive brief sensor dropouts)
             if (anchorSettleActive) {
                 anchorSettleSamples.aYP.push(aYP_p);
                 anchorSettleSamples.gYawP.push(Math.abs(gYawP_p));
                 anchorSettleSamples.aLatP.push(aXP_p);
-                if (now - anchorSettleLastTrigger >= anchorWindowMs) {
-                    anchorSettleActive = false;
-                    let n = anchorSettleSamples.aYP.length;
-                    if (n >= 8) {
-                        let half = Math.floor(n/2);
-                        let earlyAY  = anchorSettleSamples.aYP.slice(0,half),  lateAY  = anchorSettleSamples.aYP.slice(half);
-                        let earlyYaw = anchorSettleSamples.gYawP.slice(0,half), lateYaw = anchorSettleSamples.gYawP.slice(half);
-                        let earlyAYMag = earlyAY.reduce((a,b)=>a+Math.abs(b),0)/earlyAY.length;
-                        let lateAYMag  = lateAY.reduce((a,b)=>a+Math.abs(b),0)/lateAY.length;
-                        let earlyYawM  = earlyYaw.reduce((a,b)=>a+b,0)/earlyYaw.length;
-                        let lateYawM   = lateYaw.reduce((a,b)=>a+b,0)/lateYaw.length;
-                        let decelScore   = Math.min(1,Math.max(0,(earlyAYMag-lateAYMag+0.05)/0.25));
-                        let yawDampScore = Math.min(1,Math.max(0,(earlyYawM-lateYawM)/25));
-                        let lateYawVar   = lateYaw.reduce((a,b)=>a+(b-lateYawM)**2,0)/lateYaw.length;
-                        let stabilScore  = Math.max(0, 1-lateYawVar/400);
-                        let score = Math.round((decelScore*0.35+yawDampScore*0.35+stabilScore*0.30)*100);
-                        let ab = document.getElementById('p-anchorBadge');
-                        if (ab) {
-                            if      (score >= 60) { ab.className='p-badge p-green';  ab.innerText='ANCHORED ('+score+')'; }
-                            else if (score >= 30) { ab.className='p-badge p-yellow'; ab.innerText='SETTLING ('+score+')'; }
-                            else                  { ab.className='p-badge p-red';    ab.innerText='UNSTABLE ('+score+')'; playDescendingSweep(); }
-                        }
-                        // Hip Settle — lateral pelvic impulse in first half of window
-                        let earlyLat    = anchorSettleSamples.aLatP.slice(0, half);
-                        let lateLat     = anchorSettleSamples.aLatP.slice(half);
-                        let earlyLatPeak = Math.max(...earlyLat.map(v => Math.abs(v)));
-                        let lateLatMean  = lateLat.reduce((a,b) => a+b, 0) / lateLat.length;
-                        let lateLatVar   = lateLat.reduce((a,b) => a + (b - lateLatMean)**2, 0) / lateLat.length;
-                        let hse = document.getElementById('p-hipSettleBadge');
-                        if (hse) {
-                            hse.style.cssText = '';
-                            if      (earlyLatPeak > 0.30)                           { hse.className='p-badge p-yellow'; hse.innerText='OVERSWING ⚠'; }
-                            else if (earlyLatPeak > 0.10 && lateLatVar < 0.015)     { hse.className='p-badge p-green';  hse.innerText='HIP SETTLE ✓'; }
-                            else if (earlyLatPeak > 0.05)                           { hse.className='p-badge p-yellow'; hse.innerText='SLIGHT SETTLE'; }
-                            else                                                     { hse.className='p-badge p-red';    hse.innerText='NO HIP SETTLE'; }
-                        }
-                        anchorSettleHoldUntil = now + 2000;
-                    }
-                }
             }
         } else {
             document.getElementById('pelvisInfoDiv').style.visibility = 'hidden';
+        }
+
+        // Timer evaluation outside pelvicOk — survives brief sensor dropouts
+        if (anchorSettleActive && now - anchorSettleLastTrigger >= anchorSettleWindowMs) {
             anchorSettleActive = false;
+            if (anchorSettleBwdCount >= 2) {
+                let n = anchorSettleSamples.aYP.length;
+                if (n >= 3) {
+                    let half = Math.floor(n/2);
+                    let earlyAY  = anchorSettleSamples.aYP.slice(0,half),  lateAY  = anchorSettleSamples.aYP.slice(half);
+                    let earlyYaw = anchorSettleSamples.gYawP.slice(0,half), lateYaw = anchorSettleSamples.gYawP.slice(half);
+                    let earlyAYMag = earlyAY.reduce((a,b)=>a+Math.abs(b),0)/earlyAY.length;
+                    let lateAYMag  = lateAY.reduce((a,b)=>a+Math.abs(b),0)/lateAY.length;
+                    let earlyYawM  = earlyYaw.reduce((a,b)=>a+b,0)/earlyYaw.length;
+                    let lateYawM   = lateYaw.reduce((a,b)=>a+b,0)/lateYaw.length;
+                    let decelScore   = Math.min(1,Math.max(0,(earlyAYMag-lateAYMag+0.05)/0.25));
+                    let yawDampScore = Math.min(1,Math.max(0,(earlyYawM-lateYawM)/25));
+                    let lateYawVar   = lateYaw.reduce((a,b)=>a+(b-lateYawM)**2,0)/lateYaw.length;
+                    let stabilScore  = Math.max(0, 1-lateYawVar/400);
+                    let score = Math.round((decelScore*0.35+yawDampScore*0.35+stabilScore*0.30)*100);
+                    let ab = document.getElementById('p-anchorBadge');
+                    if (ab) {
+                        if      (score >= 60) { ab.className='p-badge p-green';  ab.innerText='ANCHORED ('+score+')'; }
+                        else if (score >= 30) { ab.className='p-badge p-yellow'; ab.innerText='SETTLING ('+score+')'; }
+                        else                  { ab.className='p-badge p-red';    ab.innerText='UNSTABLE ('+score+')'; playDescendingSweep(); }
+                    }
+                    let earlyLat    = anchorSettleSamples.aLatP.slice(0, half);
+                    let lateLat     = anchorSettleSamples.aLatP.slice(half);
+                    let earlyLatPeak = Math.max(...earlyLat.map(v => Math.abs(v)));
+                    let lateLatMean  = lateLat.reduce((a,b) => a+b, 0) / lateLat.length;
+                    let lateLatVar   = lateLat.reduce((a,b) => a + (b - lateLatMean)**2, 0) / lateLat.length;
+                    let hse = document.getElementById('p-hipSettleBadge');
+                    if (hse) {
+                        hse.style.cssText = '';
+                        if      (earlyLatPeak > 0.30)                           { hse.className='p-badge p-yellow'; hse.innerText='OVERSWING ⚠'; }
+                        else if (earlyLatPeak > 0.10 && lateLatVar < 0.015)     { hse.className='p-badge p-green';  hse.innerText='HIP SETTLE ✓'; }
+                        else if (earlyLatPeak > 0.05)                           { hse.className='p-badge p-yellow'; hse.innerText='SLIGHT SETTLE'; }
+                        else                                                     { hse.className='p-badge p-red';    hse.innerText='NO HIP SETTLE'; }
+                    }
+                    anchorSettleHoldUntil = now + 3000;
+                } else {
+                    let ab = document.getElementById('p-anchorBadge');
+                    if (ab) { ab.className='p-badge'; ab.innerText='— ANCHOR'; }
+                    anchorSettleHoldUntil = now + 3000;
+                }
+            } else {
+                let ab = document.getElementById('p-anchorBadge');
+                if (ab && ab.innerText === 'MEASURING...') { ab.className='p-badge'; ab.innerText='— ANCHOR'; }
+                anchorSettleHoldUntil = now + 3000;
+            }
         }
 
     }, intervalMs); 
