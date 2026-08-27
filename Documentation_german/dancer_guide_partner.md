@@ -1,7 +1,8 @@
 # WCS Dance Master Sensors — Tänzer-Leitfaden: Partner-Dashboard
 
 > Dieser Leitfaden behandelt das Partner-Dashboard (`/`) — die Ansicht für einen Coach oder Tanzpartner, der von der Seite zuschaut.  
-> Die Solo-Trainingsansicht mit stufengesteuertem Feedback ist unter [dancer_guide_solo.md](dancer_guide_solo.md) beschrieben.
+> Die Solo-Trainingsansicht mit stufengesteuertem Feedback ist unter [dancer_guide_solo.md](dancer_guide_solo.md) beschrieben.  
+> **Grounding-Metriken (SDR, SETTLE, ROLL, GND-Score) sind ausschließlich im Solo-Dashboard** (`/solo`, ADV-Level) verfügbar. Das Partner-Dashboard enthält keine Grounding-Kachel.
 
 ---
 

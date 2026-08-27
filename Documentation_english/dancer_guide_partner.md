@@ -1,7 +1,8 @@
 # WCS Dance Master Sensors — Dancer's Guide: Partner Dashboard
 
 > This guide covers the Partner Dashboard (`/`) — the view designed for a coach or dance partner watching from the side.  
-> For the solo training view with level-gated feedback, see [dancer_guide_solo.md](dancer_guide_solo.md).
+> For the solo training view with level-gated feedback, see [dancer_guide_solo.md](dancer_guide_solo.md).  
+> **Grounding metrics (SDR, SETTLE, ROLL, GND Score) are available exclusively in the Solo Dashboard** (`/solo`, ADV level). The Partner Dashboard does not include a Grounding Card.
 
 ---
 
