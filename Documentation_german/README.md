@@ -6,6 +6,13 @@ Die technischen Badge-Bezeichnungen (z. B. `HEEL STRIKE ✓`, `DELAYED ✓`) ers
 > 🇬🇧 Englische Dokumentation: [Documentation_english/README.md](../Documentation_english/README.md)  
 > 🏠 Haupt-Readme: [readme.md](../readme.md)
 
+Das System unterstützt zwei Anwendungsfälle — wähle den passenden Guide:
+
+- 🧍 **Solo-Training** — der Tänzer nutzt das Solo-Dashboard (`/solo`) allein und liest die Badge-Rückmeldungen zwischen den Schritten ab. → [Tänzerguide — Solo](dancer_guide_solo.md)
+- 🤝 **Partner / Coaching** — Trainer oder Tanzpartner öffnet das Partner-Dashboard (`/`) auf einem zweiten Gerät, während der Tänzer trainiert. → [Tänzerguide — Partner](dancer_guide_partner.md)
+
+Beide Dashboards können gleichzeitig auf getrennten Geräten laufen. Der optionale Becken-Sensor ergänzt beide Dashboards um fünf Echtzeit-Hüft-Metriken.
+
 ---
 
 ## Übersicht
