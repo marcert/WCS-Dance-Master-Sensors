@@ -8,7 +8,7 @@ A real-time wireless sensor network and video-overlay feedback system built for 
 
 > 🇩🇪 **Deutsche Dokumentation:** [Documentation_german/README.md](Documentation_german/README.md)
 
-![Dashboard Screenshot](Attachments/screenshot.png)
+
 
 ---
 
@@ -28,6 +28,11 @@ Alerts fire immediately as audio beeps and coloured badge overlays — faster th
 
 ### Main Dashboard — Connection & Footwork Overview
 Real-time canvas graphs for both feet and the hand sensor. Designed for coaches observing from the side. Open in any browser at the Master's IP address root (`/`).
+
+<p align="center">
+  <kbd><img src="https://raw.githubusercontent.com/marcert/WCS-Dance-Master-Sensors/refs/heads/main/Attachments/screenshot.png" width="600"></kbd>
+</p>
+
 
 ### Solo Training Dashboard — Foot Articulation Deep-Dive
 Detailed step-by-step badge feedback for solo drills. Designed for the dancer to glance at between steps. Open at `/solo`.
