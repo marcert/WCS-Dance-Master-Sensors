@@ -17,7 +17,7 @@ A real-time wireless sensor network and video-overlay feedback system built for 
 | Sensor | Measures |
 | :--- | :--- |
 | **Left & Right Foot** | Foot roll-off quality (gyro angular rate), heel/toe strike angle, impact force (Z-axis g-force), push-off power |
-| **Hand / Scale Unit** | Lead-follow tension in grams (−3.5 kg to +3.5 kg via HX711 strain gauge), connection jerk index |
+| **Hand / Scale Unit** | Lead-follow tension in grams (−4.0 kg to +4.0 kg via HX711 strain gauge), connection jerk index |
 | **Pelvis Sensor** *(optional)* | Lateral pelvic tilt, yaw damping (Anchor Settle score), hip activation (yaw rate), hip–foot coupling timing, vertical bounce |
 
 Alerts fire immediately as audio beeps and coloured badge overlays — faster than you can read a graph.

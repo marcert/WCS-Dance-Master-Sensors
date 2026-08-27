@@ -57,7 +57,7 @@ Jerk (Ruck) bezeichnet die Änderungsrate der Beschleunigung — abrupte Spitzen
 | **`GYRO_MIN`** | $80{,}0\,\text{deg/s}$ | Empirisch aus Tests sauberer Fußartikulierung abgeleitet; Werte darunter fehlt die notwendige Rollbewegung. |
 | **`ACCEL_MAX`** | $1{,}5\,g$ | Typische Grenze zwischen gedämpften Schritten und harten Aufprallstößen. |
 | **Jerk-Schwellenwert** | $12{,}0$ (Rohindex) | Aktivierungswert für akustische Auslöser bei starken, unangenehmen Zugkräften. |
-| **Diagramm-Skalierung** | $-3500\,\text{g}$ bis $+3500\,\text{g}$ | Erfasst die üblichen WCS-Verbindungskraftschwankungen ohne Clipping. |
+| **Diagramm-Skalierung** | $-4000\,\text{g}$ bis $+4000\,\text{g}$ | Erfasst die üblichen WCS-Verbindungskraftschwankungen ohne Clipping. |
 
 ---
 
