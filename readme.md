@@ -36,7 +36,9 @@ Three training levels hide or reveal cards depending on what is relevant:
 | `🏃 INT` | + Jerk bar, Push-Off badge, Double Stance card | Technique refinement |
 | `⭐ ADV` | All cards — full biomechanical feedback incl. pelvis metrics | Detailed analysis |
 
-> 📸 **[Screenshot: Solo Dashboard with the BEG/INT/ADV level selector button visible in the header and the corresponding card layout]**
+<p align="center">
+  <kbd><img src="https://raw.githubusercontent.com/marcert/WCS-Dance-Master-Sensors/refs/heads/main/Attachments/scr.jpg" width="600"></kbd>
+</p>
 
 When the optional **Pelvis Sensor** is attached, both dashboards display five additional real-time metrics: hip activation, lateral stability, hip–foot coupling, vertical bounce, and Anchor Settle score.
 
@@ -71,7 +73,7 @@ When the optional **Pelvis Sensor** is attached, both dashboards display five ad
 6. **Tap `📐 ZERO`** while standing naturally in your dance stance to calibrate the foot angle baseline.
 7. **Tap `🔊 Biofeedback: OFF`** to enable audio alerts.
 
-> 📸 **[Screenshot: Phone browser showing the Solo Dashboard with live sensor data after completing the session setup steps]**
+
 
 > The IP address is shown on the Master's display on startup. In AP-only mode it is always `192.168.4.1`.
 
