@@ -103,8 +103,8 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
 
    | θ bei T-1 | Richtungs-Badge |
    | :---: | :--- |
-   | θ ≥ +8° | ➡️ FORWARD (blau) — zuverlässiger Fersenerstkontakt |
-   | θ < −8° | ⬅️ BACK (lila) — zuverlässiger Zehenerstkontakt |
+   | θ ≥ +8° | ➡ FWD (blau) — zuverlässiger Fersenerstkontakt |
+   | θ < −8° | ⬅ BWD (lila) — zuverlässiger Zehenerstkontakt |
    | −8° ≤ θ < +8° | — (grau) — mehrdeutig; Richtung nicht angezeigt |
 
    **Interne Richtungsklassifikation (Anchor-Settle-Auslöser):** Unabhängig von der Badge-Anzeige verwendet die interne `activeDir`-Logik eine engere mehrdeutige Zone: Nur `0° < θ < +10°` erfordert eine Neigungstrend-Prüfung. Für `θ ≤ 0°` (jede Plantarflexion / Zehenerstkontakt) wird `activeDir` direkt auf BACKWARD gesetzt, ohne Trendanalyse. Dies stellt sicher, dass Rückwärtsschritte, die bei θ = −2° bis −5° landen, das Anchor-Settle-Auswertungsfenster korrekt auslösen, obwohl das Richtungs-Badge weiterhin „—" anzeigt (da |θ| < 8°).
@@ -113,7 +113,7 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
 
    Das Strike-Badge bewertet *wie* der Fuß gelandet ist, unabhängig von der Richtung. Dies ist für Vorwärts- und Rückwärtsschritte gleichermaßen nützlich: `SOFT ✓` bei θ ≈ 0° zeigt einen kontrollierten Rückwärtsschritt an; `HARD IMPACT ⚠` bei θ ≈ 0° bedeutet, dass der Tänzer auf den Fuß gefallen ist.
 
-   Jerk-Schwellenwerte (gleiche Skalierung wie die angezeigte Aufprall-Jerk-Anzeige ÷ 4):
+   Jerk-Schwellenwerte:
    - **HART:** J > 22 g/s (intern > 88)
    - **MODERAT:** 20 g/s < J ≤ 22 g/s (intern 80–88)
    - **WEICH:** J ≤ 20 g/s (intern ≤ 80)
@@ -128,7 +128,7 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
    | −8° bis +7° (mehrdeutig) | 20–22 g/s | `MODERATE` (Gelb) | Akzeptabel; Aufprall reduzieren |
    | −8° bis +7° (mehrdeutig) | > 22 g/s | `HARD IMPACT ⚠` (Rot) | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
 
-   * **BRUSH+HEEL-Neuklassifikation (200-ms-Fenster):** Wenn eine Landung in der mehrdeutigen Zone innerhalb von 200 ms von einem zweiten aZ > 1,05 g-Peak mit accelAngle > 8° am gleichen Fuß gefolgt wird, wird das Badge zu `BRUSH+HEEL` (grün) aufgewertet und das Richtungs-Badge zeigt ➡️ FORWARD.
+   * **BRUSH+HEEL-Neuklassifikation (200-ms-Fenster):** Wenn eine Landung in der mehrdeutigen Zone innerhalb von 200 ms von einem zweiten aZ > 1,05 g-Peak mit accelAngle > 8° am gleichen Fuß gefolgt wird, wird das Badge zu `BRUSH+HEEL` (grün) aufgewertet und das Richtungs-Badge zeigt ➡ FWD.
 
 ---
 
@@ -203,17 +203,12 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
 
 ---
 
-### F. Abroll-Symmetrie-Index (ASI) & Glätteindex
+### F. Abroll-Symmetrie-Index (ASI)
 
-1. **Asymmetrie-Index (ASI):**
+**Asymmetrie-Index (ASI):**
    Vergleicht die integrierte Winkelarbeit über linke und rechte Fuß-Abrollzyklen während die Füße aktiv in Bewegung sind ($|\omega_{\text{pitch}}| > 15^\circ/\text{s}$):
    $$\text{ASI} = \frac{2 \cdot \left|\int|\omega_{\text{left}}|\,dt - \int|\omega_{\text{right}}|\,dt\right|}{\int|\omega_{\text{left}}|\,dt + \int|\omega_{\text{right}}|\,dt} \times 100\%$$
    * **Ziel:** $< 15\%$ (`SYMMETRIC`), $16\text{--}35\%$ (`MINOR ASYM`), $>35\%$ (`ASYMMETRIC`).
-
-2. **Abroll-Glätteindex (Roll-Smoothness Index):**
-   Misst den kombinierten Winkelgeschwindigkeits-Jerk beider Füße, geglättet über ein 25-Frame (0,5 s) gleitendes Fenster:
-   $$\text{Smoothness} = 100 - \text{Mean}_{25}\!\left(\min\!\left(100,\;\left(\left|\frac{\Delta\omega_L}{\Delta t}\right| + \left|\frac{\Delta\omega_R}{\Delta t}\right|\right) \times 0.018\right)\right)$$
-   * **Ziel:** Höhere Werte ($\ge 65$) zeigen `SMOOTH`, kontinuierliche Knöchelartikulierung ohne Mikrostottern an.
 
 ---
 
@@ -282,7 +277,7 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Mehrdeutig — weich** | $-8° \le \theta < +8°$, Jerk $\le 20$ g/s | `SOFT ✓` (Grün) | Kein |
 | **Mehrdeutig — moderat** | $-8° \le \theta < +8°$, Jerk $20\text{–}22$ g/s | `MODERATE` (Gelb) | Kein |
 | **Mehrdeutig — hart** | $-8° \le \theta < +8°$, Jerk $> 22$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
-| **BRUSH+HEEL-Neuklassifikation** | mehrdeutig → zweites aZ $> 1{,}05\,g$ + accelAngle $> 8°$ innerhalb 200 ms | `BRUSH+HEEL` (Grün) → ➡️ FORWARD | Kein |
+| **BRUSH+HEEL-Neuklassifikation** | mehrdeutig → zweites aZ $> 1{,}05\,g$ + accelAngle $> 8°$ innerhalb 200 ms | `BRUSH+HEEL` (Grün) → ➡ FWD | Kein |
 | **Standbein-Abstoß (vorwärts, optimal)** | BACKWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (rückwärts/Anker, optimal)** | FORWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (schwach)** | Beide Richtungen, $120\text{–}159/199^\circ/\text{s}$ UND $aY > 0.15g$ | `↗ PUSH` (Gelb) — hält 400 ms | Kein |
@@ -302,7 +297,6 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Rigid Lever** | Pronation $> 8°/\text{s}$ UND Vorzeichenumkehr in 200 ms | `RIGID LEVER` (Grün) | Kein |
 | **Sprunggelenk-Stoßdämpfung** | rollIntegral $> 4°$ (keine Umkehr) | `ANKLE FLEX` (Grün) | Kein |
 | **Sprunggelenk-Steifigkeit** | rollIntegral $< 1°$ | `STIFF ANKLE` (Gelb) | Kein |
-| **Hitch & Go — erkannt** | $|aZ| < 0{,}35\,g$ für 50–380 ms innerhalb 700 ms nach letztem Schritt | `✓ HITCH (L/R)` (Grün) | Kein |
 | **Ball→Ferse — optimal** | $\theta_{T-1} < -2°$, lateMean $> 3°$ | `BALL→HEEL ✓` (Grün) | Kein |
 | **Ball→Ferse — partiell** | $\theta_{T-1} < 0°$, lateMean $> 0°$ | `PARTIAL ROLL` (Gelb) | Kein |
 | **Ball→Ferse — Ferse zuerst** | $\theta_{T-1} \ge 0°$ | `HEEL-FIRST` (Gelb) | Kein |
@@ -313,30 +307,23 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Zehe→Ferse — optimal (Ballensch.)** | earlyMean $< -2°$, rise $> 3°$ | `TOE→HEEL ✓` (Grün) | Kein |
 | **Zehe→Ferse — partiell (Ballensch.)** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
 | **Ferse→Ball — Flachfuß** | earlyMean $\le 0°$, rise $\le 1°$ | `FLAT-FOOT` (Gelb) | Kein |
+| **Roll-Glattheit — sauber** | rollVar < 80 | `CLEAN ROLL ✓` (Grün) | Kein |
+| **Roll-Glattheit — moderat** | rollVar 80–300 | `MODERATE ROLL` (Gelb) | Kein |
+| **Roll-Glattheit — Slapping** | rollVar > 300 | `SLAPPING` (Rot) | Kein |
+| **SDR — gut gedämpft** | SDR > 0,65 | `ABSORBING ✓` (Grün) — nur ADV + Pelvis | Kein |
+| **SDR — partiell** | SDR 0,35–0,65 | `PARTIAL SDR` (Gelb) — nur ADV + Pelvis | Kein |
+| **SDR — steif** | SDR < 0,35 | `STIFF` (Rot) — nur ADV + Pelvis | Kein |
+| **SETTLE — gesund** | 60–180 ms | `SETTLING ✓ Xms` (Grün) — nur ADV + Pelvis | Kein |
+| **SETTLE — starr** | < 60 ms | `QUICK Xms` (Gelb) — nur ADV + Pelvis | Kein |
+| **SETTLE — verzögert** | > 180 ms | `SLOW Xms` (Gelb) — nur ADV + Pelvis | Kein |
+| **GND-Score — gut** | ≥ 65 | Grounding-Kachel grün — nur ADV | Kein |
+| **GND-Score — mittel** | ≥ 35 | Grounding-Kachel gelb — nur ADV | Kein |
+| **GND-Score — schwach** | < 35 | Grounding-Kachel rot — nur ADV | Kein |
 | **Pro-Fuß-Sperrzeitfenster** | $180\text{–}320\text{ ms}$ (kadenzadaptiv) + Alternierungswächter | Unterdrückt Doppelauslösung | Kein |
 
 ---
 
-### I. Hitch & Go Erkennung
-
-Ein *Hitch* ist ein kurzes, bewusstes Anheben des gerade aufgesetzten Fußes — ein Jazz/Blues-Akzent zur Phrasierungssynchronisation. Der Sensor erkennt ihn als kurzzeitigen Bodenkontaktverlust am aktiven Fuß innerhalb von 80–700 ms nach dem letzten Schritt auf diesem Fuß.
-
-**Erkennungslogik:**
-
-| Zustand | Bedingung | Übergang |
-| :--- | :--- | :--- |
-| `ground` → `lifted` | $|aZ| < 0{,}35\,g$ UND $80\,\text{ms} < t_{\text{seit Schritt}} < 700\,\text{ms}$ | Liftzeit-Start |
-| `lifted` → `ground` (gültig) | $|aZ| \ge 0{,}55\,g$ UND $50\,\text{ms} \le t_{\text{lift}} \le 380\,\text{ms}$ | `✓ HITCH (L/R)` (Grün) |
-| `lifted` → `ground` (zu lang) | $t_{\text{lift}} > 380\,\text{ms}$ | Reset ohne Badge — Gewichtsverlagerung, kein Hitch |
-| Sensor offline | — | Zustand auf `ground` zurückgesetzt |
-
-Der 0,35g-Schwellenwert liegt klar unterhalb des normalen belasteten Fuß-aZ von ~1,0g und oberhalb des Rauschpegels. Der 0,55g-Rückkehrschwellenwert sorgt für Hysterese beim Wiederaufsetzen (Hinweis: der DS-Bodenkontakt-Eintrittsschwellenwert beträgt 0,65g; der 0,55g-Wert ist spezifisch für die Hitch-Wiederaufsetz-Erkennung).
-
-**Hinweis:** Hitch-Erkennung ist nicht levelabhängig — das Badge erscheint in der Letzter-Schritt-Kachel bei allen Trainingslevels.
-
----
-
-### J. Ball-to-Heel Anker-Progression
+### I. Ball-to-Heel Anker-Progression
 
 Bei einem gut ausgeführten Rückwärts-Anker setzt der Fuß zunächst auf dem Ballen auf (θ negativ — Plantarflexion) und senkt sich dann zur Ferse, während das Körpergewicht einsinkt. Der Sensor quantifiziert diese Progression durch Tracking des Fußneigungswinkels θ während eines tempoadaptiven Fensters nach jedem Rückwärtsschritt.
 
@@ -361,7 +348,7 @@ $$\theta_{\text{spät}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]} \quad \t
 
 ---
 
-### K. Ferse-zu-Ballen / Zehe-zu-Ferse Vorwärts-Progression
+### J. Ferse-zu-Ballen / Zehe-zu-Ferse Vorwärts-Progression
 
 Die Vorwärtsschritt-Rollmetrik erkennt das sagittale Sprunggelenk-Artikulationsmuster nach jedem Vorwärtsschritt. Im WCS gibt es zwei gültige Muster — Fersenschritt (Dorsalflexion beim Kontakt, θ > 0°) und Ballenschritt (Plantarflexion beim Kontakt, θ < 0°) — und das Badge identifiziert, welches vorlag und ob das Abrollen vollständig war.
 
@@ -384,6 +371,100 @@ $$\text{rise} = \theta_{\text{spät}} - \theta_{\text{früh}} \quad \text{(posit
 | Sonst | `FLAT-FOOT` (Gelb) | Kein eindeutiges Kontaktmuster — flache oder mehrdeutige Landung |
 
 **Mindestanzahl Samples:** Mindestens 6 Samples erforderlich (~120 ms). Ein neuer Schritt setzt `heelBallActive` zurück.
+
+---
+
+### K. Roll-Glattheit pro Schritt (rollSmoothBadge)
+
+Das `ROLL`-Badge erscheint in der Letzter-Schritt-Kachel bei **allen Trainingslevels** und bewertet die Gleichmäßigkeit der Fußabrollbewegung während der Standphase — ein direktes Maß für die Qualität der exzentrischen Vorfußkontrolle.
+
+**Berechnung:** Die Metrik wird über ein 350-ms-Fenster der Standphase nach dem Fußkontakt ausgewertet:
+
+$$\text{rollVar} = \frac{\sum_{i} (\Delta g_{\text{Pitch},i})^2}{n}$$
+
+Dabei ist $\Delta g_{\text{Pitch},i}$ die Änderung des sagittalen Gyroskop-Winkels zwischen aufeinanderfolgenden Samples — hohe quadratische Varianz zeigt ruckartige, unkontrollierte Vorfuß-Absenkbewegungen an.
+
+| Zustand | Bedingung | Farbe | Biomechanische Bedeutung |
+| :---: | :---: | :---: | :--- |
+| `CLEAN ROLL ✓` | rollVar < 80 | Grün | Gleichmäßige, kontrollierte Abrollbewegung — M. tibialis anterior aktiv |
+| `MODERATE ROLL` | rollVar 80–300 | Gelb | Teilweise Kontrolle; Abrollbewegung könnte gleichmäßiger sein |
+| `SLAPPING` | rollVar > 300 | Rot | Unkontrolliertes Abkippen des Vorfußes (siehe unten) |
+| `— ROLL` | Noch kein Schritt | Grau | Initialer Zustand |
+
+#### Mechanismus des SLAPPING-Phänomens
+
+SLAPPING entsteht **nicht** durch die Stärke des Fersenaufschlags selbst. Die Ursache liegt im fehlenden exzentrischen Bremsen durch den **M. tibialis anterior** nach dem Fersenkontakt:
+
+1. Der Fersenkontakt erfolgt (θ > +8°) — dieser Moment ist normal
+2. Der M. tibialis anterior bremst den Vorfuß nach dem Fersenkontakt nicht exzentrisch ab
+3. Der Vorfuß kippt unkontrolliert auf den Boden → steile Spitze in der $g_{\text{Pitch}}$-Winkelgeschwindigkeit → hohe rollVar
+
+**Richtungsabhängiges Muster:**
+
+- **Count 1+2 (Fersenerstkontakt bei Vorwärtsschritten):** Typischerweise höhere rollVar → `SLAPPING`-Risiko erhöht, da der volle Fersenrocker durchlaufen wird
+- **Count 3&4 (Ballenerstkontakt bei Rückwärtsschritten):** Typischerweise niedrigere rollVar → `CLEAN ROLL`, da der Fuß bereits in Plantarflexion landet
+
+**Korrektur:** Bewusstes exzentrisches Abbremsen des Vorfußes nach dem Fersenkontakt — Ferse → Fußaußenkante → Ballen mit aktiver Sprunggelenksspannung. Statt den Vorfuß fallen zu lassen: aktive Dorsalflexionskontrolle des Sprunggelenks im Fersenrocker.
+
+---
+
+### L. Grounding-Kachel (nur ADV-Level)
+
+Die Grounding-Kachel erscheint im Querformat neben dem Abroll-Dynamik-Graphen und ist ausschließlich im **ADV-Traininglevel** sichtbar. Sie aggregiert drei Metriken der Stoßdämpfungs- und Impulsübertragungs-Qualität der kinematischen Kette: SDR, SETTLE und ROLL (letzteres wird aus der Step-Kachel eingelesen). SDR und SETTLE erfordern den Beckensensor (ID 4).
+
+---
+
+#### SDR-Badge (Shock Damping Ratio — Stoßdämpfungsverhältnis)
+
+Misst, wie viel des Fußaufprall-Jerks durch die Beinkette absorbiert wird, bevor er das Becken erreicht.
+
+**Berechnung:** In einem 100-ms-Fenster nach dem Fußkontakt werden Spitzen-Jerk-Werte am Fuß ($J_{\text{Fuß,peak}}$) und am Becken (Spitzenwert der sagittalen Beckenbeschleunigung, $J_{\text{Becken,peak}}$) verglichen:
+
+$$\text{SDR} = 1 - \frac{J_{\text{Becken,peak}}}{J_{\text{Fuß,peak}}}$$
+
+Ein SDR von 1,0 bedeutet vollständige Dämpfung (kein Jerk erreicht das Becken); SDR = 0 bedeutet ungefilterte Weiterleitung.
+
+| Badge | Bedingung | Farbe | Biomechanische Bedeutung |
+| :---: | :---: | :---: | :--- |
+| `ABSORBING ✓` | SDR > 0,65 | Grün | Beinkette dämpft Aufprall gut — Knie/Sprunggelenk absorbieren effektiv |
+| `PARTIAL SDR` | SDR 0,35–0,65 | Gelb | Partielle Dämpfung; Aufprall wird teilweise weitergeleitet |
+| `STIFF` | SDR < 0,35 | Rot | Stoß wird ungefiltert weitergeleitet — steife Beinkette |
+| `— SDR` | Kein Pelvis-Sensor | Grau | Beckensensor nicht verbunden |
+
+---
+
+#### SETTLE-Badge (Phasen-Verzögerung / Beinketten-Compliance)
+
+Misst die Zeit vom Fußkontakt bis zum Minimum der vertikalen Beckenbeschleunigung (`pAz`) — ein Proxy für die Compliance der Beinkette beim Abfedern des Aufpralls.
+
+$$\text{SETTLE-Zeit} = t\!\left(\min(pA_z)\right) - t_{\text{Fußkontakt}} \quad [\text{ms}]$$
+
+Ein gesundes Verzögerungsplateau von 60–180 ms zeigt an, dass das Kniegelenk den Impuls abfedert und das Becken verzögert nachgibt — die charakteristische „Sink"-Bewegung im WCS.
+
+| Badge | Bedingung | Farbe | Biomechanische Bedeutung |
+| :---: | :---: | :---: | :--- |
+| `SETTLING ✓ Xms` | 60–180 ms | Grün | Gesunde Beinketten-Compliance — kontrolliertes Einsinken |
+| `QUICK Xms` | < 60 ms | Gelb | Starre Absorption, kein messbares Verzögerungsplateau; zeigt auch `QUICK 0ms` bei völlig starrer Hüftabsorption (kein messbarer Dip in Becken-aZ) |
+| `SLOW Xms` | > 180 ms | Gelb | Sehr verzögerte Reaktion — übermäßig nachgebende Kette |
+| `— SETTLE` | Kein Pelvis-Sensor | Grau | Beckensensor nicht verbunden |
+
+---
+
+#### GND-Score (Grounding-Gesamtscore)
+
+Ein gewichteter Composite-Score (0–100) aus allen drei Grounding-Metriken:
+
+$$\text{GND} = \text{SDR-Score} \times 0{,}40 + \text{SETTLE-Score} \times 0{,}30 + \text{ROLL-Score} \times 0{,}30$$
+
+Das ROLL-Badge (aus der Step-Kachel, §K) fließt mit 30 % in den GND-Score ein; Step-Kachel und Grounding-Kachel teilen sich diese Metrik.
+
+| GND-Score | Farbe | Bedeutung |
+| :---: | :---: | :--- |
+| ≥ 65 | Grün | Gute Gesamtdämpfung und Bodenkontakt-Qualität |
+| ≥ 35 | Gelb | Verbesserungspotenzial in mindestens einer Teilmetrik |
+| < 35 | Rot | Deutliche Schwächen in der Stoßdämpfungskette |
+
+Ein **Fortschrittsbalken** in der Grounding-Kachel visualisiert den GND-Score. Der Score wird nach jedem Schritt aktualisiert, für den SDR- und SETTLE-Daten vorliegen.
 
 ---
 

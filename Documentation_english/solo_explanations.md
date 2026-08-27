@@ -102,8 +102,8 @@ In WCS **forward steps** all three rockers are present: heel strike → ankle ad
 
    | θ at T-1 | Direction badge |
    | :---: | :--- |
-   | θ ≥ +8° | ➡️ FORWARD (blue) — reliable heel-first contact |
-   | θ < −8° | ⬅️ BACK (purple) — reliable toe-first contact |
+   | θ ≥ +8° | ➡ FWD (blue) — reliable heel-first contact |
+   | θ < −8° | ⬅ BWD (purple) — reliable toe-first contact |
    | −8° ≤ θ < +8° | — (grey) — ambiguous; direction not shown |
 
    **Internal direction classification (Anchor Settle trigger):** Distinct from the badge display, the internal `activeDir` logic uses a narrower ambiguous zone: only `0° < θ < +10°` requires a pitch-angle trend check. For `θ ≤ 0°` (any plantarflexion / toe-first contact), `activeDir` is set to BACKWARD directly without trend analysis. This ensures backward steps landing at θ = -2° to -5° correctly trigger the Anchor Settle evaluation window even though the direction badge still shows "—" (because |θ| < 8°).
@@ -127,7 +127,7 @@ In WCS **forward steps** all three rockers are present: heel strike → ankle ad
    | −8° to +7° (ambiguous) | 20–22 g/s | `MODERATE` (Yellow) | Acceptable; reduce impact |
    | −8° to +7° (ambiguous) | > 22 g/s | `HARD IMPACT ⚠` (Red) | Fell onto foot — triggers 1200 Hz click |
 
-   * **BRUSH+HEEL reclassification (200 ms window):** if a landing in the ambiguous zone is followed within 200 ms by a second aZ > 1.05 g peak with accelAngle > 8° on the same foot, the badge upgrades to `BRUSH+HEEL` (green) and the direction badge shows ➡️ FORWARD.
+   * **BRUSH+HEEL reclassification (200 ms window):** if a landing in the ambiguous zone is followed within 200 ms by a second aZ > 1.05 g peak with accelAngle > 8° on the same foot, the badge upgrades to `BRUSH+HEEL` (green) and the direction badge shows ➡ FWD.
 
 ---
 
@@ -199,17 +199,12 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 
 ---
 
-### F. Roll-off Symmetry Index (ASI) & Smoothness Index
+### F. Roll-off Symmetry Index (ASI)
 
 1. **Asymmetry Index (ASI):**
    Compares total angular work integrated across Left and Right foot roll-off cycles while feet are actively moving ($|\omega_{\text{pitch}}| > 15^\circ/\text{s}$):
    $$\text{ASI} = \frac{2 \cdot \left|\int|\omega_{\text{left}}|\,dt - \int|\omega_{\text{right}}|\,dt\right|}{\int|\omega_{\text{left}}|\,dt + \int|\omega_{\text{right}}|\,dt} \times 100\%$$
    * **Target:** $< 15\%$ (`SYMMETRIC`), $16\text{--}35\%$ (`MINOR ASYM`), $>35\%$ (`ASYMMETRIC`).
-
-2. **Roll-Smoothness Index:**
-   Measures combined angular acceleration jerk of both feet smoothed over a 25-frame (0.5 s) sliding window:
-   $$\text{Smoothness} = 100 - \text{Mean}_{25}\!\left(\min\!\left(100,\;\left(\left|\frac{\Delta\omega_L}{\Delta t}\right| + \left|\frac{\Delta\omega_R}{\Delta t}\right|\right) \times 0.018\right)\right)$$
-   * **Target:** Higher values ($\ge 65$) indicate `SMOOTH`, continuous ankle articulation without micro-stutters.
 
 ---
 
@@ -271,7 +266,9 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Rigid Lever** | pronation $> 8°/\text{s}$ AND sign reversal in 200 ms | `RIGID LEVER` (Green) | None |
 | **Ankle Shock Absorption** | rollIntegral $> 4°$ (no reversal) | `ANKLE FLEX` (Green) | None |
 | **Ankle Stiffness** | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | None |
-| **Hitch & Go — detected** | $|aZ| < 0.35\,g$ for 50–380 ms within 700 ms of last step | `✓ HITCH (L/R)` (Green) | None |
+| **Roll Smoothness — clean** | rollVar < 80 | `CLEAN ROLL ✓` (Green) | None |
+| **Roll Smoothness — moderate** | rollVar 80–300 | `MODERATE ROLL` (Yellow) | None |
+| **Roll Smoothness — slapping** | rollVar > 300 | `SLAPPING` (Red) | None |
 | **Ball→Heel — optimal** | $\theta_{T-1} < -2°$, lateMean $> 3°$ | `BALL→HEEL ✓` (Green) | None |
 | **Ball→Heel — partial** | $\theta_{T-1} < 0°$, lateMean $> 0°$ | `PARTIAL ROLL` (Yellow) | None |
 | **Ball→Heel — heel-first** | $\theta_{T-1} \ge 0°$ | `HEEL-FIRST` (Yellow) | None |
@@ -282,26 +279,16 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **Toe→Heel — optimal (ball-lead)** | earlyMean $< -2°$, rise $> 3°$ | `TOE→HEEL ✓` (Green) | None |
 | **Toe→Heel — partial (ball-lead)** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Yellow) | None |
 | **Heel→Ball — flat-foot** | earlyMean $\le 0°$, rise $\le 1°$ | `FLAT-FOOT` (Yellow) | None |
+| **SDR — Shock Damping Ratio — absorbing** | SDR > 0.65 | `ABSORBING ✓` (Green) | None |
+| **SDR — Shock Damping Ratio — partial** | SDR 0.35–0.65 | `PARTIAL SDR` (Yellow) | None |
+| **SDR — Shock Damping Ratio — stiff** | SDR < 0.35 | `STIFF` (Red) | None |
+| **SETTLE — Pelvis Settle Delay — healthy** | 60–180 ms | `SETTLING ✓ Xms` (Green) | None |
+| **SETTLE — Pelvis Settle Delay — quick** | < 60 ms | `QUICK Xms` (Yellow) | None |
+| **SETTLE — Pelvis Settle Delay — slow** | > 180 ms | `SLOW Xms` (Yellow) | None |
+| **GND Score — grounded** | GND ≥ 65 | Score + progress bar (Green) | None |
+| **GND Score — partial** | 35 ≤ GND < 65 | Score + progress bar (Yellow) | None |
+| **GND Score — stiff** | GND < 35 | Score + progress bar (Red) | None |
 | **Per-Foot Lockout Window**| $180\text{–}320\text{ ms}$ (cadence-adaptive) + Alternation Guard | Suppresses same-foot re-trigger | None |
-
----
-
-### H. Hitch & Go Detection
-
-A *hitch* is a brief, voluntary foot-lift on the recently-placed foot — a jazz/blues accent used to syncopate the phrasing. The sensor detects it as a transient loss of ground contact on the active foot within 80–700 ms of the last step on that foot.
-
-**Detection logic:**
-
-| State | Condition | Transition |
-| :--- | :--- | :--- |
-| `ground` → `lifted` | $|aZ| < 0.35\,g$ AND $80\,\text{ms} < t_{\text{since step}} < 700\,\text{ms}$ | Start lift timer |
-| `lifted` → `ground` (valid) | $|aZ| \ge 0.55\,g$ AND $50\,\text{ms} \le t_{\text{lift}} \le 380\,\text{ms}$ | `✓ HITCH (L/R)` (Green) |
-| `lifted` → `ground` (too long) | $t_{\text{lift}} > 380\,\text{ms}$ | Reset silently — weight shift, not a hitch |
-| Sensor offline | — | State reset to `ground` |
-
-The 0.35g lift threshold lies clearly below the normal loaded-foot aZ of ~1.0g while remaining above the electrical noise floor. The 0.55g return threshold provides hysteresis at re-contact (note: the DS ground-contact entry threshold is 0.65g; this 0.55g is specific to hitch re-contact detection).
-
-**Note:** Hitch detection is not level-gated — the badge appears in the Last Step card at all training levels.
 
 ---
 
@@ -353,6 +340,37 @@ $$\text{rise} = \theta_{\text{late}} - \theta_{\text{early}} \quad \text{(positi
 | Otherwise | `FLAT-FOOT` (Yellow) | No clear contact pattern or roll — flat/ambiguous landing |
 
 **Minimum samples:** At least 6 samples required (~120 ms). A new step resets `heelBallActive`.
+
+---
+
+### K. Roll Smoothness — `rollSmoothBadge`
+
+Measures forefoot landing quality by quantifying how smoothly the foot pitch angular velocity changes during the first 350 ms of stance phase after each step. It detects *uncontrolled forefoot drop* — the characteristic sensor signature of a slap-step.
+
+**Window:** 350 ms post-impact; samples `gPitch` (foot pitch angular velocity) continuously through the stance phase.
+
+**Calculation:**
+$$\text{rollVar} = \frac{\sum (\Delta g_{\text{pitch}})^2}{n}$$
+where $\Delta g_\text{pitch}$ is the frame-to-frame change in pitch angular velocity over the 350 ms window.
+
+| Condition | Badge | Biomechanical Meaning |
+| :---: | :---: | :--- |
+| rollVar < 80 | `CLEAN ROLL ✓` (Green) | Smooth, controlled forefoot lowering — tibialis anterior braking active |
+| 80 ≤ rollVar ≤ 300 | `MODERATE ROLL` (Yellow) | Some abrupt pitch changes — partial eccentric control |
+| rollVar > 300 | `SLAPPING` (Red) | Steep spike in pitch angular velocity — unbraked forefoot drop |
+| No step yet | `— ROLL` (Grey) | Awaiting first step |
+
+**Biomechanical mechanism of SLAPPING:**
+
+A slap does not originate primarily from the force of heel contact. It is caused by the **M. tibialis anterior failing to eccentrically brake the forefoot** after initial heel contact. During normal gait, the tibialis anterior fires eccentrically in the Heel Rocker phase (1st Rocker — see §2A, Perry & Burnfield) to lower the forefoot smoothly to the floor. When this braking force is absent or insufficient, the forefoot drops uncontrolled under gravity, producing a steep angular velocity spike in `gPitch` that the rollVar formula captures as a large sum of squared differences.
+
+**WCS context:**
+- **Count 1+2 (heel-first forward steps):** The Heel Rocker is engaged and tibialis anterior braking is required. Slapping is common here when the dancer is fatigued or weight is not actively transferred.
+- **Count 3&4 (ball-first backward steps / triple step):** The forefoot contacts first, bypassing the Heel Rocker — `CLEAN ROLL ✓` is the typical result.
+
+**Correction:** Practice conscious eccentric ankle control: at heel contact, actively resist the forefoot drop — heel → lateral edge → ball with maintained ankle tension throughout. Even light muscular resistance dramatically reduces the angular velocity spike.
+
+**Level visibility:** The ROLL badge appears in the Step Card at all training levels (not ADV-only). It also contributes 30% of the Grounding Card GND Score (see §6 — Grounding Card).
 
 ---
 
@@ -531,4 +549,62 @@ Evaluated at the end of the Anchor Settle window. Uses lateral pelvis accelerati
 | HIP SETTLE ✓ | `earlyLatPeak > 0.10 g` AND `lateLatVar < 0.015` | Green |
 | SLIGHT SETTLE | `earlyLatPeak > 0.05 g` | Yellow |
 | NO HIP SETTLE | `earlyLatPeak ≤ 0.05 g` | Red |
+
+### Grounding Card
+
+The **Grounding Card** is displayed at Advanced (ADV) level only, appearing next to the Live Roll-off Dynamics graph in landscape mode. It aggregates three shock-absorption quality metrics into a composite **GND Score** that gives the dancer a single, at-a-glance reading of how efficiently the kinetic chain absorbs and dissipates impact energy. The SDR and SETTLE components require the pelvis sensor (ID 4); the ROLL component is read from the Step Card (`rollSmoothBadge`, §2K) and is always available from the foot sensors alone.
+
+> 📸 **[Screenshot: Grounding Card in landscape mode showing sdrBadge, phaseDelayBadge, and GND Score composite with colour-coded progress bar]**
+
+#### SDR — Shock Damping Ratio (`sdrBadge`)
+
+Quantifies how much of the foot-impact shock is attenuated by the leg chain before reaching the pelvis. Measured in the 100 ms window immediately post-impact.
+
+$$\text{SDR} = 1 - \frac{\text{peak pelvis jerk}}{\text{foot jerk}} \quad \text{(100 ms post-impact)}$$
+
+where *foot jerk* is $J_\text{impact}$ (§2D) and *pelvis jerk* is the peak rate of change of `pAz` over the same 100 ms window. An SDR of 1.0 means all shock is absorbed; 0.0 means none.
+
+| State | Condition | Colour | Biomechanical Meaning |
+| :--- | :---: | :--- | :--- |
+| `ABSORBING ✓` | SDR > 0.65 | Green | Leg chain attenuates > 65% of shock — effective eccentric loading |
+| `PARTIAL SDR` | 0.35 ≤ SDR ≤ 0.65 | Yellow | Moderate attenuation — room for improvement |
+| `STIFF` | SDR < 0.35 | Red | Shock passes through largely unattenuated — stiff kinetic chain |
+| `— SDR` | No pelvis sensor | Grey | Pelvis sensor required |
+
+#### SETTLE — Pelvis Settle Delay (`phaseDelayBadge`)
+
+Measures the time from foot impact to the pelvis vertical acceleration (`pAz`) minimum — the moment when the centre of mass reaches its lowest point and the leg chain has fully absorbed the impact impulse. A healthy deceleration phase (60–180 ms) confirms that the knee and hip joints actively decelerate the descending body mass rather than transferring it rigidly to the floor.
+
+$$\Delta t_{\text{settle}} = t(\text{pAz}_{\min}) - t_{\text{impact}} \quad [\text{ms}]$$
+
+| State | Condition | Colour | Biomechanical Meaning |
+| :--- | :---: | :--- | :--- |
+| `SETTLING ✓ Xms` | 60–180 ms | Green | Healthy deceleration phase — compliant leg chain |
+| `QUICK Xms` | < 60 ms | Yellow | Stiff absorption — no measurable deceleration phase |
+| `SLOW Xms` | > 180 ms | Yellow | Very delayed response — sluggish weight transfer |
+| `— SETTLE` | No pelvis sensor **or** no measurable dip in `pAz` | Grey | Also displays `QUICK 0ms` when hip absorption is stiff and no dip is detectable |
+
+#### GND Score — Composite Grounding Quality
+
+A weighted composite score (0–100) summarising overall shock-absorption quality for each step. A **progress bar** within the card shows the score visually.
+
+$$\text{GND} = \text{SDR}_{\text{score}} \times 0.40 + \text{SETTLE}_{\text{score}} \times 0.30 + \text{ROLL}_{\text{score}} \times 0.30$$
+
+where each component score is normalised to 0–100 from its respective badge state, and ROLL is derived from the `rollSmoothBadge` in the Step Card (§2K).
+
+| Component | Weight | Source |
+| :--- | :---: | :--- |
+| SDR (Shock Damping Ratio) | 40% | Pelvis sensor — `sdrBadge` |
+| SETTLE (Pelvis Settle Delay) | 30% | Pelvis sensor — `phaseDelayBadge` |
+| ROLL (Roll Smoothness) | 30% | Foot sensor — `rollSmoothBadge` (Step Card) |
+
+**Score colour thresholds:**
+
+| Score | Colour | Interpretation |
+| :---: | :--- | :--- |
+| ≥ 65 | Green | Good shock absorption overall |
+| 35–64 | Yellow | Partial absorption — one or more components suboptimal |
+| < 35 | Red | Poor shock dissipation — stiff kinetic chain or uncontrolled forefoot |
+
+**Note:** If the pelvis sensor is absent the Grounding Card is not displayed. ROLL alone (foot sensor) cannot produce a GND Score without the pelvis components.
 
