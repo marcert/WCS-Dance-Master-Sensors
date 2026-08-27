@@ -65,6 +65,7 @@ Karten, die für deinen Grad nicht relevant sind, werden ausgeblendet und geben 
 <p align="center">
   <kbd><img src="https://raw.githubusercontent.com/marcert/WCS-Dance-Master-Sensors/refs/heads/main/Attachments/Buttons.jpg" width="600"></kbd>
 </p>
+
 ### Anfängeransicht
 
 Eine Karte, unten rechts. Alles andere ist Kamera. Schau nach dem [Richtungs-Badge](#wie-die-richtung-bestimmt-wird) und dem [Strike-Badge](#4-die-schritt-badge-karte) nach jedem Schritt. Nichts anderes.
