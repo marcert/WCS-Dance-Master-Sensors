@@ -57,7 +57,7 @@ Jerk is the rate of change of acceleration — abrupt spikes correlate directly 
 | **`GYRO_MIN`** | $80.0\,\text{deg/s}$ | Derived from empirical testing of clean dancing foot articulation; values below this threshold lack the necessary rolling motion. |
 | **`ACCEL_MAX`** | $1.5\,g$ | Typical acceleration boundary separating cushioned steps from harsh impact shocks. |
 | **Jerk threshold** | $12.0$ (raw index) | Threshold where auditory triggers activate to flag sharp, uncomfortable structural pulls. |
-| **Graph scaling** | $-3500\,\text{g}$ to $+3500\,\text{g}$ | Chosen to capture standard WCS connection force variations without clipping. |
+| **Graph scaling** | $-4000\,\text{g}$ to $+4000\,\text{g}$ | Chosen to capture standard WCS connection force variations without clipping. |
 
 ---
 
