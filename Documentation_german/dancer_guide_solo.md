@@ -42,7 +42,9 @@ Im Querformat ist der Bildschirm in zwei Spalten unterteilt:
 - **Unten rechts**: Letzter-Schritt-Karte (dein primäres Echtzeit-Feedback).
 - **Unten Mitte**: Roll-off-Symmetrie- und Gleichmäßigkeits-Karte.
 
-> 📸 **[Screenshot: Solo-Dashboard im Querformat mit sichtbarem Zwei-Spalten-Layout und Kamera-Feed im Hintergrund]**
+<p align="center">
+  <kbd><img src="https://raw.githubusercontent.com/marcert/WCS-Dance-Master-Sensors/refs/heads/main/Attachments/scr.jpg" width="600"></kbd>
+</p>
 
 ---
 
@@ -60,8 +62,9 @@ Karten, die für deinen Grad nicht relevant sind, werden ausgeblendet und geben 
 
 > **Hinweis:** Diese Stufen beschreiben die **Komplexität des auf dem Bildschirm angezeigten Feedbacks** — sie haben nichts mit deiner WSDC-Wettkampfklasse zu tun. Ein Tänzer auf Champion-Niveau, der eine neue Übung beginnt, sollte `👤 BEG` verwenden, um sich auf eine Sache zu konzentrieren. Ein absoluter Neueinsteiger, der etwas Bestimmtes übt, kann von einem Wechsel zu `🏃 INT` profitieren. Wähle den Grad, der zu dem passt, woran du gerade arbeitest, nicht zu deinem Wettkampf-Lebenslauf.
 
-> 📸 **[Screenshot: Nahaufnahme der Kopfzeile mit dem Level-Selector-Knopf in den Zuständen BEG (grün), INT (orange) und ADV (lila)]**
-
+<p align="center">
+  <kbd><img src="https://raw.githubusercontent.com/marcert/WCS-Dance-Master-Sensors/refs/heads/main/Attachments/Buttons.jpg" width="600"></kbd>
+</p>
 ### Anfängeransicht
 
 Eine Karte, unten rechts. Alles andere ist Kamera. Schau nach dem [Richtungs-Badge](#wie-die-richtung-bestimmt-wird) und dem [Strike-Badge](#4-die-schritt-badge-karte) nach jedem Schritt. Nichts anderes.
