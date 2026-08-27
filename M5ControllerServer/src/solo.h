@@ -232,6 +232,20 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
             .metric-value { font-size: 1.4rem; }
             .stance-timeline { height: 22px; margin-top: 4px; }
             .bar-container { margin-top: 2px; }
+
+            /* ADV: narrow graph to make room for grounding card */
+            main.level-advanced #graphCard {
+                flex: 0 0 26%;
+            }
+            main.level-advanced #groundingCard {
+                display: flex !important;
+                flex-direction: column;
+                justify-content: space-around;
+                flex: 0 0 17%;
+                height: 52%;
+                align-self: flex-end;
+                overflow: hidden;
+            }
         }
 
         /* --- LEVEL-BASED VISIBILITY --- */
@@ -257,6 +271,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         main.level-intermediate #stepCard         { grid-column: 2; grid-row: 2; }
 
         /* ADVANCED: everything visible — no rules needed */
+        /* Grounding card: visible in ADV (any orientation) */
+        main.level-advanced #groundingCard { display: flex !important; flex-direction: column; }
 
         /* --- PELVIS CARD --- */
         /* Hidden by default; JS sets display when sensor comes online */
@@ -309,6 +325,17 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         <div id="canvas-wrapper"><canvas id="chartPitch"></canvas></div>
     </div>
 
+    <!-- GROUNDING CARD (ADV only, sits next to graph in landscape) -->
+    <div class="card" id="groundingCard" style="display:none;">
+        <div class="card-title" style="font-size:min(2.8vw,11px);letter-spacing:.05em;">🌍 GROUNDING</div>
+        <span id="sdrBadge"        class="badge" style="background:#1e272e;color:#8b949e;display:block;margin-top:3px;text-align:center;">— SDR</span>
+        <span id="phaseDelayBadge" class="badge" style="background:#1e272e;color:#8b949e;display:block;margin-top:3px;text-align:center;">— SETTLE</span>
+        <div id="groundingScore" style="margin-top:5px;font-size:min(3vw,13px);font-weight:bold;color:#aaa;text-align:center;">—</div>
+        <div style="margin-top:3px;height:5px;background:#1e272e;border-radius:3px;overflow:hidden;">
+            <div id="groundingBar" style="height:100%;width:0%;background:#aaa;border-radius:3px;transition:width 0.3s,background 0.3s;"></div>
+        </div>
+    </div>
+
     <!-- METRICS GRID -->
     <div class="dashboard-grid">
 
@@ -318,7 +345,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <!-- TOP-LEFT: PELVIS HIP MECHANICS (replaces spacer while sensor is online) -->
                 <div id="pelvicCard" class="card">
                     <div class="card-title">Pelvis — Hip Mechanics</div>
-                    <div id="pelvicRaw" style="font-size:0.65rem;color:#666;margin-top:2px;"></div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                         <span style="font-size:0.78rem;color:#8b949e;">Hip Activation</span>
                         <span id="hipActBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP</span>
@@ -421,19 +447,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             Impact Jerk: <strong id="jerkVal" style="color:#fff;">0</strong> g/s
                         </div>
                     </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <span id="strikeAngleVal" class="metric-value">0°</span>
+                    <div style="display:flex; align-items:center; justify-content:flex-end;">
                         <span id="strikeBadge" class="badge badge-green" style="min-width:7.5rem; text-align:center; display:inline-block;">OPTIMAL</span>
-                    </div>
-                    <div class="bar-container">
-                        <div id="jerkBar" class="bar-fill" style="background: var(--accent-left);"></div>
                     </div>
                     <div class="step-lower-badges">
                         <span id="powerBadge" class="badge" style="background:#1e272e; color:#8b949e;">— PUSH-OFF</span>
                         <span id="loadBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— LOADING</span>
                         <span id="rollBadge"  class="badge" style="background:#1e272e; color:#8b949e;">— ANKLE ROLL</span>
                         <span id="delayBadge" class="badge" style="background:#1e272e; color:#8b949e;">— DELAY</span>
-                        <span id="hitchBadge"    class="badge" style="background:#1e272e; color:#8b949e;">— HITCH</span>
+                        <span id="rollSmoothBadge" class="badge" style="background:#1e272e; color:#8b949e;">— ROLL</span>
                         <span id="ballHeelBadge" class="badge" style="background:#1e272e; color:#8b949e;">— BALL→HEEL</span>
                         <span id="heelBallBadge" class="badge" style="background:#1e272e; color:#8b949e; grid-column:1/-1;">— HEEL→BALL</span>
                     </div>
@@ -662,6 +684,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let pelvicPitchSmoothed = 0;                  // IIR-smoothed pelvis pitch deviation
         let lastPelvicSagP  = 0, lastPelvicVertP = 1.0; // last known accel values for tare
 
+        // --- Grounding metrics state ---
+        let prevAVertP_g = 1.0;
+        let sdrActive = false, sdrStartTime = 0, sdrFootJerk = 0, sdrPelvisJerkPeak = 0;
+        let pdActive = false, pdStartTime = 0, pdMinAz = 2.0, pdMinTime = 0;
+        let rsmActive = false, rsmStartTime = 0, rsmActiveFoot = "L", rsmSum = 0, rsmCount = 0, rsmPrevGPitch = 0;
+
         let anchorSettleActive       = false;            // true while collecting post-anchor pelvis window
         let anchorSettleStartTime    = 0;
         let anchorSettleLastTrigger  = 0;              // updated on each backward step; evaluates 500ms after the LAST backward step
@@ -674,8 +702,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
 
         // Hitch & Go detection — brief foot lift on recently-placed foot
-        let hitchStateL = 'ground', hitchStateR = 'ground';
-        let hitchLiftStartL = 0, hitchLiftStartR = 0;
         // Ball-to-Heel anchor progression — foot θ during anchor window
         let anchorThetaActive = false, anchorThetaFoot = '', anchorThetaStart = 0;
         let anchorThetaSamples = [];
@@ -774,15 +800,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     if (pelvicOk) {
                         document.getElementById('pelvicCard').style.display = 'block';
                         document.getElementById('pelvicSpacer').style.display = 'none';
-
-                        // Live raw values — axis-assignment verification
-                        let rawEl = document.getElementById('pelvicRaw');
-                        if (rawEl) rawEl.innerText =
-                            'aS:' + (aSagP  >= 0 ? '+' : '') + aSagP.toFixed(2) +
-                            ' aL:' + (aLatP  >= 0 ? '+' : '') + aLatP.toFixed(2) +
-                            ' aV:' + (aVertP >= 0 ? '+' : '') + aVertP.toFixed(2) +
-                            ' gP:' + String(gPitchP.toFixed(0)).padStart(4) +
-                            ' gY:' + String(gYawP.toFixed(0)).padStart(4);
 
                         // Hip Activation — rolling max of |gYawP| over 500ms, IIR-smoothed
                         gYawAbsHistory.shift(); gYawAbsHistory.push(Math.abs(gYawP));
@@ -1008,6 +1025,16 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                                                     pushIntegralR = 0; // R just landed — reset its push-off accumulator
                                                                                 }
 
+                                        // --- Grounding: open measurement windows ---
+                                        if (triggerImpact) {
+                                            if (pelvicOk) {
+                                                sdrActive = true; sdrStartTime = now; sdrFootJerk = activeJerk; sdrPelvisJerkPeak = 0;
+                                                pdActive = true;  pdStartTime = now;  pdMinAz = aVertP; pdMinTime = now;
+                                            }
+                                            rsmActive = true; rsmStartTime = now; rsmActiveFoot = activeFoot;
+                                            rsmSum = 0; rsmCount = 0; rsmPrevGPitch = (activeFoot === "L") ? gPitchL : gPitchR;
+                                        }
+
                                         // 4. TERMINAL STANCE / POWER PUSH DETECTION (Windlass Push-off from Trailing Foot)
                                         // Directional thresholds: a foot that last stepped BACKWARD is trailing in a forward walk
                                         // → needs more drive (≥200°/s). A foot that last stepped FORWARD is trailing in a
@@ -1102,7 +1129,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                           if (el) el.innerText = lastDirVal !== null ? lastDirVal.toFixed(1) + "°" : "—";
                           if (sr) sr.innerText = "[" + lastDirSrc + "]"; }
 
-                        document.getElementById('strikeAngleVal').innerText = activeTheta + "° (" + activeFoot + ")";
+
                         document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
 
                                                 // Direction badge: reliable only at θ-zone extremes
@@ -1245,10 +1272,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         void stepCard.offsetWidth; // Trigger Reflow
                         stepCard.classList.add('card-flash');
 
-                        // Jerk Bar Visualisierung
-                        let jerkPercent = Math.min(100, (activeJerk / 120) * 100); // bar scaled to native 200 Hz dt
-                        document.getElementById('jerkBar').style.width = jerkPercent + "%";
-                        document.getElementById('jerkBar').style.background = (activeFoot === "L") ? "var(--accent-left)" : "var(--accent-right)";
 
                         if (activeJerk > 120) playImpactClick(500); // threshold scaled to native 200 Hz dt (×4 vs 20 ms poll)
 
@@ -1412,51 +1435,6 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
                     }
 
-                    // E. Hitch & Go — brief foot lift (50–380 ms) on recently-placed foot
-                    const HITCH_UP  = 0.35;  // aZ below this = foot lifted
-                    const HITCH_DN  = 0.55;  // aZ above this = foot back down
-                    const HITCH_MIN = 50;    // minimum lift duration ms
-                    const HITCH_MAX = 380;   // maximum lift duration ms
-                    const HITCH_WIN = 700;   // must occur within 700 ms of last step
-
-                    if (leftOk) {
-                        let aZLabs = Math.abs(aZL);
-                        if (hitchStateL === 'ground') {
-                            let sinceStep = now - lastStepTimeLeft;
-                            if (aZLabs < HITCH_UP && sinceStep > 80 && sinceStep < HITCH_WIN) {
-                                hitchStateL = 'lifted'; hitchLiftStartL = now;
-                            }
-                        } else if (hitchStateL === 'lifted') {
-                            let liftMs = now - hitchLiftStartL;
-                            if (aZLabs >= HITCH_DN) {
-                                if (liftMs >= HITCH_MIN && liftMs <= HITCH_MAX) {
-                                    let hb = document.getElementById('hitchBadge');
-                                    if (hb) { hb.className = 'badge badge-green'; hb.style.cssText = ''; hb.innerText = '✓ HITCH (L)'; }
-                                }
-                                hitchStateL = 'ground';
-                            } else if (liftMs > HITCH_MAX) { hitchStateL = 'ground'; }
-                        }
-                    } else { hitchStateL = 'ground'; }
-
-                    if (rightOk) {
-                        let aZRabs = Math.abs(aZR);
-                        if (hitchStateR === 'ground') {
-                            let sinceStep = now - lastStepTimeRight;
-                            if (aZRabs < HITCH_UP && sinceStep > 80 && sinceStep < HITCH_WIN) {
-                                hitchStateR = 'lifted'; hitchLiftStartR = now;
-                            }
-                        } else if (hitchStateR === 'lifted') {
-                            let liftMs = now - hitchLiftStartR;
-                            if (aZRabs >= HITCH_DN) {
-                                if (liftMs >= HITCH_MIN && liftMs <= HITCH_MAX) {
-                                    let hb = document.getElementById('hitchBadge');
-                                    if (hb) { hb.className = 'badge badge-green'; hb.style.cssText = ''; hb.innerText = '✓ HITCH (R)'; }
-                                }
-                                hitchStateR = 'ground';
-                            } else if (liftMs > HITCH_MAX) { hitchStateR = 'ground'; }
-                        }
-                    } else { hitchStateR = 'ground'; }
-
                     // F. Ball-to-Heel anchor progression — sample foot θ during anchor window
                     if (anchorThetaActive) {
                         let thetaAnch = anchorThetaFoot === 'L'
@@ -1619,6 +1597,86 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         if (smoothnessAvg >= 65)      { smoothBadge.className = "badge badge-green";  smoothBadge.innerText = "SMOOTH"; }
                         else if (smoothnessAvg >= 40) { smoothBadge.className = "badge badge-yellow"; smoothBadge.innerText = "MODERATE"; }
                         else                          { smoothBadge.className = "badge badge-red";    smoothBadge.innerText = "ROUGH"; }
+                    }
+
+                    // === GROUNDING METRICS (per-frame evaluation) ===
+                    if (pelvicOk) {
+                        let pelvisJerkNow = Math.abs(aVertP - prevAVertP_g) / 0.005;
+                        if (sdrActive) {
+                            sdrPelvisJerkPeak = Math.max(sdrPelvisJerkPeak, pelvisJerkNow);
+                            if (now - sdrStartTime >= 100) {
+                                sdrActive = false;
+                                let sdr = sdrFootJerk > 4 ? Math.max(0, Math.min(1, 1 - sdrPelvisJerkPeak / sdrFootJerk)) : -1;
+                                let el = document.getElementById('sdrBadge');
+                                if (el && sdr >= 0) {
+                                    el.style.cssText = 'display:block;margin-top:3px;text-align:center;';
+                                    if      (sdr > 0.65) { el.className='badge badge-green';  el.innerText='ABSORBING ✓'; }
+                                    else if (sdr > 0.35) { el.className='badge badge-yellow'; el.innerText='PARTIAL SDR'; }
+                                    else                 { el.className='badge badge-red';    el.innerText='STIFF'; }
+                                }
+                            }
+                        }
+                        if (pdActive) {
+                            if (aVertP < pdMinAz) { pdMinAz = aVertP; pdMinTime = now; }
+                            if (now - pdStartTime >= 200) {
+                                pdActive = false;
+                                let dt = pdMinTime - pdStartTime;
+                                let el = document.getElementById('phaseDelayBadge');
+                                if (el) {
+                                    el.style.cssText = 'display:block;margin-top:3px;text-align:center;';
+                                    if      (dt >= 60 && dt <= 180) { el.className='badge badge-green';  el.innerText='SETTLING ✓ '+dt+'ms'; }
+                                    else if (dt < 60)               { el.className='badge badge-yellow'; el.innerText='QUICK '+dt+'ms'; }
+                                    else                            { el.className='badge badge-yellow'; el.innerText='SLOW '+dt+'ms'; }
+                                }
+                            }
+                        }
+                        prevAVertP_g = aVertP;
+                    }
+                    if (rsmActive) {
+                        let curGP = rsmActiveFoot === "L" ? gPitchL : gPitchR;
+                        let dOmega = curGP - rsmPrevGPitch;
+                        rsmSum += dOmega * dOmega;
+                        rsmCount++;
+                        rsmPrevGPitch = curGP;
+                        if (now - rsmStartTime >= 350) {
+                            rsmActive = false;
+                            let rollVar = rsmCount > 0 ? rsmSum / rsmCount : 0;
+                            let el = document.getElementById('rollSmoothBadge');
+                            if (el) {
+                                if      (rollVar < 80)  { el.className='badge badge-green';  el.innerText='CLEAN ROLL ✓'; }
+                                else if (rollVar < 300) { el.className='badge badge-yellow'; el.innerText='MODERATE ROLL'; }
+                                else                    { el.className='badge badge-red';    el.innerText='SLAPPING'; }
+                            }
+                        }
+                    }
+                    // Composite grounding score
+                    {
+                        let gs = document.getElementById('groundingScore');
+                        if (gs) {
+                            let scores = [
+                                { id:'sdrBadge',        w:0.40 },
+                                { id:'phaseDelayBadge', w:0.30 },
+                                { id:'rollSmoothBadge', w:0.30 }
+                            ];
+                            let total = 0, wSum = 0;
+                            scores.forEach(s => {
+                                let el = document.getElementById(s.id);
+                                if (!el) return;
+                                let v = el.className.includes('badge-green') ? 1.0
+                                      : el.className.includes('badge-yellow') ? 0.5
+                                      : el.className.includes('badge-red')    ? 0.0
+                                      : -1;
+                                if (v >= 0) { total += v * s.w; wSum += s.w; }
+                            });
+                            if (wSum > 0) {
+                                let score = Math.round((total / wSum) * 100);
+                                gs.innerText = score + ' GND';
+                                let gndColor = score >= 65 ? '#66bb6a' : score >= 35 ? '#ffa726' : '#ef5350';
+                                gs.style.color = gndColor;
+                                let gb = document.getElementById('groundingBar');
+                                if (gb) { gb.style.width = score + '%'; gb.style.background = gndColor; }
+                            }
+                        }
                     }
 
                     prevAccelZLeft = aZL;
