@@ -2,6 +2,10 @@
 
 A real-time wireless sensor network and video-overlay feedback system built for **West Coast Swing (WCS)** dancers and coaches. Sensors stream live biomechanical data to a web dashboard that overlays directly on the phone camera — giving instant physical telemetry while you dance.
 
+**Two complementary views for every situation:**
+- 🧍 **[Solo Training](Documentation_english/dancer_guide_solo.md)** — detailed step-by-step badge feedback for drills and self-coaching. Open at `/solo` on the dancer's own phone.
+- 🤝 **[Partner / Coaching](Documentation_english/dancer_guide_partner.md)** — connection-force graph and combined foot + pelvis analysis. Open at `/` on a second device while the dancer trains.
+
 > 🇩🇪 **Deutsche Dokumentation:** [Documentation_german/README.md](Documentation_german/README.md)
 
 ![Dashboard Screenshot](Attachments/screenshot.png)
