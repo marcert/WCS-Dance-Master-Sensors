@@ -90,7 +90,7 @@ In WCS **forward steps** all three rockers are present: heel strike → ankle ad
 
    $$\theta_{\text{raw}}(t) = \alpha \cdot \bigl(\theta_{\text{raw}}(t-\Delta t) + \omega_{\text{pitch}} \cdot \Delta t\bigr) + (1-\alpha) \cdot \theta_{\text{accel}}, \quad \alpha = 0.94$$
 
-   **T-1 Snapshot for step classification:** At the moment of impact, the angle from the *previous frame* (T-1) is used — not the instantaneous value. The aZ > 0.95–0.97 g trigger (tempo-adaptive) fires after partial weight loading when roll-through has already begun; the T-1 frame captures pre-contact foot orientation before distortion.
+   **T-1 Snapshot for step classification:** At the moment of impact, the angle from the *previous frame* (T-1) is used — not the instantaneous value. The aZ > 0.92–0.95 g trigger (tempo-adaptive) fires after partial weight loading when roll-through has already begun; the T-1 frame captures pre-contact foot orientation before distortion.
 
 2. **Zero-Tare Compensation ($\theta_{\text{calibrated}}$):**
    To adjust for individual instep shoe slopes, the `📐 ZERO` button captures static mounting offsets ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -363,7 +363,7 @@ To prevent false secondary step triggers caused by micro-taps, foot unweighting,
 1. **Transient Signal Candidate Sensing:**
    Each foot independently qualifies as an impact candidate via OR-logic:
    $$\text{signal}_{\text{foot}} = \bigl(|aZ| > \theta_{\text{thr}} \;\mathbf{AND}\; \text{preJerk} > 2\bigr) \;\mathbf{OR}\; \bigl(|\omega_{\text{pitch}}| > 80\,\text{deg/s} \;\mathbf{AND}\; \text{preJerk} > 8\bigr)$$
-   where $\theta_{\text{thr}} = 0.95\,g$ when $t_{\text{step}} > 800\,\text{ms}$ (slow practice, $< 75\,\text{BPM}$), and $0.97\,g$ otherwise. The `preJerk > 2` gate on the aZ path suppresses gradual stance-foot weight drift (typical preJerk 0.5–2) while passing real foot impacts (preJerk typically 5–30+). This tempo-adaptive threshold captures soft deliberate weight transfers in slow footwork training while suppressing brush artefacts at dance tempo.
+   where $\theta_{\text{thr}} = 0.92\,g$ when $t_{\text{step}} > 800\,\text{ms}$ (slow practice, $< 75\,\text{BPM}$), and $0.95\,g$ otherwise. The `preJerk > 2` gate on the aZ path suppresses gradual stance-foot weight drift (typical preJerk 0.5–2) while passing real foot impacts (preJerk typically 5–30+). This tempo-adaptive threshold captures soft deliberate weight transfers in slow footwork training while suppressing brush artefacts at dance tempo.
    The `preJerk` gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) on the gyro path suppresses liftoff rotation artefacts that would otherwise ghost as step triggers. When both feet signal in the same frame, the dominant foot is selected by peak ground reaction force: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
    > **Note:** The gyro path correctly resolves flat ball-of-foot contacts (aZ below threshold) via `|gPitch| > 80°/s`. Observed preJerk minimum in real WCS steps: **6.0** — well above the 2.0 gate. Step balance in practice: L/R counts remain equal across single steps and triple steps.
@@ -375,7 +375,7 @@ To prevent false secondary step triggers caused by micro-taps, foot unweighting,
    * **The Lockout Concept:** The system maintains independent last-step timestamps for each leg (`lastStepTimeLeft` and `lastStepTimeRight`). Whenever a candidate step is detected for a leg, the state machine checks if the time elapsed since the previous step *on that specific leg* is less than the dynamic lockout window.
    * **Cadence-Adaptive Window:** The lockout scales with the current step period: $t_{\text{lockout}} = \text{clamp}(t_{\text{step}} \times 0.55,\ 180\text{ ms},\ 320\text{ ms})$. At 120 BPM ($t_{\text{step}} = 500\text{ ms}$) this yields 275 ms; at 160 BPM (375 ms) → 206 ms; at 200 BPM (300 ms) → 180 ms (floor). This prevents both ghost triggers at slow tempos and missed steps at high tempos.
    * **Alternation Guard:** Steps must alternate (`Left -> Right -> Left`). If the same foot fires twice without the opposite foot making contact in between, it is discarded as a liftoff re-detection or vibration ghost.
-   * **Global 130 ms Cross-Foot Lockout:** Any step trigger — regardless of which foot — is rejected if it arrives within 130 ms of the last confirmed step. This cross-foot guard catches the case where the non-stepping foot oscillates near 0.95–0.97 g shortly after a real step: the per-foot lockout on the opposite foot is stale (its last-step time is old) and would not block it. `lastStepTimestamp` is updated on every confirmed step and shared across both feet.
+   * **Global 130 ms Cross-Foot Lockout:** Any step trigger — regardless of which foot — is rejected if it arrives within 130 ms of the last confirmed step. This cross-foot guard catches the case where the non-stepping foot oscillates near 0.92–0.95 g shortly after a real step: the per-foot lockout on the opposite foot is stale (its last-step time is old) and would not block it. `lastStepTimestamp` is updated on every confirmed step and shared across both feet.
 
 ---
 

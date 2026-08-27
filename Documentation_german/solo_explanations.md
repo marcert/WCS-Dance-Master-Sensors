@@ -91,7 +91,7 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
 
    $$\theta_{\text{raw}}(t) = \alpha \cdot \bigl(\theta_{\text{raw}}(t-\Delta t) + \omega_{\text{pitch}} \cdot \Delta t\bigr) + (1-\alpha) \cdot \theta_{\text{accel}}, \quad \alpha = 0.94$$
 
-   **T-1-Schnappschuss für Schrittklassifikation:** Zum Zeitpunkt des Aufpralls wird der Winkel vom *vorherigen Frame* (T-1) verwendet — nicht der Momentanwert. Der aZ > 0,95–0,97 g-Auslöser (tempo-adaptiv) feuert nach teilweiser Gewichtsbelastung, wenn das Abrollen bereits begonnen hat; der T-1-Frame erfasst die Fußausrichtung vor dem Kontakt, bevor Verzerrungen auftreten.
+   **T-1-Schnappschuss für Schrittklassifikation:** Zum Zeitpunkt des Aufpralls wird der Winkel vom *vorherigen Frame* (T-1) verwendet — nicht der Momentanwert. Der aZ > 0,92–0,95 g-Auslöser (tempo-adaptiv) feuert nach teilweiser Gewichtsbelastung, wenn das Abrollen bereits begonnen hat; der T-1-Frame erfasst die Fußausrichtung vor dem Kontakt, bevor Verzerrungen auftreten.
 
 2. **Nullpunkt-Tarierung ($\theta_{\text{calibrated}}$):**
    Zur Anpassung individueller Schuhabsatz-Neigungen erfasst der `📐 ZERO`-Button statische Montageversätze ($\text{leftMountOffset}$, $\text{rightMountOffset}$):
@@ -256,7 +256,7 @@ $$\text{rollReversal} = \lvert\overline{\omega}_{0-3}\rvert > 8°/\text{s} \quad
 
 Die Verzögerungsrampe misst, wie schnell das Gewicht nach dem Fußkontakt übertragen wurde — ausgedrückt als Bruchteil des aktuellen Schrittintervalls. Die Metrik passt sich dadurch automatisch an das Musiktempo an.
 
-**Berechnung:** Nach jedem Schrittauslöser wird ein 500-ms-Überwachungsfenster gestartet. Das Fenster gilt als abgeschlossen, wenn $|aZ - 1.0| < 0.08g$ UND $|\omega_{\text{pitch}}| < 15°/\text{s}$ für 2 aufeinanderfolgende Samples erfüllt sind.
+**Berechnung:** Nach jedem Schrittauslöser wird ein 500-ms-Überwachungsfenster gestartet. Das Fenster gilt als abgeschlossen, wenn $|aZ - 1{,}0| < 0{,}15\,g$ UND $|\omega_{\text{pitch}}| < 40°/\text{s}$ für 2 aufeinanderfolgende Samples erfüllt sind.
 
 $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 
@@ -275,13 +275,13 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 
 | Metrik / Parameter | Wert / Bereich | Visuelles Badge / Zustand | Audio-Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Fersenzone — kontrolliert** | $\theta \ge +8°$, Jerk $\le 30$ g/s | `HEEL STRIKE ✓` (Grün) | Kein |
-| **Fersenzone — abrupt** | $\theta \ge +8°$, Jerk $> 30$ g/s | `HEEL SLAM ⚠` (Rot) | 1200-Hz-Klick |
-| **Zehenzone — kontrolliert** | $\theta < -8°$, Jerk $\le 30$ g/s | `TOE-FIRST ✓` (Grün) | Kein |
-| **Zehenzone — abrupt** | $\theta < -8°$, Jerk $> 30$ g/s | `TOE JAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Fersenzone — kontrolliert** | $\theta \ge +8°$, Jerk $\le 22$ g/s | `HEEL STRIKE ✓` (Grün) | Kein |
+| **Fersenzone — abrupt** | $\theta \ge +8°$, Jerk $> 22$ g/s | `HEEL SLAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Zehenzone — kontrolliert** | $\theta < -8°$, Jerk $\le 22$ g/s | `TOE-FIRST ✓` (Grün) | Kein |
+| **Zehenzone — abrupt** | $\theta < -8°$, Jerk $> 22$ g/s | `TOE JAM ⚠` (Rot) | 1200-Hz-Klick |
 | **Mehrdeutig — weich** | $-8° \le \theta < +8°$, Jerk $\le 20$ g/s | `SOFT ✓` (Grün) | Kein |
 | **Mehrdeutig — moderat** | $-8° \le \theta < +8°$, Jerk $20\text{–}22$ g/s | `MODERATE` (Gelb) | Kein |
-| **Mehrdeutig — hart** | $-8° \le \theta < +8°$, Jerk $> 30$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
+| **Mehrdeutig — hart** | $-8° \le \theta < +8°$, Jerk $> 22$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
 | **BRUSH+HEEL-Neuklassifikation** | mehrdeutig → zweites aZ $> 1{,}05\,g$ + accelAngle $> 8°$ innerhalb 200 ms | `BRUSH+HEEL` (Grün) → ➡️ FORWARD | Kein |
 | **Standbein-Abstoß (vorwärts, optimal)** | BACKWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (rückwärts/Anker, optimal)** | FORWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
@@ -396,7 +396,7 @@ Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder B
 
    $$\text{signal}_{\text{foot}} = \bigl(\lvert aZ\rvert > \theta_{\text{thr}} \quad\mathbf{UND}\quad \text{preJerk} > 2\bigr) \quad\mathbf{ODER}\quad \bigl(\lvert\omega_{\text{pitch}}\rvert > 80\,\text{deg/s} \quad\mathbf{UND}\quad \text{preJerk} > 8\bigr)$$
 
-   Dabei gilt $\theta_{\text{thr}} = 0{,}95\,g$ wenn $t_{\text{Schritt}} > 800\,\text{ms}$ (Trainingstempo $< 75\,\text{BPM}$), sonst $0{,}97\,g$. Das `preJerk > 2`-Gate auf dem aZ-Pfad unterdrückt langsame Standfuß-Gewichtsdrift (typischer preJerk 0,5–2), lässt aber echte Aufprallimpulse (preJerk typisch 5–30+) durch.
+   Dabei gilt $\theta_{\text{thr}} = 0{,}92\,g$ wenn $t_{\text{Schritt}} > 800\,\text{ms}$ (Trainingstempo $< 75\,\text{BPM}$), sonst $0{,}95\,g$. Das `preJerk > 2`-Gate auf dem aZ-Pfad unterdrückt langsame Standfuß-Gewichtsdrift (typischer preJerk 0,5–2), lässt aber echte Aufprallimpulse (preJerk typisch 5–30+) durch.
 
    Das `preJerk`-Gate (`|aZ_t - aZ_{t-1}| / Δt > 8`) auf dem Gyro-Pfad unterdrückt Abhebebewegungs-Artefakte. Wenn beide Füße im gleichen Frame signalisieren, wird der dominante Fuß nach maximaler Bodenreaktionskraft ausgewählt: $\text{detectedFoot} = \arg\max(|aZ_L|, |aZ_R|)$.
 
@@ -409,7 +409,7 @@ Um falsche sekundäre Schrittauslöser durch Mikrotipps, Fußentlastungen oder B
    * **Sperrzeitkonzept:** Das System verwaltet unabhängige Letztschritt-Zeitstempel für jedes Bein (`lastStepTimeLeft` und `lastStepTimeRight`). Wenn ein Schrittkandidat erkannt wird, prüft die Zustandsmaschine, ob die seit dem letzten Schritt *an diesem spezifischen Bein* verstrichene Zeit kleiner als das dynamische Sperrzeitfenster ist.
    * **Kadenz-Adaptives Fenster:** $t_{\text{lockout}} = \text{clamp}(t_{\text{step}} \times 0.55,\ 180\text{ ms},\ 320\text{ ms})$. Bei 120 BPM → 275 ms; bei 160 BPM → 206 ms; bei 200 BPM → 180 ms (Untergrenze).
    * **Alternierungswächter:** Schritte müssen alternieren (`Links → Rechts → Links`). Gleicher Fuß zweimal ohne Gegenfuß-Kontakt dazwischen wird als Artefakt verworfen.
-   * **Globaler Cross-Fuß-Lockout (130 ms):** Jeder Schrittauslöser — unabhängig vom Fuß — wird verworfen, wenn er innerhalb von 130 ms nach dem letzten bestätigten Schritt eintrifft. Dieser übergreifende Lockout verhindert False-Trigger des ruhenden Fußes (~0,95–0,97 g Oszillation) kurz nach einem echten Schritt: Das per-Fuß-Sperrzeitfenster des Gegenfußes ist veraltet und würde ihn nicht blockieren. `lastStepTimestamp` wird bei jedem bestätigten Schritt aktualisiert und gilt für beide Füße.
+   * **Globaler Cross-Fuß-Lockout (130 ms):** Jeder Schrittauslöser — unabhängig vom Fuß — wird verworfen, wenn er innerhalb von 130 ms nach dem letzten bestätigten Schritt eintrifft. Dieser übergreifende Lockout verhindert False-Trigger des ruhenden Fußes (~0,92–0,95 g Oszillation) kurz nach einem echten Schritt: Das per-Fuß-Sperrzeitfenster des Gegenfußes ist veraltet und würde ihn nicht blockieren. `lastStepTimestamp` wird bei jedem bestätigten Schritt aktualisiert und gilt für beide Füße.
 
 ---
 
