@@ -88,7 +88,7 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 
 | Element | What it tells you |
 | :--- | :--- |
-| **Direction badge** | ➡️ FORWARD (θ ≥ +8°), ⬅️ BACK (θ < −8°), or — when the angle is in the ambiguous zone |
+| **Direction badge** | ➡ FWD (θ ≥ +8°), ⬅ BWD (θ < −8°), or — when the angle is in the ambiguous zone |
 | **Strike badge** (large coloured label) | Classification of that landing — see tables below |
 | **ROLL badge** | Foot roll quality — how the forefoot lowers after heel contact (all levels) — [see section below](#roll-badge-all-levels) |
 | **PUSH-OFF badge** | Push-off power of your trailing foot (Beginner: hidden) |
@@ -102,13 +102,13 @@ The system classifies direction from foot pitch angle θ. Direction is **reliabl
 
 | Direction badge | θ at landing | Meaning |
 | :--- | :--- | :--- |
-| **➡️ FORWARD** | θ ≥ +8° | Clear dorsiflexion — heel contacted first |
+| **➡ FWD** | θ ≥ +8° | Clear dorsiflexion — heel contacted first |
 | **—** (grey) | −8° to +7° | Ambiguous zone — foot too flat to classify direction |
-| **⬅️ BACK** | θ < −8° | Clear plantarflexion — toe-ball contacted first |
+| **⬅ BWD** | θ < −8° | Clear plantarflexion — toe-ball contacted first |
 
 When θ is between −8° and +7°, the system cannot reliably determine direction. The direction badge shows — (grey). Use the camera view to check actual direction.
 
-### HEEL zone badges (➡️ FORWARD, θ ≥ +8°)
+### HEEL zone badges (➡ FWD, θ ≥ +8°)
 
 | Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
@@ -124,18 +124,18 @@ The foot is too flat to classify direction. The quality badge still fires:
 | `SOFT ✓` | ≤ 20 g/s | Light, controlled landing — good absorption in this zone |
 | `MODERATE` | 20–22 g/s | Moderate impact — acceptable, but worth reducing |
 | `HARD IMPACT ⚠` | > 22 g/s | Heavy flat-foot landing — stomping pattern |
-| `BRUSH+HEEL` | — | Ambiguous landing followed by heel-set within 200 ms — reclassified to ➡️ FORWARD; correct technique confirmed |
+| `BRUSH+HEEL` | — | Ambiguous landing followed by heel-set within 200 ms — reclassified to ➡ FWD; correct technique confirmed |
 
 Use the camera view to check actual direction when the direction badge shows —.
 
-### TOE zone badges (⬅️ BACK, θ < −8°)
+### TOE zone badges (⬅ BWD, θ < −8°)
 
 | Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
 | `TOE-FIRST ✓` | ≤ 22 g/s | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
 | `TOE JAM ⚠` | > 22 g/s | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
 
-> **Note on early heel drops:** A backward step where the heel contacts before the toe will land in the ambiguous zone (—) rather than ⬅️ BACK. If you see consistent SOFT/MODERATE/HARD IMPACT on what you believe are backward steps, your heel is contacting too early. Focus on sending the toe out first and keeping the ankle relaxed until the foot settles.
+> **Note on early heel drops:** A backward step where the heel contacts before the toe will land in the ambiguous zone (—) rather than ⬅ BWD. If you see consistent SOFT/MODERATE/HARD IMPACT on what you believe are backward steps, your heel is contacting too early. Focus on sending the toe out first and keeping the ankle relaxed until the foot settles.
 
 ### ROLL badge (all levels)
 

@@ -88,7 +88,7 @@ Dies ist die **primäre Echtzeit-Feedback-Karte**. Sie wird bei jedem erkannten 
 
 | Element | Was es dir sagt |
 | :--- | :--- |
-| **Richtungs-Badge** | ➡️ FORWARD (θ ≥ +8°), ⬅️ BACK (θ < −8°), oder — wenn der Winkel in der unklaren Zone liegt |
+| **Richtungs-Badge** | ➡ FWD (θ ≥ +8°), ⬅ BWD (θ < −8°), oder — wenn der Winkel in der unklaren Zone liegt |
 | **Strike-Badge** (großes farbiges Label) | Klassifizierung dieser Landung — siehe Tabellen unten |
 | **ROLL-Badge** | Abrollqualität — wie der Vorfuß nach dem Fersenkontakt abgesenkt wird (alle Stufen) — [siehe Abschnitt unten](#roll-badge-alle-stufen) |
 | **PUSH-OFF-Badge** | Push-off-Kraft deines hinteren Fußes (Anfänger: ausgeblendet) |
@@ -102,13 +102,13 @@ Das System klassifiziert die Richtung anhand des Nickwinkels θ des Fußes. Die 
 
 | Richtungs-Badge | θ beim Aufsetzen | Bedeutung |
 | :--- | :--- | :--- |
-| **➡️ FORWARD** | θ ≥ +8° | Klare Dorsalflexion — Ferse hat zuerst Kontakt |
+| **➡ FWD** | θ ≥ +8° | Klare Dorsalflexion — Ferse hat zuerst Kontakt |
 | **—** (grau) | −8° bis +7° | Unklare Zone — Fuß zu flach für Richtungsbestimmung |
-| **⬅️ BACK** | θ < −8° | Klare Plantarflexion — Ballen hat zuerst Kontakt |
+| **⬅ BWD** | θ < −8° | Klare Plantarflexion — Ballen hat zuerst Kontakt |
 
 Liegt θ zwischen −8° und +7°, kann das System die Richtung nicht zuverlässig bestimmen. Der Richtungs-Badge zeigt — (grau). Zur Richtungsprüfung die Kameraansicht nutzen.
 
-### HEEL-Zone-Badges (➡️ FORWARD, θ ≥ +8°)
+### HEEL-Zone-Badges (➡ FWD, θ ≥ +8°)
 
 | Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
@@ -124,18 +124,18 @@ Der Fuß ist zu flach, um die Richtung zu bestimmen. Der Qualitäts-Badge wird d
 | `SOFT ✓` | ≤ 20 g/s | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
 | `MODERATE` | 20–22 g/s | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
 | `HARD IMPACT ⚠` | > 22 g/s | Schwerer Flachfuß-Aufprall — Stampfmuster |
-| `BRUSH+HEEL` | — | Flache Landung gefolgt von Fersenauftritt innerhalb von 200 ms — automatisch zu ➡️ FORWARD umklassifiziert; korrekte Technik bestätigt |
+| `BRUSH+HEEL` | — | Flache Landung gefolgt von Fersenauftritt innerhalb von 200 ms — automatisch zu ➡ FWD umklassifiziert; korrekte Technik bestätigt |
 
 Wenn der Richtungs-Badge — zeigt, die Kameraansicht zur Richtungsprüfung nutzen.
 
-### TOE-Zone-Badges (⬅️ BACK, θ < −8°)
+### TOE-Zone-Badges (⬅ BWD, θ < −8°)
 
 | Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
 | `TOE-FIRST ✓` | ≤ 22 g/s | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
 | `TOE JAM ⚠` | > 22 g/s | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
 
-> **Hinweis zu frühem Fersenabsatz:** Setzt die Ferse beim Rückwärtsschritt vor dem Ballen auf, landet der Schritt in der unklaren Zone (—) statt bei ⬅️ BACK. Wenn bei Schritten, die als Rückwärtsschritte gemeint sind, konstant SOFT/MODERATE/HARD IMPACT erscheinen, setzt die Ferse zu früh auf. Darauf achten, zuerst den Ballen aufkommen zu lassen und das Sprunggelenk entspannt zu halten, bis der Fuß vollständig steht.
+> **Hinweis zu frühem Fersenabsatz:** Setzt die Ferse beim Rückwärtsschritt vor dem Ballen auf, landet der Schritt in der unklaren Zone (—) statt bei ⬅ BWD. Wenn bei Schritten, die als Rückwärtsschritte gemeint sind, konstant SOFT/MODERATE/HARD IMPACT erscheinen, setzt die Ferse zu früh auf. Darauf achten, zuerst den Ballen aufkommen zu lassen und das Sprunggelenk entspannt zu halten, bis der Fuß vollständig steht.
 
 ### ROLL-Badge (alle Stufen)
 
