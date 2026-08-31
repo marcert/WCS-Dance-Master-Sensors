@@ -1618,16 +1618,19 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
                         if (pdActive) {
                             if (aVertP < pdMinAz) { pdMinAz = aVertP; pdMinTime = now; }
-                            if (now - pdStartTime >= 200) {
+                            let pdWindow = Math.max(200, Math.round(stepDurationMs * 0.45));
+                            if (now - pdStartTime >= pdWindow) {
                                 pdActive = false;
                                 if (pdMinTime > pdStartTime) {
                                     let dt = pdMinTime - pdStartTime;
+                                    let pdLo = Math.max(30, Math.round(stepDurationMs * 0.12));
+                                    let pdHi = Math.round(stepDurationMs * 0.42);
                                     let el = document.getElementById('phaseDelayBadge');
                                     if (el) {
                                         el.style.cssText = 'display:block;margin-top:3px;text-align:center;';
-                                        if      (dt >= 60 && dt <= 180) { el.className='badge badge-green';  el.innerText='SETTLING ✓ '+dt+'ms'; }
-                                        else if (dt < 60)               { el.className='badge badge-yellow'; el.innerText='QUICK '+dt+'ms'; }
-                                        else                            { el.className='badge badge-yellow'; el.innerText='SLOW '+dt+'ms'; }
+                                        if      (dt >= pdLo && dt <= pdHi) { el.className='badge badge-green';  el.innerText='SETTLING ✓ '+dt+'ms'; }
+                                        else if (dt < pdLo)                { el.className='badge badge-yellow'; el.innerText='QUICK '+dt+'ms'; }
+                                        else                               { el.className='badge badge-yellow'; el.innerText='SLOW '+dt+'ms'; }
                                     }
                                 }
                             }

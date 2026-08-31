@@ -313,9 +313,9 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **SDR — gut gedämpft** | SDR > 0,65 | `ABSORBING ✓` (Grün) — nur ADV + Pelvis | Kein |
 | **SDR — partiell** | SDR 0,35–0,65 | `PARTIAL SDR` (Gelb) — nur ADV + Pelvis | Kein |
 | **SDR — steif** | SDR < 0,35 | `STIFF` (Rot) — nur ADV + Pelvis | Kein |
-| **SETTLE — gesund** | 60–180 ms | `SETTLING ✓ Xms` (Grün) — nur ADV + Pelvis | Kein |
-| **SETTLE — starr** | < 60 ms | `QUICK Xms` (Gelb) — nur ADV + Pelvis | Kein |
-| **SETTLE — verzögert** | > 180 ms | `SLOW Xms` (Gelb) — nur ADV + Pelvis | Kein |
+| **SETTLE — gesund** | 12–42 % des Schrittintervalls | `SETTLING ✓ Xms` (Grün) — nur ADV + Pelvis | Kein |
+| **SETTLE — starr** | < 12 % des Schrittintervalls | `QUICK Xms` (Gelb) — nur ADV + Pelvis | Kein |
+| **SETTLE — verzögert** | > 42 % des Schrittintervalls | `SLOW Xms` (Gelb) — nur ADV + Pelvis | Kein |
 | **GND-Score — gut** | ≥ 65 | Grounding-Kachel grün — nur ADV | Kein |
 | **GND-Score — mittel** | ≥ 35 | Grounding-Kachel gelb — nur ADV | Kein |
 | **GND-Score — schwach** | < 35 | Grounding-Kachel rot — nur ADV | Kein |
@@ -439,13 +439,13 @@ Misst die Zeit vom Fußkontakt bis zum Minimum der vertikalen Beckenbeschleunigu
 
 $$\text{SETTLE-Zeit} = t\!\left(\min(pA_z)\right) - t_{\text{Fußkontakt}} \quad [\text{ms}]$$
 
-Ein gesundes Verzögerungsplateau von 60–180 ms zeigt an, dass das Kniegelenk den Impuls abfedert und das Becken verzögert nachgibt — die charakteristische „Sink"-Bewegung im WCS.
+Ein gesundes Verzögerungsplateau von 12–42 % des aktuellen Schrittintervalls (Untergrenze 30 ms) zeigt an, dass das Kniegelenk den Impuls abfedert und das Becken verzögert nachgibt — die charakteristische „Sink"-Bewegung im WCS. Das Auswertungsfenster skaliert ebenfalls: `max(200 ms, t_Schritt × 0,45)`.
 
 | Badge | Bedingung | Farbe | Biomechanische Bedeutung |
 | :---: | :---: | :---: | :--- |
-| `SETTLING ✓ Xms` | 60–180 ms | Grün | Gesunde Beinketten-Compliance — kontrolliertes Einsinken |
-| `QUICK Xms` | < 60 ms | Gelb | Starre Absorption, kein messbares Verzögerungsplateau; zeigt auch `QUICK 0ms` bei völlig starrer Hüftabsorption (kein messbarer Dip in Becken-aZ) |
-| `SLOW Xms` | > 180 ms | Gelb | Sehr verzögerte Reaktion — übermäßig nachgebende Kette |
+| `SETTLING ✓ Xms` | `pdLo`–`pdHi` (12–42 % des Schrittintervalls) | Grün | Gesunde Beinketten-Compliance — kontrolliertes Einsinken |
+| `QUICK Xms` | < `pdLo` (< 12 % des Schrittintervalls) | Gelb | Starre Absorption, kein messbares Verzögerungsplateau; zeigt auch `QUICK 0ms` bei völlig starrer Hüftabsorption (kein messbarer Dip in Becken-aZ) |
+| `SLOW Xms` | > `pdHi` (> 42 % des Schrittintervalls) | Gelb | Sehr verzögerte Reaktion — übermäßig nachgebende Kette |
 | `— SETTLE` | Kein Pelvis-Sensor | Grau | Beckensensor nicht verbunden |
 
 ---
