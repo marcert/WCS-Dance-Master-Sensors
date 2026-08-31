@@ -832,7 +832,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         let bounceBadge = document.getElementById('bounceBadge');
                         if (bounceBadge) {
                             if      (aZVar < 0.006)  { bounceBadge.className = 'badge badge-green';  bounceBadge.style.cssText = ''; bounceBadge.innerText = 'GROUNDED'; }
-                            else if (aZVar < 0.020)  { bounceBadge.className = 'badge badge-yellow'; bounceBadge.style.cssText = ''; bounceBadge.innerText = 'SLIGHT BOUNCE'; }
+                            else if (aZVar < 0.030)  { bounceBadge.className = 'badge badge-yellow'; bounceBadge.style.cssText = ''; bounceBadge.innerText = 'SLIGHT BOUNCE'; }
                             else                     { bounceBadge.className = 'badge badge-red';    bounceBadge.style.cssText = ''; bounceBadge.innerText = 'BOUNCY'; }
                         }
 
@@ -892,7 +892,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 anchorSettleLastScore = anchorScore;
                                 let ab = document.getElementById('anchorSettleBadge');
                                 if (ab) {
-                                    if      (anchorScore >= 60) { ab.className = 'badge badge-green';  ab.style.cssText = ''; ab.innerText = 'ANCHORED (' + anchorScore + ')'; }
+                                    if      (anchorScore >= 50) { ab.className = 'badge badge-green';  ab.style.cssText = ''; ab.innerText = 'ANCHORED (' + anchorScore + ')'; }
                                     else if (anchorScore >= 30) { ab.className = 'badge badge-yellow'; ab.style.cssText = ''; ab.innerText = 'SETTLING (' + anchorScore + ')'; }
                                     else                        { ab.className = 'badge badge-red';    ab.style.cssText = ''; ab.innerText = 'UNSTABLE (' + anchorScore + ')'; }
                                 }
@@ -904,8 +904,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 let hse = document.getElementById('hipSettleBadge');
                                 if (hse) {
                                     hse.style.cssText = '';
-                                    if      (earlyLatPeak > 0.30)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'OVERSWING ⚠'; }
-                                    else if (earlyLatPeak > 0.10 && lateLatVar < 0.015)        { hse.className = 'badge badge-green';  hse.innerText = 'HIP SETTLE ✓'; }
+                                    if      (earlyLatPeak > 0.10 && lateLatVar < 0.015)        { hse.className = 'badge badge-green';  hse.innerText = 'HIP SETTLE ✓'; }
+                                    else if (earlyLatPeak > 0.30 && lateLatVar >= 0.015)        { hse.className = 'badge badge-yellow'; hse.innerText = 'OVERSWING ⚠'; }
                                     else if (earlyLatPeak > 0.05)                              { hse.className = 'badge badge-yellow'; hse.innerText = 'SLIGHT SETTLE'; }
                                     else                                                        { hse.className = 'badge badge-red';    hse.innerText = 'NO HIP SETTLE'; }
                                 }
@@ -1133,10 +1133,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         document.getElementById('jerkVal').innerText = Math.round(activeJerk / 4); // ÷4 converts internal 200Hz-scaled value to actual g/s at poll rate
 
                                                 // Direction badge: reliable only at θ-zone extremes
-                                                if (activeTheta >= 8) {
+                                                if (activeTheta >= 6) {
                                                     dirBadge.innerText = "➡ FWD";
                                                     dirBadge.style.background = "#1f6beb";
-                                                } else if (activeTheta < -8) {
+                                                } else if (activeTheta < -6) {
                                                     dirBadge.innerText = "⬅ BWD";
                                                     dirBadge.style.background = "#a371f7";
                                                 } else {
@@ -1146,15 +1146,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                                 // Strike badge: landing quality, direction-agnostic
                                                 badge.style.cssText = "";
-                                                if (activeTheta >= 8) {
-                                                    if (activeJerk > 88) {
+                                                if (activeTheta >= 6) {
+                                                    if (activeJerk > 110) {
                                                         badge.className = "badge badge-red";    badge.innerText = "HEEL SLAM ⚠";
                                                         playImpactClick(1200);
                                                     } else {
                                                         badge.className = "badge badge-green";  badge.innerText = "HEEL STRIKE ✓";
                                                     }
-                                                } else if (activeTheta < -8) {
-                                                    if (activeJerk > 88) {
+                                                } else if (activeTheta < -6) {
+                                                    if (activeJerk > 110) {
                                                         badge.className = "badge badge-red";    badge.innerText = "TOE JAM ⚠";
                                                         playImpactClick(1200);
                                                     } else {
@@ -1162,10 +1162,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                     }
                                                 } else {
                                                     // Ambiguous zone: quality only (all backward steps + flat forward steps)
-                                                    if (activeJerk > 88) {
+                                                    if (activeJerk > 110) {
                                                         badge.className = "badge badge-red";    badge.innerText = "HARD IMPACT ⚠";
                                                         playImpactClick(1200);
-                                                    } else if (activeJerk > 80) {
+                                                    } else if (activeJerk > 100) {
                                                         badge.className = "badge badge-yellow"; badge.innerText = "MODERATE";
                                                     } else {
                                                         badge.className = "badge badge-green";  badge.innerText = "SOFT ✓";
@@ -1305,7 +1305,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         peakDsThisStep = 0; // reset for next interval
 
                                                 let stanceBadge = document.getElementById('stanceBadge');
-                        if (stanceRatio >= 15 && stanceRatio <= 52) {
+                        if (stanceRatio >= 15 && stanceRatio <= 60) {
                             stanceBadge.className = "badge badge-green"; stanceBadge.innerText = "OPTIMAL ROLL";
                         } else if (stanceRatio < 15) {
                             stanceBadge.className = "badge badge-yellow"; stanceBadge.innerText = "HECTIC";
@@ -1348,7 +1348,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             if (lBadge) {
                                 if (loadRise > 0.12) {
                                     lBadge.className = "badge badge-green";  lBadge.style.cssText = ""; lBadge.innerText = "SMOOTH LOAD";
-                                } else if (loadRise < -0.08) {
+                                } else if (loadRise < -0.10) {
                                     lBadge.className = "badge badge-yellow"; lBadge.style.cssText = ""; lBadge.innerText = "EARLY UNLOAD";
                                 } else {
                                     lBadge.className = "badge badge-yellow"; lBadge.style.cssText = ""; lBadge.innerText = "INSTANT LOAD";
@@ -1620,13 +1620,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             if (aVertP < pdMinAz) { pdMinAz = aVertP; pdMinTime = now; }
                             if (now - pdStartTime >= 200) {
                                 pdActive = false;
-                                let dt = pdMinTime - pdStartTime;
-                                let el = document.getElementById('phaseDelayBadge');
-                                if (el) {
-                                    el.style.cssText = 'display:block;margin-top:3px;text-align:center;';
-                                    if      (dt >= 60 && dt <= 180) { el.className='badge badge-green';  el.innerText='SETTLING ✓ '+dt+'ms'; }
-                                    else if (dt < 60)               { el.className='badge badge-yellow'; el.innerText='QUICK '+dt+'ms'; }
-                                    else                            { el.className='badge badge-yellow'; el.innerText='SLOW '+dt+'ms'; }
+                                if (pdMinTime > pdStartTime) {
+                                    let dt = pdMinTime - pdStartTime;
+                                    let el = document.getElementById('phaseDelayBadge');
+                                    if (el) {
+                                        el.style.cssText = 'display:block;margin-top:3px;text-align:center;';
+                                        if      (dt >= 60 && dt <= 180) { el.className='badge badge-green';  el.innerText='SETTLING ✓ '+dt+'ms'; }
+                                        else if (dt < 60)               { el.className='badge badge-yellow'; el.innerText='QUICK '+dt+'ms'; }
+                                        else                            { el.className='badge badge-yellow'; el.innerText='SLOW '+dt+'ms'; }
+                                    }
                                 }
                             }
                         }
@@ -1643,7 +1645,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             let rollVar = rsmCount > 0 ? rsmSum / rsmCount : 0;
                             let el = document.getElementById('rollSmoothBadge');
                             if (el) {
-                                if      (rollVar < 80)  { el.className='badge badge-green';  el.innerText='CLEAN ROLL ✓'; }
+                                if (rollVar < 130) { el.className='badge badge-green';  el.innerText='CLEAN ROLL ✓'; }
                                 else if (rollVar < 300) { el.className='badge badge-yellow'; el.innerText='MODERATE ROLL'; }
                                 else                    { el.className='badge badge-red';    el.innerText='SLAPPING'; }
                             }
