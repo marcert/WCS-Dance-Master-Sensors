@@ -24,7 +24,7 @@
 │  ← g     FLIP CAM   EXIT   FREEZE   ZERO   REC START        │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│   CONNECTION FORCE  (−4.0 kg to +4.0 kg)                    │
+│   CONNECTION FORCE  (−5.0 kg to +5.0 kg)                    │
 │   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
@@ -47,7 +47,7 @@
 
 ## 3. Connection Force Graph (Top Graph)
 
-Shows the force measured by the strain gauge held between the two dancers, scaled to ±4.0 kg.
+Shows the force measured by the strain gauge held between the two dancers, scaled to ±5.0 kg.
 
 | Line colour | Meaning |
 | :--- | :--- |
