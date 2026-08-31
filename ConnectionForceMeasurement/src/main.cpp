@@ -104,10 +104,6 @@ uint8_t scanForMaster() {
   return foundCh;
 }
 
-// Globale Variablen für das Display-Diagramm
-int graphX = 0;
-int lastY = 80;
-
 // Variablen zur Erkennung von Wertänderungen
 float lastSentWeight = -9999.0f;
 float lastSentAx = 0.0f, lastSentAy = 0.0f, lastSentAz = 0.0f;
@@ -214,26 +210,6 @@ void setup() {
   M5.Display.fillScreen(BLACK);
   drawConnectionStatus();
   lastRescanTime = millis();
-}
-
-void drawGraph(float weight) {
-  // Mapping von -2500g (-2,5kg) bis +2500g (+2,5kg) auf Y-Pixel (130 bis 30)
-  int newY = map((long)weight, -2500, 2500, 130, 30);
-  newY = constrain(newY, 30, 130);
-
-  // Zug (Grün) / Druck (Rot)
-  uint16_t color = (weight > 0) ? GREEN : RED;
-
-  M5.Display.drawLine(graphX, lastY, graphX + 1, newY, color);
-  
-  graphX++;
-  lastY = newY;
-
-  // Wenn der Bildrand erreicht ist: Bereich löschen und neu anfangen
-  if (graphX > 235) {
-    M5.Display.fillRect(0, 30, 240, 105, BLACK);
-    graphX = 0;
-  }
 }
 
 void loop() {
@@ -397,10 +373,6 @@ void loop() {
       lastSentAy     = ay;
       lastSentAz     = az;
       lastSendTime   = millis();
-
-      if (currentWeight < 2500 && currentWeight > -2500) {
-        drawGraph(currentWeight);
-      }
 
       M5.Display.setCursor(10, 5);
       M5.Display.setTextColor(WHITE, BLACK);
