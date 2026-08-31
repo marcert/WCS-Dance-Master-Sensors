@@ -24,7 +24,7 @@
 │  ← g     FLIP CAM   EXIT   FREEZE   ZERO   REC START        │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│   CONNECTION FORCE  (−4.0 kg to +4.0 kg)                    │
+│   CONNECTION FORCE  (−5.0 kg to +5.0 kg)                    │
 │   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
@@ -47,7 +47,7 @@
 
 ## 3. Verbindungskraft-Diagramm (Oberes Diagramm)
 
-Zeigt die vom Dehnungsmessstreifen zwischen den beiden Tänzern gemessene Kraft, skaliert auf ±4,0 kg.
+Zeigt die vom Dehnungsmessstreifen zwischen den beiden Tänzern gemessene Kraft, skaliert auf ±5,0 kg.
 
 | Linienfarbe | Bedeutung |
 | :--- | :--- |
