@@ -103,9 +103,9 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
 
    | θ bei T-1 | Richtungs-Badge |
    | :---: | :--- |
-   | θ ≥ +8° | ➡ FWD (blau) — zuverlässiger Fersenerstkontakt |
-   | θ < −8° | ⬅ BWD (lila) — zuverlässiger Zehenerstkontakt |
-   | −8° ≤ θ < +8° | — (grau) — mehrdeutig; Richtung nicht angezeigt |
+   | θ ≥ +6° | ➡ FWD (blau) — zuverlässiger Fersenerstkontakt |
+   | θ < −6° | ⬅ BWD (lila) — zuverlässiger Zehenerstkontakt |
+   | −6° ≤ θ < +6° | — (grau) — mehrdeutig; Richtung nicht angezeigt |
 
    **Interne Richtungsklassifikation (Anchor-Settle-Auslöser):** Unabhängig von der Badge-Anzeige verwendet die interne `activeDir`-Logik eine engere mehrdeutige Zone: Nur `0° < θ < +10°` erfordert eine Neigungstrend-Prüfung. Für `θ ≤ 0°` (jede Plantarflexion / Zehenerstkontakt) wird `activeDir` direkt auf BACKWARD gesetzt, ohne Trendanalyse. Dies stellt sicher, dass Rückwärtsschritte, die bei θ = −2° bis −5° landen, das Anchor-Settle-Auswertungsfenster korrekt auslösen, obwohl das Richtungs-Badge weiterhin „—" anzeigt (da |θ| < 8°).
 
@@ -114,19 +114,19 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
    Das Strike-Badge bewertet *wie* der Fuß gelandet ist, unabhängig von der Richtung. Dies ist für Vorwärts- und Rückwärtsschritte gleichermaßen nützlich: `SOFT ✓` bei θ ≈ 0° zeigt einen kontrollierten Rückwärtsschritt an; `HARD IMPACT ⚠` bei θ ≈ 0° bedeutet, dass der Tänzer auf den Fuß gefallen ist.
 
    Jerk-Schwellenwerte:
-   - **HART:** J > 22 g/s (intern > 88)
-   - **MODERAT:** 20 g/s < J ≤ 22 g/s (intern 80–88)
-   - **WEICH:** J ≤ 20 g/s (intern ≤ 80)
+   - **HART:** J > 27,5 g/s (intern > 110)
+   - **MODERAT:** 25 g/s < J ≤ 27,5 g/s (intern 100–110)
+   - **WEICH:** J ≤ 25 g/s (intern ≤ 100)
 
    | θ-Zone | Jerk | Badge | Bedeutung |
    | :---: | :---: | :--- | :--- |
-   | ≥ +8° (Ferse) | ≤ 22 g/s | `HEEL STRIKE ✓` (Grün) | Saubere Fersenlandung — korrekte Vorwärtstechnik |
-   | ≥ +8° (Ferse) | > 22 g/s | `HEEL SLAM ⚠` (Rot) | Fersenkontakt, aber zu abrupt — mit Knie/Knöchel abfedern |
-   | < −8° (Zehe) | ≤ 22 g/s | `TOE-FIRST ✓` (Grün) | Kontrollierter Zehenerstkontakt — korrekt für tiefe Rückwärtsschritte oder Ball-Steps |
-   | < −8° (Zehe) | > 22 g/s | `TOE JAM ⚠` (Rot) | Zehenkontakt zu hart |
-   | −8° bis +7° (mehrdeutig) | ≤ 20 g/s | `SOFT ✓` (Grün) | Kontrollierte Landung — gute Qualität unabhängig von der Richtung |
-   | −8° bis +7° (mehrdeutig) | 20–22 g/s | `MODERATE` (Gelb) | Akzeptabel; Aufprall reduzieren |
-   | −8° bis +7° (mehrdeutig) | > 22 g/s | `HARD IMPACT ⚠` (Rot) | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
+   | ≥ +6° (Ferse) | ≤ 27,5 g/s | `HEEL STRIKE ✓` (Grün) | Saubere Fersenlandung — korrekte Vorwärtstechnik |
+   | ≥ +6° (Ferse) | > 27,5 g/s | `HEEL SLAM ⚠` (Rot) | Fersenkontakt, aber zu abrupt — mit Knie/Knöchel abfedern |
+   | < −6° (Zehe) | ≤ 27,5 g/s | `TOE-FIRST ✓` (Grün) | Kontrollierter Zehenerstkontakt — korrekt für tiefe Rückwärtsschritte oder Ball-Steps |
+   | < −6° (Zehe) | > 27,5 g/s | `TOE JAM ⚠` (Rot) | Zehenkontakt zu hart |
+   | −6° bis +5° (mehrdeutig) | ≤ 25 g/s | `SOFT ✓` (Grün) | Kontrollierte Landung — gute Qualität unabhängig von der Richtung |
+   | −6° bis +5° (mehrdeutig) | 25–27,5 g/s | `MODERATE` (Gelb) | Akzeptabel; Aufprall reduzieren |
+   | −6° bis +5° (mehrdeutig) | > 27,5 g/s | `HARD IMPACT ⚠` (Rot) | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
 
    * **BRUSH+HEEL-Neuklassifikation (200-ms-Fenster):** Wenn eine Landung in der mehrdeutigen Zone innerhalb von 200 ms von einem zweiten aZ > 1,05 g-Peak mit accelAngle > 8° am gleichen Fuß gefolgt wird, wird das Badge zu `BRUSH+HEEL` (grün) aufgewertet und das Richtungs-Badge zeigt ➡ FWD.
 
@@ -192,14 +192,14 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
 
 #### Warum Überlappung in der WCS-Mechanik wichtig ist:
 * **Geerdetes Abrollen:** Im West Coast Swing ist der Gewichtstransfer graduell. Während ein Fuß den Boden verlässt, nimmt der andere das Gewicht auf und erzeugt eine natürliche bilaterale Überlappungsphase (Bodenkontakt-Eintritt bei $|aZ| > 0{,}65\,g$).
-* **Elastische Ausdehnung & Timing:** Ein gesundes Überlappungsverhältnis ($15\%\text{ bis }52\%$) erzeugt die charakteristische „elastische" Dehnung und den reibungslosen Impulsübergang im WCS. Zu wenig Überlappung zeigt Hetzen oder Springen an, zu viel führt zu schwerfälligen Übergängen.
+* **Elastische Ausdehnung & Timing:** Ein gesundes Überlappungsverhältnis ($15\%\text{ bis }60\%$) erzeugt die charakteristische „elastische" Dehnung und den reibungslosen Impulsübergang im WCS. Zu wenig Überlappung zeigt Hetzen oder Springen an, zu viel führt zu schwerfälligen Übergängen.
 * **Hinweis zur Fachliteratur:** Die klassische Ganganalyse (Perry & Burnfield, 2010 — zitiert in §2A; Winter, D.A., 1990: *Biomechanics and Motor Control of Human Gait*, University of Waterloo Press) gibt die Standphase mit ~60 % und die Schwungphase mit ~40 % des Gangzyklus bei komfortabler Gehgeschwindigkeit an. Dies ist eine andere Messung — sie beschreibt, wie lange *ein* Fuß während eines Gangzyklus auf dem Boden bleibt. Die hiesige Metrik misst das *gleichzeitige bilaterale Kontaktverhältnis* innerhalb eines Schrittintervalls, was ein Subset der Einzel-Fuß-Standphase ist. Freier Überblick über Gangphasendefinitionen: [Wikipedia — Ganganalyse](https://de.wikipedia.org/wiki/Ganganalyse).
 
 | Verhältnisbereich (%) | Badge-Bewertung | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
-| **15% bis 52%** | `OPTIMAL ROLL` | Ideale geerdete Abrollphase für Läufe und Ausdehnung. |
+| **15% bis 60%** | `OPTIMAL ROLL` | Ideale geerdete Abrollphase für Läufe und Ausdehnung. |
 | **< 15%** | `HECTIC` | Gehetzter Gewichtstransfer; fehlende Abrollartikulierung. |
-| **> 52%** | `SLUGGISH` | Übermäßiger Bodenkontakt; schwerfälliger Tempoübergang. |
+| **> 60%** | `SLUGGISH` | Übermäßiger Bodenkontakt; schwerfälliger Tempoübergang. |
 
 ---
 
@@ -223,8 +223,8 @@ $$\text{loadRise} = \overline{aZ}_{[160-240\text{ ms}]} - \overline{aZ}_{[0-80\t
 | loadRise | Badge | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
 | $> 0.12\,g$ | `SMOOTH LOAD` (Grün) | Progressiver Gewichtstransfer — Körperschwerpunkt bewegt sich schrittweise über den Fuß |
-| $-0.08\text{ bis }+0.12\,g$ | `INSTANT LOAD` (Gelb) | Gewicht sofort beim Aufprall übertragen — weniger Gelenkschutz |
-| $< -0.08\,g$ | `EARLY UNLOAD` (Gelb) | Gewicht verlagert sich bereits vor Stabilisierung zum nächsten Fuß |
+| $-0.10\text{ bis }+0.12\,g$ | `INSTANT LOAD` (Gelb) | Gewicht sofort beim Aufprall übertragen — weniger Gelenkschutz |
+| $< -0.10\,g$ | `EARLY UNLOAD` (Gelb) | Gewicht verlagert sich bereits vor Stabilisierung zum nächsten Fuß |
 
 **Sprunggelenk-Stoßdämpfung + Abrollumkehr** (200-ms-Fenster, 10 Samples von `gRoll`):
 
@@ -270,24 +270,24 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 
 | Metrik / Parameter | Wert / Bereich | Visuelles Badge / Zustand | Audio-Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Fersenzone — kontrolliert** | $\theta \ge +8°$, Jerk $\le 22$ g/s | `HEEL STRIKE ✓` (Grün) | Kein |
-| **Fersenzone — abrupt** | $\theta \ge +8°$, Jerk $> 22$ g/s | `HEEL SLAM ⚠` (Rot) | 1200-Hz-Klick |
-| **Zehenzone — kontrolliert** | $\theta < -8°$, Jerk $\le 22$ g/s | `TOE-FIRST ✓` (Grün) | Kein |
-| **Zehenzone — abrupt** | $\theta < -8°$, Jerk $> 22$ g/s | `TOE JAM ⚠` (Rot) | 1200-Hz-Klick |
-| **Mehrdeutig — weich** | $-8° \le \theta < +8°$, Jerk $\le 20$ g/s | `SOFT ✓` (Grün) | Kein |
-| **Mehrdeutig — moderat** | $-8° \le \theta < +8°$, Jerk $20\text{–}22$ g/s | `MODERATE` (Gelb) | Kein |
-| **Mehrdeutig — hart** | $-8° \le \theta < +8°$, Jerk $> 22$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
+| **Fersenzone — kontrolliert** | $\theta \ge +6°$, Jerk $\le 27{,}5$ g/s | `HEEL STRIKE ✓` (Grün) | Kein |
+| **Fersenzone — abrupt** | $\theta \ge +6°$, Jerk $> 27{,}5$ g/s | `HEEL SLAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Zehenzone — kontrolliert** | $\theta < -6°$, Jerk $\le 27{,}5$ g/s | `TOE-FIRST ✓` (Grün) | Kein |
+| **Zehenzone — abrupt** | $\theta < -6°$, Jerk $> 27{,}5$ g/s | `TOE JAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Mehrdeutig — weich** | $-6° \le \theta < +6°$, Jerk $\le 25$ g/s | `SOFT ✓` (Grün) | Kein |
+| **Mehrdeutig — moderat** | $-6° \le \theta < +6°$, Jerk $25\text{–}27{,}5$ g/s | `MODERATE` (Gelb) | Kein |
+| **Mehrdeutig — hart** | $-6° \le \theta < +6°$, Jerk $> 27{,}5$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
 | **BRUSH+HEEL-Neuklassifikation** | mehrdeutig → zweites aZ $> 1{,}05\,g$ + accelAngle $> 8°$ innerhalb 200 ms | `BRUSH+HEEL` (Grün) → ➡ FWD | Kein |
 | **Standbein-Abstoß (vorwärts, optimal)** | BACKWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (rückwärts/Anker, optimal)** | FORWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (schwach)** | Beide Richtungen, $120\text{–}159/199^\circ/\text{s}$ UND $aY > 0.15g$ | `↗ PUSH` (Gelb) — hält 400 ms | Kein |
 | **Aufprall-Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Karten-Rand blinkt | 500-Hz-Aufprallklick (80 ms) |
-| **Doppelstandphase — Optimal** | 15% bis 52% | `OPTIMAL ROLL` (Grün) | Kein |
+| **Doppelstandphase — Optimal** | 15% bis 60% | `OPTIMAL ROLL` (Grün) | Kein |
 | **Doppelstandphase — Hetzen** | $< 15\%$ | `HECTIC` (Gelb) | Kein |
-| **Doppelstandphase — Träge** | $> 52\%$ | `SLUGGISH` (Gelb) | Kein |
+| **Doppelstandphase — Träge** | $> 60\%$ | `SLUGGISH` (Gelb) | Kein |
 | **Gewichtstransfer — Progressiv** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Grün) | Kein |
-| **Gewichtstransfer — Sofort** | $-0.08 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Gelb) | Kein |
-| **Gewichtstransfer — Frühzeitig** | loadRise $< -0.08\,g$ | `EARLY UNLOAD` (Gelb) | Kein |
+| **Gewichtstransfer — Sofort** | $-0.10 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Gelb) | Kein |
+| **Gewichtstransfer — Frühzeitig** | loadRise $< -0.10\,g$ | `EARLY UNLOAD` (Gelb) | Kein |
 | **Verzögerungsrampe — VW verzögert** | ratio 0,12–0,38 (VW) | `DELAYED ✓` (Grün) | Kein |
 | **Verzögerungsrampe — VW schnell** | ratio $< 0.12$ (VW) | `QUICK` (Gelb) | Kein |
 | **Verzögerungsrampe — VW spät** | ratio $> 0.38$ (VW) | `LATE` (Gelb) | Nur ADV |
@@ -307,8 +307,8 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **Zehe→Ferse — optimal (Ballensch.)** | earlyMean $< -2°$, rise $> 3°$ | `TOE→HEEL ✓` (Grün) | Kein |
 | **Zehe→Ferse — partiell (Ballensch.)** | earlyMean $< 0°$, rise $> 1°$ | `PARTIAL ROLL` (Gelb) | Kein |
 | **Ferse→Ball — Flachfuß** | earlyMean $\le 0°$, rise $\le 1°$ | `FLAT-FOOT` (Gelb) | Kein |
-| **Roll-Glattheit — sauber** | rollVar < 80 | `CLEAN ROLL ✓` (Grün) | Kein |
-| **Roll-Glattheit — moderat** | rollVar 80–300 | `MODERATE ROLL` (Gelb) | Kein |
+| **Roll-Glattheit — sauber** | rollVar < 130 | `CLEAN ROLL ✓` (Grün) | Kein |
+| **Roll-Glattheit — moderat** | rollVar 130–300 | `MODERATE ROLL` (Gelb) | Kein |
 | **Roll-Glattheit — Slapping** | rollVar > 300 | `SLAPPING` (Rot) | Kein |
 | **SDR — gut gedämpft** | SDR > 0,65 | `ABSORBING ✓` (Grün) — nur ADV + Pelvis | Kein |
 | **SDR — partiell** | SDR 0,35–0,65 | `PARTIAL SDR` (Gelb) — nur ADV + Pelvis | Kein |
@@ -386,8 +386,8 @@ Dabei ist $\Delta g_{\text{Pitch},i}$ die Änderung des sagittalen Gyroskop-Wink
 
 | Zustand | Bedingung | Farbe | Biomechanische Bedeutung |
 | :---: | :---: | :---: | :--- |
-| `CLEAN ROLL ✓` | rollVar < 80 | Grün | Gleichmäßige, kontrollierte Abrollbewegung — M. tibialis anterior aktiv |
-| `MODERATE ROLL` | rollVar 80–300 | Gelb | Teilweise Kontrolle; Abrollbewegung könnte gleichmäßiger sein |
+| `CLEAN ROLL ✓` | rollVar < 130 | Grün | Gleichmäßige, kontrollierte Abrollbewegung — M. tibialis anterior aktiv |
+| `MODERATE ROLL` | rollVar 130–300 | Gelb | Teilweise Kontrolle; Abrollbewegung könnte gleichmäßiger sein |
 | `SLAPPING` | rollVar > 300 | Rot | Unkontrolliertes Abkippen des Vorfußes (siehe unten) |
 | `— ROLL` | Noch kein Schritt | Grau | Initialer Zustand |
 
@@ -581,8 +581,8 @@ Erkennt übermäßige vertikale Schwingung des Beckens — ein Zeichen für spri
 | Zustand | Bedingung | Farbe |
 | :--- | :--- | :--- |
 | GROUNDED | `aZVar < 0,006` | Grün |
-| SLIGHT BOUNCE | `aZVar < 0,020` | Gelb |
-| BOUNCY | `aZVar ≥ 0,020` | Rot |
+| SLIGHT BOUNCE | `aZVar < 0,030` | Gelb |
+| BOUNCY | `aZVar ≥ 0,030` | Rot |
 
 ### Pelvic Tilt (Beckenneigung)
 
@@ -627,8 +627,8 @@ $$\text{score} = \text{decelScore} \times 0{,}35 + \text{yawDampScore} \times 0{
 
 | Zustand | Bedingung | Farbe |
 | :--- | :--- | :--- |
-| ANCHORED | score ≥ 60 | Grün |
-| SETTLING | score ≥ 30 | Gelb |
+| ANCHORED | score ≥ 50 | Grün |
+| SETTLING | score 30–49 | Gelb |
 | UNSTABLE | score < 30 | Rot |
 
 > 📸 **[Screenshot: Beckenkarte mit Anchor-Settle-Badge und numerischem Score (z. B. ANCHORED 74) in Grün nach einem Rückwärts-Ankerschritt]**
@@ -642,8 +642,8 @@ Wird am Ende des Anchor-Settle-Fensters ausgewertet. Verwendet laterale Beckenbe
 
 | Zustand | Bedingung | Farbe |
 | :--- | :--- | :--- |
-| OVERSWING ⚠ | `earlyLatPeak > 0,30 g` | Gelb |
 | HIP SETTLE ✓ | `earlyLatPeak > 0,10 g` UND `lateLatVar < 0,015` | Grün |
 | SLIGHT SETTLE | `earlyLatPeak > 0,05 g` | Gelb |
+| OVERSWING ⚠ | `earlyLatPeak > 0,30 g` UND `lateLatVar ≥ 0,015` | Gelb |
 | NO HIP SETTLE | `earlyLatPeak ≤ 0,05 g` | Rot |
 

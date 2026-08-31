@@ -88,7 +88,7 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 
 | Element | What it tells you |
 | :--- | :--- |
-| **Direction badge** | ➡ FWD (θ ≥ +8°), ⬅ BWD (θ < −8°), or — when the angle is in the ambiguous zone |
+| **Direction badge** | ➡ FWD (θ ≥ +6°), ⬅ BWD (θ < −6°), or — when the angle is in the ambiguous zone |
 | **Strike badge** (large coloured label) | Classification of that landing — see tables below |
 | **ROLL badge** | Foot roll quality — how the forefoot lowers after heel contact (all levels) — [see section below](#roll-badge-all-levels) |
 | **PUSH-OFF badge** | Push-off power of your trailing foot (Beginner: hidden) |
@@ -102,38 +102,38 @@ The system classifies direction from foot pitch angle θ. Direction is **reliabl
 
 | Direction badge | θ at landing | Meaning |
 | :--- | :--- | :--- |
-| **➡ FWD** | θ ≥ +8° | Clear dorsiflexion — heel contacted first |
-| **—** (grey) | −8° to +7° | Ambiguous zone — foot too flat to classify direction |
-| **⬅ BWD** | θ < −8° | Clear plantarflexion — toe-ball contacted first |
+| **➡ FWD** | θ ≥ +6° | Clear dorsiflexion — heel contacted first |
+| **—** (grey) | −6° to +5° | Ambiguous zone — foot too flat to classify direction |
+| **⬅ BWD** | θ < −6° | Clear plantarflexion — toe-ball contacted first |
 
-When θ is between −8° and +7°, the system cannot reliably determine direction. The direction badge shows — (grey). Use the camera view to check actual direction.
+When θ is between −6° and +5°, the system cannot reliably determine direction. The direction badge shows — (grey). Use the camera view to check actual direction.
 
-### HEEL zone badges (➡ FWD, θ ≥ +8°)
+### HEEL zone badges (➡ FWD, θ ≥ +6°)
 
 | Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | ≤ 22 g/s | Clean heel strike — controlled contact | Target for all forward walks and breaks |
-| `HEEL SLAM ⚠` | > 22 g/s | Hard heel impact — excessive landing force | Bend the knee on contact and soften the ankle |
+| `HEEL STRIKE ✓` | ≤ 27.5 g/s | Clean heel strike — controlled contact | Target for all forward walks and breaks |
+| `HEEL SLAM ⚠` | > 27.5 g/s | Hard heel impact — excessive landing force | Bend the knee on contact and soften the ankle |
 
-### Ambiguous zone (—, −8° to +7°)
+### Ambiguous zone (—, −6° to +5°)
 
 The foot is too flat to classify direction. The quality badge still fires:
 
 | Badge | Jerk | What it means |
 | :--- | :--- | :--- |
-| `SOFT ✓` | ≤ 20 g/s | Light, controlled landing — good absorption in this zone |
-| `MODERATE` | 20–22 g/s | Moderate impact — acceptable, but worth reducing |
-| `HARD IMPACT ⚠` | > 22 g/s | Heavy flat-foot landing — stomping pattern |
+| `SOFT ✓` | ≤ 25 g/s | Light, controlled landing — good absorption in this zone |
+| `MODERATE` | 25–27.5 g/s | Moderate impact — acceptable, but worth reducing |
+| `HARD IMPACT ⚠` | > 27.5 g/s | Heavy flat-foot landing — stomping pattern |
 | `BRUSH+HEEL` | — | Ambiguous landing followed by heel-set within 200 ms — reclassified to ➡ FWD; correct technique confirmed |
 
 Use the camera view to check actual direction when the direction badge shows —.
 
-### TOE zone badges (⬅ BWD, θ < −8°)
+### TOE zone badges (⬅ BWD, θ < −6°)
 
 | Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `TOE-FIRST ✓` | ≤ 22 g/s | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
-| `TOE JAM ⚠` | > 22 g/s | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
+| `TOE-FIRST ✓` | ≤ 27.5 g/s | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
+| `TOE JAM ⚠` | > 27.5 g/s | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
 
 > **Note on early heel drops:** A backward step where the heel contacts before the toe will land in the ambiguous zone (—) rather than ⬅ BWD. If you see consistent SOFT/MODERATE/HARD IMPACT on what you believe are backward steps, your heel is contacting too early. Focus on sending the toe out first and keeping the ankle relaxed until the foot settles.
 
@@ -208,9 +208,9 @@ Visible from **Intermediate** level. This card tells you how long both feet are 
 
 | Badge | Overlap ratio | What it means | Training implication |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 15%–52% | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
+| `OPTIMAL ROLL` ✅ | 15%–60% | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
 | `HECTIC` ⚠️ | < 15% | Rushed — one foot leaves before the other is secure | "Peel, don't lift" — roll through the foot before stepping |
-| `SLUGGISH` ⚠️ | > 52% | Prolonged double contact — hesitation or heavy stance | Commit to the COM shift earlier |
+| `SLUGGISH` ⚠️ | > 60% | Prolonged double contact — hesitation or heavy stance | Commit to the COM shift earlier |
 
 Watch this card during **triple steps and walks**. `HECTIC` on an anchor step often means you are rushing out of the anchor before building connection.
 
@@ -225,7 +225,7 @@ Visible at **Advanced** level only.
 | Display | What it tells you | Green target |
 | :--- | :--- | :--- |
 | **ASI %** | Difference between left and right foot roll-off | `SYMMETRIC` — below 15% |
-| **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` — 65 or above |
+| **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` — 40 or above |
 
 - High **ASI** (e.g. `ASYMMETRIC` > 35%) usually means one ankle is stiffer, or one side is compensating for an old injury.
 - Low **Smoothness** means your ankle movements are jerky. Slow the tempo and focus on rolling through the full foot rather than stepping flat.
@@ -381,8 +381,8 @@ These three components are combined into a 0–100 score displayed in the badge.
 
 | Badge | Score | What it means | How to improve |
 | :--- | :--- | :--- | :--- |
-| `ANCHORED (n)` ✅ | ≥ 60 | Strong deceleration + yaw damping + stable hold | Good — work on consistency across every anchor step |
-| `SETTLING (n)` ⚠️ | 30–59 | Partial settle — one or two components weak | Identify the weak component using the tips below |
+| `ANCHORED (n)` ✅ | ≥ 50 | Strong deceleration + yaw damping + stable hold | Good — work on consistency across every anchor step |
+| `SETTLING (n)` ⚠️ | 30–49 | Partial settle — one or two components weak | Identify the weak component using the tips below |
 | `UNSTABLE (n)` ❌ | < 30 | Pelvis still moving or wobbling after the anchor | Focus on "sticking" the anchor — reach the end of the slot and hold |
 
 **Diagnosing a low score:**

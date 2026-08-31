@@ -88,7 +88,7 @@ Dies ist die **primäre Echtzeit-Feedback-Karte**. Sie wird bei jedem erkannten 
 
 | Element | Was es dir sagt |
 | :--- | :--- |
-| **Richtungs-Badge** | ➡ FWD (θ ≥ +8°), ⬅ BWD (θ < −8°), oder — wenn der Winkel in der unklaren Zone liegt |
+| **Richtungs-Badge** | ➡ FWD (θ ≥ +6°), ⬅ BWD (θ < −6°), oder — wenn der Winkel in der unklaren Zone liegt |
 | **Strike-Badge** (großes farbiges Label) | Klassifizierung dieser Landung — siehe Tabellen unten |
 | **ROLL-Badge** | Abrollqualität — wie der Vorfuß nach dem Fersenkontakt abgesenkt wird (alle Stufen) — [siehe Abschnitt unten](#roll-badge-alle-stufen) |
 | **PUSH-OFF-Badge** | Push-off-Kraft deines hinteren Fußes (Anfänger: ausgeblendet) |
@@ -102,38 +102,38 @@ Das System klassifiziert die Richtung anhand des Nickwinkels θ des Fußes. Die 
 
 | Richtungs-Badge | θ beim Aufsetzen | Bedeutung |
 | :--- | :--- | :--- |
-| **➡ FWD** | θ ≥ +8° | Klare Dorsalflexion — Ferse hat zuerst Kontakt |
-| **—** (grau) | −8° bis +7° | Unklare Zone — Fuß zu flach für Richtungsbestimmung |
-| **⬅ BWD** | θ < −8° | Klare Plantarflexion — Ballen hat zuerst Kontakt |
+| **➡ FWD** | θ ≥ +6° | Klare Dorsalflexion — Ferse hat zuerst Kontakt |
+| **—** (grau) | −6° bis +5° | Unklare Zone — Fuß zu flach für Richtungsbestimmung |
+| **⬅ BWD** | θ < −6° | Klare Plantarflexion — Ballen hat zuerst Kontakt |
 
-Liegt θ zwischen −8° und +7°, kann das System die Richtung nicht zuverlässig bestimmen. Der Richtungs-Badge zeigt — (grau). Zur Richtungsprüfung die Kameraansicht nutzen.
+Liegt θ zwischen −6° und +5°, kann das System die Richtung nicht zuverlässig bestimmen. Der Richtungs-Badge zeigt — (grau). Zur Richtungsprüfung die Kameraansicht nutzen.
 
-### HEEL-Zone-Badges (➡ FWD, θ ≥ +8°)
+### HEEL-Zone-Badges (➡ FWD, θ ≥ +6°)
 
 | Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | ≤ 22 g/s | Sauberer Fersenauftritt — kontrollierter Kontakt | Ziel für alle Vorwärtsgänge und Breaks |
-| `HEEL SLAM ⚠` | > 22 g/s | Harter Fersenaufprall — zu viel Landekraft | Knie beim Aufsetzen beugen und Sprunggelenk weicher machen |
+| `HEEL STRIKE ✓` | ≤ 27,5 g/s | Sauberer Fersenauftritt — kontrollierter Kontakt | Ziel für alle Vorwärtsgänge und Breaks |
+| `HEEL SLAM ⚠` | > 27,5 g/s | Harter Fersenaufprall — zu viel Landekraft | Knie beim Aufsetzen beugen und Sprunggelenk weicher machen |
 
-### Unklare Zone (—, −8° bis +7°)
+### Unklare Zone (—, −6° bis +5°)
 
 Der Fuß ist zu flach, um die Richtung zu bestimmen. Der Qualitäts-Badge wird dennoch ausgelöst:
 
 | Badge | Jerk | Was es bedeutet |
 | :--- | :--- | :--- |
-| `SOFT ✓` | ≤ 20 g/s | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
-| `MODERATE` | 20–22 g/s | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
-| `HARD IMPACT ⚠` | > 22 g/s | Schwerer Flachfuß-Aufprall — Stampfmuster |
+| `SOFT ✓` | ≤ 25 g/s | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
+| `MODERATE` | 25–27,5 g/s | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
+| `HARD IMPACT ⚠` | > 27,5 g/s | Schwerer Flachfuß-Aufprall — Stampfmuster |
 | `BRUSH+HEEL` | — | Flache Landung gefolgt von Fersenauftritt innerhalb von 200 ms — automatisch zu ➡ FWD umklassifiziert; korrekte Technik bestätigt |
 
 Wenn der Richtungs-Badge — zeigt, die Kameraansicht zur Richtungsprüfung nutzen.
 
-### TOE-Zone-Badges (⬅ BWD, θ < −8°)
+### TOE-Zone-Badges (⬅ BWD, θ < −6°)
 
 | Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `TOE-FIRST ✓` | ≤ 22 g/s | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
-| `TOE JAM ⚠` | > 22 g/s | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
+| `TOE-FIRST ✓` | ≤ 27,5 g/s | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
+| `TOE JAM ⚠` | > 27,5 g/s | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
 
 > **Hinweis zu frühem Fersenabsatz:** Setzt die Ferse beim Rückwärtsschritt vor dem Ballen auf, landet der Schritt in der unklaren Zone (—) statt bei ⬅ BWD. Wenn bei Schritten, die als Rückwärtsschritte gemeint sind, konstant SOFT/MODERATE/HARD IMPACT erscheinen, setzt die Ferse zu früh auf. Darauf achten, zuerst den Ballen aufkommen zu lassen und das Sprunggelenk entspannt zu halten, bis der Fuß vollständig steht.
 
@@ -208,9 +208,9 @@ Sichtbar ab **Fortgeschritten**. Diese Karte zeigt, wie lange beide Füße währ
 
 | Badge | Überschneidungsrate | Was es bedeutet | Trainingsimplikation |
 | :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 15 %–52 % | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
+| `OPTIMAL ROLL` ✅ | 15 %–60 % | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
 | `HECTIC` ⚠️ | < 15 % | Gehetzt — ein Fuß verlässt den Boden, bevor der andere sicher steht | „Abrollen, nicht abheben" — durch den Fuß rollen, bevor man schreitet |
-| `SLUGGISH` ⚠️ | > 52 % | Verlängerter Doppelkontakt — Zögern oder schwere Stellung | Den Massenschwerpunkt früher verlagern |
+| `SLUGGISH` ⚠️ | > 60 % | Verlängerter Doppelkontakt — Zögern oder schwere Stellung | Den Massenschwerpunkt früher verlagern |
 
 Beobachte diese Karte während **Tripleschritten und Gängen**. `HECTIC` bei einem Ankerschritt bedeutet oft, dass du den Anker verlässt, bevor du Verbindung aufgebaut hast.
 
@@ -225,7 +225,7 @@ Nur auf **Experten**-Stufe sichtbar.
 | Anzeige | Was es dir sagt | Grünes Ziel |
 | :--- | :--- | :--- |
 | **ASI %** | Unterschied zwischen linkem und rechtem Fuß-Roll-off | `SYMMETRIC` — unter 15 % |
-| **Gleichmäßigkeit** | Flüssigkeit der Sprunggelenks-Artikulation über beide Füße | `SMOOTH` — 65 oder höher |
+| **Gleichmäßigkeit** | Flüssigkeit der Sprunggelenks-Artikulation über beide Füße | `SMOOTH` — 40 oder höher |
 
 - Hoher **ASI** (z. B. `ASYMMETRIC` > 35 %) bedeutet meist, dass ein Sprunggelenk steifer ist oder eine Seite eine alte Verletzung kompensiert.
 - Niedrige **Gleichmäßigkeit** bedeutet, dass deine Sprunggelenksbewegungen ruckartig sind. Verlangsame das Tempo und konzentriere dich darauf, durch den ganzen Fuß zu rollen statt flach aufzusetzen.
@@ -371,8 +371,8 @@ Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im 
 
 | Badge | Wert | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- | :--- |
-| `ANCHORED (n)` ✅ | ≥ 60 | Starke Verzögerung + Gier-Dämpfung + stabile Haltung | Gut — an Konsistenz bei jedem Ankerschritt arbeiten |
-| `SETTLING (n)` ⚠️ | 30–59 | Teilweise Setzung — eine oder zwei Komponenten schwach | Schwache Komponente mit den untenstehenden Tipps identifizieren |
+| `ANCHORED (n)` ✅ | ≥ 50 | Starke Verzögerung + Gier-Dämpfung + stabile Haltung | Gut — an Konsistenz bei jedem Ankerschritt arbeiten |
+| `SETTLING (n)` ⚠️ | 30–49 | Teilweise Setzung — eine oder zwei Komponenten schwach | Schwache Komponente mit den untenstehenden Tipps identifizieren |
 | `UNSTABLE (n)` ❌ | < 30 | Becken bewegt sich oder wackelt noch nach dem Anker | „Anker festsetzen" — das Ende des Slots erreichen und halten |
 
 **Niedrigen Wert diagnostizieren:**
