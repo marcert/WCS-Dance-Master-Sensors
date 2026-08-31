@@ -282,9 +282,9 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **SDR — Shock Damping Ratio — absorbing** | SDR > 0.65 | `ABSORBING ✓` (Green) | None |
 | **SDR — Shock Damping Ratio — partial** | SDR 0.35–0.65 | `PARTIAL SDR` (Yellow) | None |
 | **SDR — Shock Damping Ratio — stiff** | SDR < 0.35 | `STIFF` (Red) | None |
-| **SETTLE — Pelvis Settle Delay — healthy** | 60–180 ms | `SETTLING ✓ Xms` (Green) | None |
-| **SETTLE — Pelvis Settle Delay — quick** | < 60 ms | `QUICK Xms` (Yellow) | None |
-| **SETTLE — Pelvis Settle Delay — slow** | > 180 ms | `SLOW Xms` (Yellow) | None |
+| **SETTLE — Pelvis Settle Delay — healthy** | 12–42 % of step interval | `SETTLING ✓ Xms` (Green) | None |
+| **SETTLE — Pelvis Settle Delay — quick** | < 12 % of step interval | `QUICK Xms` (Yellow) | None |
+| **SETTLE — Pelvis Settle Delay — slow** | > 42 % of step interval | `SLOW Xms` (Yellow) | None |
 | **GND Score — grounded** | GND ≥ 65 | Score + progress bar (Green) | None |
 | **GND Score — partial** | 35 ≤ GND < 65 | Score + progress bar (Yellow) | None |
 | **GND Score — stiff** | GND < 35 | Score + progress bar (Red) | None |
@@ -573,15 +573,15 @@ where *foot jerk* is $J_\text{impact}$ (§2D) and *pelvis jerk* is the peak rate
 
 #### SETTLE — Pelvis Settle Delay (`phaseDelayBadge`)
 
-Measures the time from foot impact to the pelvis vertical acceleration (`pAz`) minimum — the moment when the centre of mass reaches its lowest point and the leg chain has fully absorbed the impact impulse. A healthy deceleration phase (60–180 ms) confirms that the knee and hip joints actively decelerate the descending body mass rather than transferring it rigidly to the floor.
+Measures the time from foot impact to the pelvis vertical acceleration (`pAz`) minimum — the moment when the centre of mass reaches its lowest point and the leg chain has fully absorbed the impact impulse. A healthy deceleration phase (12–42 % of the current step interval; floor 30 ms) confirms that the knee and hip joints actively decelerate the descending body mass rather than transferring it rigidly to the floor. The evaluation window also scales: `max(200 ms, stepDuration × 0.45)`.
 
 $$\Delta t_{\text{settle}} = t(\text{pAz}_{\min}) - t_{\text{impact}} \quad [\text{ms}]$$
 
 | State | Condition | Colour | Biomechanical Meaning |
 | :--- | :---: | :--- | :--- |
-| `SETTLING ✓ Xms` | 60–180 ms | Green | Healthy deceleration phase — compliant leg chain |
-| `QUICK Xms` | < 60 ms | Yellow | Stiff absorption — no measurable deceleration phase |
-| `SLOW Xms` | > 180 ms | Yellow | Very delayed response — sluggish weight transfer |
+| `SETTLING ✓ Xms` | `pdLo`–`pdHi` (12–42 % of step interval) | Green | Healthy deceleration phase — compliant leg chain |
+| `QUICK Xms` | < `pdLo` (< 12 % of step interval) | Yellow | Stiff absorption — no measurable deceleration phase |
+| `SLOW Xms` | > `pdHi` (> 42 % of step interval) | Yellow | Very delayed response — sluggish weight transfer |
 | `— SETTLE` | No pelvis sensor **or** no measurable dip in `pAz` | Grey | Also displays `QUICK 0ms` when hip absorption is stiff and no dip is detectable |
 
 #### GND Score — Composite Grounding Quality

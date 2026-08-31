@@ -258,13 +258,13 @@ SDR (Shock-absorbing Dynamic Response) measures how much of the foot-impact forc
 
 ### SETTLE badge
 
-Measures the delay (in milliseconds) between foot contact and the pelvis settling into its new position. A target window of 60–180 ms reflects natural WCS weight-transfer timing.
+Measures the delay (in milliseconds) between foot contact and the pelvis settling into its new position. The target window **scales automatically with the music tempo** — approximately 12–42 % of the step interval (≈ 60–210 ms at 120 BPM, ≈ 45–158 ms at 160 BPM).
 
 | Badge | Timing | What it means | How to improve |
 | :--- | :--- | :--- | :--- |
-| `SETTLING ✓ Xms` ✅ | 60–180 ms | Pelvis responds at the right pace — natural weight transfer timing | Maintain |
-| `QUICK Xms` ⚠️ | < 60 ms | Pelvis moves before weight is fully committed — rushing | Let the foot settle first; allow the hip to follow rather than lead |
-| `SLOW Xms` ⚠️ | > 180 ms | Pelvis delays too long — stiff or disconnected hip response | Trust the transfer: let the pelvis follow foot contact instead of holding it back |
+| `SETTLING ✓ Xms` ✅ | 12–42 % of step interval | Pelvis responds at the right pace — natural weight transfer timing | Maintain |
+| `QUICK Xms` ⚠️ | < 12 % of step interval | Pelvis moves before weight is fully committed — rushing | Let the foot settle first; allow the hip to follow rather than lead |
+| `SLOW Xms` ⚠️ | > 42 % of step interval | Pelvis delays too long — stiff or disconnected hip response | Trust the transfer: let the pelvis follow foot contact instead of holding it back |
 
 ### GND Score
 
