@@ -158,7 +158,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     </div>
 
     <div class="graph-container">
-        <div class="label">Connection Force (-4.0 kg to +4.0 kg)</div>
+        <div class="label">Connection Force (-5.0 kg to +5.0 kg)</div>
         <canvas id="graph_kraft" width="1000" height="250"></canvas>
     </div>
 
@@ -552,7 +552,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             currentAy += (targetAy - currentAy) * 0.4;
             currentAz += (targetAz - currentAz) * 0.4;
 
-            let y_kraft = 125 - (currentW / 4000) * 125;
+            let y_kraft = 125 - (currentW / 5000) * 125;
             y_kraft = Math.max(0, Math.min(250, y_kraft));
             kraftPoints.shift(); kraftPoints.push(y_kraft);
 
