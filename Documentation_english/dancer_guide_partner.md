@@ -119,9 +119,9 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 
 | Element | Meaning |
 | :--- | :--- |
-| **➡ FWD L / R** | Forward step (θ ≥ +8°), left or right foot |
-| **⬅ BWD L / R** | Backward step (θ < −8°), left or right foot |
-| **— L / R** | Ambiguous zone (−8° to +7°) — direction not classifiable from angle alone |
+| **➡ FWD L / R** | Forward step (θ ≥ +6°), left or right foot |
+| **⬅ BWD L / R** | Backward step (θ < −6°), left or right foot |
+| **— L / R** | Ambiguous zone (−6° to +5°) — direction not classifiable from angle alone |
 | **θ angle** | Foot pitch at landing (positive = heel up, negative = toe down) |
 | **Strike badge** | Classification of the landing — see table below |
 | **Delay badge** | Tempo-normalised weight transfer timing — see table below |
@@ -130,13 +130,13 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 
 | Badge | Zone | Jerk | Assessment |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | HEEL (θ ≥ +8°) | ≤ 22 g/s | Correct heel-first contact |
-| `HEEL SLAM ⚠` | HEEL (θ ≥ +8°) | > 22 g/s | Hard heel impact — too much landing force |
-| `TOE-FIRST ✓` | TOE (θ < −8°) | ≤ 22 g/s | Correct toe-ball contact |
-| `TOE JAM ⚠` | TOE (θ < −8°) | > 22 g/s | Hard toe impact — over-extended or forced contact |
-| `SOFT ✓` | Ambiguous (−8° to +7°) | ≤ 20 g/s | Light, controlled landing — use camera to check direction |
-| `MODERATE` | Ambiguous (−8° to +7°) | 20–22 g/s | Moderate impact in flat zone |
-| `HARD IMPACT ⚠` | Ambiguous (−8° to +7°) | > 22 g/s | Hard flat-foot landing — stomping pattern |
+| `HEEL STRIKE ✓` | HEEL (θ ≥ +6°) | ≤ 27.5 g/s | Correct heel-first contact |
+| `HEEL SLAM ⚠` | HEEL (θ ≥ +6°) | > 27.5 g/s | Hard heel impact — too much landing force |
+| `TOE-FIRST ✓` | TOE (θ < −6°) | ≤ 27.5 g/s | Correct toe-ball contact |
+| `TOE JAM ⚠` | TOE (θ < −6°) | > 27.5 g/s | Hard toe impact — over-extended or forced contact |
+| `SOFT ✓` | Ambiguous (−6° to +5°) | ≤ 25 g/s | Light, controlled landing — use camera to check direction |
+| `MODERATE` | Ambiguous (−6° to +5°) | 25–27.5 g/s | Moderate impact in flat zone |
+| `HARD IMPACT ⚠` | Ambiguous (−6° to +5°) | > 27.5 g/s | Hard flat-foot landing — stomping pattern |
 | `BRUSH+HEEL` | → HEEL | — | Ambiguous → heel-set within 200 ms — reclassified to HEEL zone |
 
 > 📷 **Screenshot placeholder — status bar: step badges**  
@@ -173,7 +173,7 @@ For full descriptions of each badge see [dancer_guide_solo.md — Section 8](dan
 | **Lateral Stability** | `STABLE` | `SLIGHT SWAY` | `LATERAL SWAY` |
 | **Hip-Foot Coupling** | `HIP LEADS` (>100 ms before foot) | `IN SYNC` (40–100 ms) | `HIP LAGS` (<40 ms) |
 | **Vertical Bounce** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` |
-| **Anchor Settle** | `ANCHORED (n)` (≥60) | `SETTLING (n)` (30–59) | `UNSTABLE (n)` (<30) |
+| **Anchor Settle** | `ANCHORED (n)` (≥50) | `SETTLING (n)` (30–49) | `UNSTABLE (n)` (<30) |
 | **Hip Settle** | `HIP SETTLE ✓` | `SLIGHT SETTLE` | `OVERSWING ⚠` / `NO HIP SETTLE` |
 
 > 📷 **Screenshot placeholder — status bar: pelvis badges active**  
@@ -189,9 +189,9 @@ Tap **`🔇 Audio: OFF`** in the header to enable alerts. Tap again to mute.
 
 | Event | Tone | Condition |
 | :--- | :--- | :--- |
-| **`HEEL SLAM ⚠`** | 1200 Hz click (80 ms) | Hard heel impact in the HEEL zone (jerk > 22 g/s) |
-| **`TOE JAM ⚠`** | 1200 Hz click (80 ms) | Hard toe impact in the TOE zone (jerk > 22 g/s) |
-| **`HARD IMPACT ⚠`** | 1200 Hz click (80 ms) | Hard flat-foot landing in the ambiguous zone (jerk > 22 g/s) |
+| **`HEEL SLAM ⚠`** | 1200 Hz click (80 ms) | Hard heel impact in the HEEL zone (jerk > 27.5 g/s) |
+| **`TOE JAM ⚠`** | 1200 Hz click (80 ms) | Hard toe impact in the TOE zone (jerk > 27.5 g/s) |
+| **`HARD IMPACT ⚠`** | 1200 Hz click (80 ms) | Hard flat-foot landing in the ambiguous zone (jerk > 27.5 g/s) |
 | **`LATERAL SWAY`** | 400 Hz sustained (250 ms) | Pelvis lateral variance exceeds threshold — fires once on entry into error state |
 | **`BOUNCY`** | 600 Hz double click | Vertical oscillation variance too high — fires once on entry into error state |
 | **`UNSTABLE` anchor** | 800 → 350 Hz descending sweep (300 ms) | Anchor settle score < 30 after each backward step |
@@ -232,7 +232,7 @@ The **Hip-Foot Coupling** badge fires on each step. Consistent `HIP LAGS` means 
 
 ### Anchor quality under pressure
 
-After each anchor, the **Anchor Settle** badge shows a 0–100 score. A score below 60 consistently across a full song means the dancer's pelvis is still moving after the anchor step lands. Low scores late in a song (but not early) indicate fatigue-driven anchor collapse.
+After each anchor, the **Anchor Settle** badge shows a 0–100 score. A score below 50 consistently across a full song means the dancer's pelvis is still moving after the anchor step lands. Low scores late in a song (but not early) indicate fatigue-driven anchor collapse.
 
 ### Using FREEZE for discussion
 

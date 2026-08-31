@@ -53,6 +53,7 @@ float rightGyro = 0, rightAccel = 0, rightAccelY = 0, rightGyroRoll = 0, rightAc
 float pelvicGyro = 0, pelvicAccel = 0, pelvicAccelY = 0, pelvicYaw = 0, pelvicAccelX = 0;
 float handWeight = 0, handAx = 0, handAy = 0, handAz = 0;
 uint8_t leftBatt = 0, rightBatt = 0, pelvicBatt = 0, masterBatt = 0, handBatt = 0;
+String masterIP = "192.168.4.1";
 
 // --- TIMEOUT TRACKING FOR CONNECTED SENSORS ---
 uint32_t lastSeenLeft   = 0;
@@ -270,6 +271,7 @@ void setup() {
     M5.Display.fillScreen(BLACK);
   if (WiFi.status() == WL_CONNECTED) {
     currentChannel = WiFi.channel();
+    masterIP = WiFi.localIP().toString();
     // Home WiFi active: leave TX power at default — router may be in another room.
 
     M5.Display.setCursor(10, 10);
@@ -327,6 +329,12 @@ void setup() {
     server.begin();
   
   M5.Display.fillScreen(BLACK);
+  // IP permanent in der letzten Zeile anzeigen — wird nie überschrieben
+  M5.Display.setTextSize(2);
+  M5.Display.setTextColor(WHITE, BLACK);
+  M5.Display.setCursor(5, M5.Display.height() - 18);
+  M5.Display.print(masterIP);
+  M5.Display.setTextSize(2);
 }
 
 void loop() {
@@ -372,7 +380,7 @@ void loop() {
   // --- DISPLAY RIGHT FOOT (on status change or battery change) ---
   if (rightOnline != dROn || (rightOnline && rightBatt != dRBatt)) {
     dROn = rightOnline; dRBatt = rightBatt;
-    M5.Display.setCursor(5, 30);
+    M5.Display.setCursor(5, 27);
     M5.Display.setTextColor(RED, BLACK);
     if (rightOnline && rightBatt > 0)
       M5.Display.printf("R: %3d%%          ", (int)rightBatt);
@@ -383,7 +391,7 @@ void loop() {
   // --- DISPLAY PELVIS (on status change or battery change) ---
   if (pelvicOnline != dPOn || (pelvicOnline && pelvicBatt != dPBatt)) {
     dPOn = pelvicOnline; dPBatt = pelvicBatt;
-    M5.Display.setCursor(5, 55);
+    M5.Display.setCursor(5, 49);
     M5.Display.setTextColor(MAGENTA, BLACK);
     if (pelvicOnline && pelvicBatt > 0)
       M5.Display.printf("P: %3d%%          ", (int)pelvicBatt);
@@ -394,7 +402,7 @@ void loop() {
   // --- DISPLAY HAND (on status change or battery change) ---
   if (handOnline != dHOn || (handOnline && handBatt != dHBatt)) {
     dHOn = handOnline; dHBatt = handBatt;
-    M5.Display.setCursor(5, 80);
+    M5.Display.setCursor(5, 71);
     M5.Display.setTextColor(GREEN, BLACK);
     if (handOnline && handBatt > 0)
       M5.Display.printf("H: %3d%%          ", (int)handBatt);
@@ -407,7 +415,7 @@ void loop() {
     lastBatUpdate = millis();
     int batLevel = M5.Power.getBatteryLevel();
     masterBatt = (uint8_t)batLevel;
-    M5.Display.setCursor(5, 105);
+    M5.Display.setCursor(5, 93);
     M5.Display.setTextColor(YELLOW, BLACK);
     M5.Display.printf("BAT: %3d%%        ", batLevel);
   }

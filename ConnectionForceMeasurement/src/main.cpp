@@ -298,20 +298,31 @@ void loop() {
       M5.Display.fillRect(0, 0, 240, 25, BLACK);
     }
 
-    // --- AKKUSTAND ANZEIGEN (alle 30 Sekunden — gleicher Rhythmus wie Fußsensoren) ---
+    // --- AKKUSTAND ANZEIGEN (alle 30 Sekunden) ---
   if (millis() - lastBatCheck > 30000 || lastBatCheck == 0) {
     lastBatCheck = millis();
     int batLevel = M5.Power.getBatteryLevel();
-    sendData.battery_level = (uint8_t)batLevel;
+
+    // AXP2101 gibt -1 zurück wenn Wert noch nicht verfügbar → Spannung als Fallback
+    if (batLevel > 0 && batLevel <= 100) {
+      sendData.battery_level = (uint8_t)batLevel;
+    } else if (batLevel < 0) {
+      float v = M5.Power.getBatteryVoltage() / 1000.0f;
+      int estLevel = (int)((v - 3.3f) / (4.2f - 3.3f) * 100.0f);
+      estLevel = constrain(estLevel, 1, 100);
+      sendData.battery_level = (uint8_t)estLevel;
+      batLevel = estLevel; // für Display-Farbe unten
+    }
+    // batLevel == 0: nichts tun, alten Wert behalten
 
     uint16_t batColor = GREEN;
-    if (batLevel < 20)      batColor = RED;
-    else if (batLevel < 50) batColor = YELLOW;
+    if (sendData.battery_level < 20)      batColor = RED;
+    else if (sendData.battery_level < 50) batColor = YELLOW;
 
     M5.Display.setTextColor(batColor, BLACK);
     M5.Display.setTextSize(2);
     M5.Display.setCursor(170, 5);
-    M5.Display.printf("%3d%%", batLevel);
+    M5.Display.printf("%3d%%", (int)sendData.battery_level);
 
     drawConnectionStatus(); // Verbindungs-Punkt mit aktualisieren
   }

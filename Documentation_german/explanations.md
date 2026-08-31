@@ -89,9 +89,9 @@ Wenn der Pelvis-Sensor (`foot_id = 4`) online ist, erscheinen sechs Badge-Metrik
 | **Hip Activation** | `gYaw`-Peak über 500 ms, IIR-geglättet | ≥ 60°/s → ACTIVE ✅ \| 25–59°/s → MODERATE ⚠ \| < 25°/s → STIFF HIPS ❌ |
 | **Lateral Stability** | Varianz der lateralen Beckenbeschleunigung über 1 s | < 0,004 → STABLE ✅ \| 0,004–0,015 → SLIGHT SWAY ⚠ \| > 0,015 → LATERAL SWAY ❌ |
 | **Hip-Foot Coupling** | Vorlaufzeit: Peak-Hüftrotation → Fußkontakt | > 100 ms → HIP LEADS ✅ \| 40–100 ms → IN SYNC ⚠ \| Hüfte nach Fuß → HIP LAGS ❌ |
-| **Vertical Bounce** | Varianz der vertikalen Beckenbeschleunigung (Schwerkraft entfernt) über 1 s | < 0,006 → GROUNDED ✅ \| 0,006–0,020 → SLIGHT BOUNCE ⚠ \| > 0,020 → BOUNCY ❌ |
-| **Anchor Settle** | Gewichteter Score (0–100) über tempo-adaptives Fenster nach jedem Rückwärtsschritt | ≥ 60 → ANCHORED ✅ \| 30–59 → SETTLING ⚠ (Score eingeblendet) \| < 30 → UNSTABLE ❌ |
-| **Hip Settle** | Peak der lateralen Beckenbeschleunigung (`earlyLatPeak`) in der ersten Fensterhälfte | > 0,30 g → OVERSWING ⚠ \| 0,10–0,30 g + späte Varianz < 0,015 → HIP SETTLE ✓ ✅ \| 0,05–0,10 g → SLIGHT SETTLE ⚠ \| ≤ 0,05 g → NO HIP SETTLE ❌ |
+| **Vertical Bounce** | Varianz der vertikalen Beckenbeschleunigung (Schwerkraft entfernt) über 1 s | < 0,006 → GROUNDED ✅ \| 0,006–0,030 → SLIGHT BOUNCE ⚠ \| > 0,030 → BOUNCY ❌ |
+| **Anchor Settle** | Gewichteter Score (0–100) über tempo-adaptives Fenster nach jedem Rückwärtsschritt | ≥ 50 → ANCHORED ✅ \| 30–49 → SETTLING ⚠ (Score eingeblendet) \| < 30 → UNSTABLE ❌ |
+| **Hip Settle** | Peak der lateralen Beckenbeschleunigung (`earlyLatPeak`) in der ersten Fensterhälfte | `earlyLatPeak` > 0,30 g UND späte Varianz ≥ 0,015 → OVERSWING ⚠ \| 0,10–0,30 g + späte Varianz < 0,015 → HIP SETTLE ✓ ✅ \| 0,05–0,10 g → SLIGHT SETTLE ⚠ \| ≤ 0,05 g → NO HIP SETTLE ❌ |
 
 > 📸 **[Screenshot: Statusleiste im Partner-Dashboard mit allen sechs Becken-Metriken (Hüftaktivierung bis Hip Settle) gleichzeitig aktiv]**
 

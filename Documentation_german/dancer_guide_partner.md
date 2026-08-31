@@ -119,9 +119,9 @@ Wird bei jedem erkannten Fußkontakt aktualisiert. Verwendet dieselbe Klassifizi
 
 | Element | Bedeutung |
 | :--- | :--- |
-| **➡ FWD L / R** | Vorwärtsschritt (θ ≥ +8°), linker oder rechter Fuß |
-| **⬅ BWD L / R** | Rückwärtsschritt (θ < −8°), linker oder rechter Fuß |
-| **— L / R** | Ambiguous Zone (−8° bis +7°) — Richtung aus dem Winkel allein nicht klassifizierbar |
+| **➡ FWD L / R** | Vorwärtsschritt (θ ≥ +6°), linker oder rechter Fuß |
+| **⬅ BWD L / R** | Rückwärtsschritt (θ < −6°), linker oder rechter Fuß |
+| **— L / R** | Ambiguous Zone (−6° bis +5°) — Richtung aus dem Winkel allein nicht klassifizierbar |
 | **θ Winkel** | Fußneigung beim Aufsetzen (positiv = Ferse hoch, negativ = Zehe runter) |
 | **Schritt-Badge** | Klassifizierung der Landung — siehe Tabelle unten |
 | **Verzögerungs-Badge** | Temponormierte Zeitgebung der Gewichtsverlagerung — siehe Tabelle unten |
@@ -130,13 +130,13 @@ Wird bei jedem erkannten Fußkontakt aktualisiert. Verwendet dieselbe Klassifizi
 
 | Badge | Zone | Jerk | Bewertung |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | HEEL (θ ≥ +8°) | ≤ 22 g/s | Korrekter Fersen-zuerst-Kontakt |
-| `HEEL SLAM ⚠` | HEEL (θ ≥ +8°) | > 22 g/s | Harter Fersenaufprall — zu viel Landekraft |
-| `TOE-FIRST ✓` | TOE (θ < −8°) | ≤ 22 g/s | Korrekter Zehenball-Kontakt |
-| `TOE JAM ⚠` | TOE (θ < −8°) | > 22 g/s | Harter Zehenaufprall — überstreckter oder erzwungener Kontakt |
-| `SOFT ✓` | Ambiguous (−8° bis +7°) | ≤ 20 g/s | Leichte, kontrollierte Landung — Kamera für Richtungsprüfung nutzen |
-| `MODERATE` | Ambiguous (−8° bis +7°) | 20–22 g/s | Mittlerer Aufprall in der Flachzone |
-| `HARD IMPACT ⚠` | Ambiguous (−8° bis +7°) | > 22 g/s | Harte Flachfuß-Landung — Stampfmuster |
+| `HEEL STRIKE ✓` | HEEL (θ ≥ +6°) | ≤ 27,5 g/s | Korrekter Fersen-zuerst-Kontakt |
+| `HEEL SLAM ⚠` | HEEL (θ ≥ +6°) | > 27,5 g/s | Harter Fersenaufprall — zu viel Landekraft |
+| `TOE-FIRST ✓` | TOE (θ < −6°) | ≤ 27,5 g/s | Korrekter Zehenball-Kontakt |
+| `TOE JAM ⚠` | TOE (θ < −6°) | > 27,5 g/s | Harter Zehenaufprall — überstreckter oder erzwungener Kontakt |
+| `SOFT ✓` | Ambiguous (−6° bis +5°) | ≤ 25 g/s | Leichte, kontrollierte Landung — Kamera für Richtungsprüfung nutzen |
+| `MODERATE` | Ambiguous (−6° bis +5°) | 25–27,5 g/s | Mittlerer Aufprall in der Flachzone |
+| `HARD IMPACT ⚠` | Ambiguous (−6° bis +5°) | > 27,5 g/s | Harte Flachfuß-Landung — Stampfmuster |
 | `BRUSH+HEEL` | → HEEL | — | Ambiguous → Fersenauflage innerhalb 200 ms — neu klassifiziert als HEEL-Zone |
 
 > 📷 **Screenshot-Platzhalter — Statusleiste: Schritt-Badges**  
@@ -173,7 +173,7 @@ Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.
 | **Seitliche Stabilität** | `STABLE` | `SLIGHT SWAY` | `LATERAL SWAY` |
 | **Hüft-Fuß-Kopplung** | `HIP LEADS` (>100 ms vor dem Fuß) | `IN SYNC` (40–100 ms) | `HIP LAGS` (<40 ms) |
 | **Vertikales Wippen** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` |
-| **Anchor Settle** | `ANCHORED (n)` (≥60) | `SETTLING (n)` (30–59) | `UNSTABLE (n)` (<30) |
+| **Anchor Settle** | `ANCHORED (n)` (≥50) | `SETTLING (n)` (30–49) | `UNSTABLE (n)` (<30) |
 | **Hip Settle** | `HIP SETTLE ✓` | `SLIGHT SETTLE` | `OVERSWING ⚠` / `NO HIP SETTLE` |
 
 > 📷 **Screenshot-Platzhalter — Statusleiste: Becken-Badges aktiv**  
@@ -189,9 +189,9 @@ Das Partner-Dashboard gibt synthetische Töne aus, wenn kritische Technikfehler 
 
 | Ereignis | Ton | Bedingung |
 | :--- | :--- | :--- |
-| **`HEEL SLAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Fersenaufprall in der HEEL-Zone (Jerk > 22 g/s) |
-| **`TOE JAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Zehenaufprall in der TOE-Zone (Jerk > 22 g/s) |
-| **`HARD IMPACT ⚠`** | 1200-Hz-Klick (80 ms) | Harte Flachfuß-Landung in der Ambiguous-Zone (Jerk > 22 g/s) |
+| **`HEEL SLAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Fersenaufprall in der HEEL-Zone (Jerk > 27,5 g/s) |
+| **`TOE JAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Zehenaufprall in der TOE-Zone (Jerk > 27,5 g/s) |
+| **`HARD IMPACT ⚠`** | 1200-Hz-Klick (80 ms) | Harte Flachfuß-Landung in der Ambiguous-Zone (Jerk > 27,5 g/s) |
 | **`LATERAL SWAY`** | 400-Hz-Ton, gehalten (250 ms) | Laterale Beckenvarianz überschreitet Schwellenwert — feuert einmalig beim Eintritt in den Fehlerzustand |
 | **`BOUNCY`** | 600-Hz-Doppelklick | Vertikale Schwingungsvarianz zu hoch — feuert einmalig beim Eintritt in den Fehlerzustand |
 | **`UNSTABLE`-Anker** | 800 → 350-Hz-Absteigsweep (300 ms) | Anchor-Settle-Score < 30 nach jedem Rückwärtsschritt |
@@ -232,7 +232,7 @@ Der **Hüft-Fuß-Kopplungs**-Badge wird bei jedem Schritt ausgelöst. Konstantes
 
 ### Anchor-Qualität unter Belastung
 
-Nach jedem Anchor zeigt der **Anchor Settle**-Badge einen Wert von 0–100. Ein Wert konstant unter 60 über einen ganzen Song bedeutet, dass das Becken des Tänzers sich noch bewegt, nachdem der Anchor-Schritt gelandet ist. Niedrige Werte gegen Ende eines Songs (aber nicht am Anfang) weisen auf einen erschöpfungsbedingten Anchor-Zusammenbruch hin.
+Nach jedem Anchor zeigt der **Anchor Settle**-Badge einen Wert von 0–100. Ein Wert konstant unter 50 über einen ganzen Song bedeutet, dass das Becken des Tänzers sich noch bewegt, nachdem der Anchor-Schritt gelandet ist. Niedrige Werte gegen Ende eines Songs (aber nicht am Anfang) weisen auf einen erschöpfungsbedingten Anchor-Zusammenbruch hin.
 
 ### FREEZE für die Besprechung nutzen
 
