@@ -258,13 +258,13 @@ SDR (Shock-absorbing Dynamic Response) misst, wie viel der Aufprallkraft vom Fu�
 
 ### SETTLE-Badge
 
-Misst die Verzögerung (in Millisekunden) zwischen dem Fußkontakt und dem Moment, in dem das Becken in seiner neuen Position zur Ruhe kommt. Das Zielfenster **skaliert automatisch mit dem Musiktempo** — ca. 12–42 % des Schrittintervalls (≈ 60–210 ms bei 120 BPM, ≈ 45–158 ms bei 160 BPM).
+Misst die Zeit vom Fußkontakt bis zur **ersten Abwärtsbewegung des Beckens** (Impact-Absorptions-Latenz). Das zeigt, wie aktiv die Beinkette — Knie und Hüfte — den Aufprall abfedert. Das Zielfenster **skaliert automatisch mit dem Musiktempo** — ca. 12–42 % des Schrittintervalls (≈ 60–210 ms bei 120 BPM, ≈ 45–158 ms bei 160 BPM).
 
 | Badge | Timing | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- | :--- |
-| `SETTLING ✓ Xms` ✅ | 12–42 % des Schrittintervalls | Becken reagiert im richtigen Tempo — natürliches Gewichtsübertragungs-Timing | Beibehalten |
-| `QUICK Xms` ⚠️ | < 12 % des Schrittintervalls | Becken bewegt sich, bevor das Gewicht vollständig übertragen ist — Hetze | Den Fuß zuerst setzen lassen; Hüfte folgt, führt nicht |
-| `SLOW Xms` ⚠️ | > 42 % des Schrittintervalls | Becken verzögert zu lange — steife oder entkoppelte Hüftreaktion | Der Verlagerung vertrauen: Becken dem Fußkontakt folgen lassen, nicht zurückhalten |
+| `SETTLING ✓ Xms` ✅ | 12–42 % des Schrittintervalls | Beinkette federt den Aufprall aktiv ab — nachgiebige Knie- und Hüftreaktion | Beibehalten |
+| `QUICK Xms` ⚠️ | < 12 % des Schrittintervalls | Becken dips vor korrekter Lastaufnahme — Gelenke zu steif für messbare Dämpfungsphase | Knie beim Aufsetzen weicher lassen; Beinkette zuerst abfedern lassen |
+| `SLOW Xms` ⚠️ | > 42 % des Schrittintervalls | Beckenreaktion verzögert — träge Gelenkaktivierung, Aufprall passiv übertragen | Knie und Hüfte beim Fußkontakt aktiv einsetzen, nicht erst danach |
 
 ### GND-Score
 

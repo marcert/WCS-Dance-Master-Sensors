@@ -433,13 +433,13 @@ Ein SDR von 1,0 bedeutet vollständige Dämpfung (kein Jerk erreicht das Becken)
 
 ---
 
-#### SETTLE-Badge (Phasen-Verzögerung / Beinketten-Compliance)
+#### SETTLE-Badge (Impact-Absorptions-Latenz / Beinketten-Compliance)
 
-Misst die Zeit vom Fußkontakt bis zum Minimum der vertikalen Beckenbeschleunigung (`pAz`) — ein Proxy für die Compliance der Beinkette beim Abfedern des Aufpralls.
+Misst die Zeit vom Fußkontakt bis zum **ersten** Minimum der vertikalen Beckenbeschleunigung (`pAz`) — die frühe Stoßabsorptions-Reaktion der Beinkette (Loading-Response-Phase). Dies ist NICHT das vollständige WCS-Settle (das erst bei 60–90 % des Schrittintervalls nach vollständiger Gewichtsübertragung eintritt — erfasst durch den Anchor-Settle-Badge).
 
 $$\text{SETTLE-Zeit} = t\!\left(\min(pA_z)\right) - t_{\text{Fußkontakt}} \quad [\text{ms}]$$
 
-Ein gesundes Verzögerungsplateau von 12–42 % des aktuellen Schrittintervalls (Untergrenze 30 ms) zeigt an, dass das Kniegelenk den Impuls abfedert und das Becken verzögert nachgibt — die charakteristische „Sink"-Bewegung im WCS. Das Auswertungsfenster skaliert ebenfalls: `max(200 ms, t_Schritt × 0,45)`.
+Ein gesundes Impact-Absorptions-Fenster von 12–42 % des aktuellen Schrittintervalls (Untergrenze 30 ms) zeigt an, dass Knie- und Hüftgelenk den Aufprall in der Loading-Response-Phase aktiv abfedern — nicht starr in die kinetische Kette weiterleiten. Das Auswertungsfenster skaliert ebenfalls: `max(200 ms, t_Schritt × 0,45)`.
 
 | Badge | Bedingung | Farbe | Biomechanische Bedeutung |
 | :---: | :---: | :---: | :--- |

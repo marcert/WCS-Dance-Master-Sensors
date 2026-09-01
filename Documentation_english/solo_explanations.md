@@ -571,9 +571,9 @@ where *foot jerk* is $J_\text{impact}$ (§2D) and *pelvis jerk* is the peak rate
 | `STIFF` | SDR < 0.35 | Red | Shock passes through largely unattenuated — stiff kinetic chain |
 | `— SDR` | No pelvis sensor | Grey | Pelvis sensor required |
 
-#### SETTLE — Pelvis Settle Delay (`phaseDelayBadge`)
+#### SETTLE — Pelvis Impact Response (`phaseDelayBadge`)
 
-Measures the time from foot impact to the pelvis vertical acceleration (`pAz`) minimum — the moment when the centre of mass reaches its lowest point and the leg chain has fully absorbed the impact impulse. A healthy deceleration phase (12–42 % of the current step interval; floor 30 ms) confirms that the knee and hip joints actively decelerate the descending body mass rather than transferring it rigidly to the floor. The evaluation window also scales: `max(200 ms, stepDuration × 0.45)`.
+Measures the time from foot impact to the **first** pelvis vertical acceleration (`pAz`) minimum — the initial downward response of the leg chain to the landing impulse (Loading Response phase). This is distinct from the full WCS delayed settle, which occurs at 60–90 % of the step interval after complete weight transfer and is captured separately by the Anchor Settle badge. A healthy impact response (12–42 % of the current step interval; floor 30 ms) confirms that the knee and hip joints actively decelerate the descending body mass in the loading phase rather than transmitting the impulse rigidly upward. The evaluation window also scales: `max(200 ms, stepDuration × 0.45)`.
 
 $$\Delta t_{\text{settle}} = t(\text{pAz}_{\min}) - t_{\text{impact}} \quad [\text{ms}]$$
 

@@ -258,13 +258,13 @@ SDR (Shock-absorbing Dynamic Response) measures how much of the foot-impact forc
 
 ### SETTLE badge
 
-Measures the delay (in milliseconds) between foot contact and the pelvis settling into its new position. The target window **scales automatically with the music tempo** — approximately 12–42 % of the step interval (≈ 60–210 ms at 120 BPM, ≈ 45–158 ms at 160 BPM).
+Measures the time from foot contact to the pelvis's **first downward response** (impact absorption latency). This reflects how actively the leg chain — knee and hip — cushions the landing impulse. The target window **scales automatically with the music tempo** — approximately 12–42 % of the step interval (≈ 60–210 ms at 120 BPM, ≈ 45–158 ms at 160 BPM).
 
 | Badge | Timing | What it means | How to improve |
 | :--- | :--- | :--- | :--- |
-| `SETTLING ✓ Xms` ✅ | 12–42 % of step interval | Pelvis responds at the right pace — natural weight transfer timing | Maintain |
-| `QUICK Xms` ⚠️ | < 12 % of step interval | Pelvis moves before weight is fully committed — rushing | Let the foot settle first; allow the hip to follow rather than lead |
-| `SLOW Xms` ⚠️ | > 42 % of step interval | Pelvis delays too long — stiff or disconnected hip response | Trust the transfer: let the pelvis follow foot contact instead of holding it back |
+| `SETTLING ✓ Xms` ✅ | 12–42 % of step interval | Leg chain actively cushions the impact — compliant knee and hip response | Maintain |
+| `QUICK Xms` ⚠️ | < 12 % of step interval | Pelvis dips before proper loading — joints too stiff to produce a measurable cushioning phase | Soften the knee on landing; let the leg chain absorb before committing weight |
+| `SLOW Xms` ⚠️ | > 42 % of step interval | Pelvis response is delayed — sluggish joint activation, impact absorbed passively | Engage the knee and hip actively at the moment of contact, not after |
 
 ### GND Score
 
