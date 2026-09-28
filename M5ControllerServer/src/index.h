@@ -158,7 +158,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     </div>
 
     <div class="graph-container">
-        <div class="label">Connection Force (-5.0 kg to +5.0 kg)</div>
+        <div class="label">Connection Force (-10.0 kg to +10.0 kg)</div>
         <canvas id="graph_kraft" width="1000" height="250"></canvas>
     </div>
 
@@ -552,7 +552,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             currentAy += (targetAy - currentAy) * 0.4;
             currentAz += (targetAz - currentAz) * 0.4;
 
-            let y_kraft = 125 - (currentW / 5000) * 125;
+            let y_kraft = 125 - (currentW / 10000) * 125; // 10000g = full scale (±10 kg)
             y_kraft = Math.max(0, Math.min(250, y_kraft));
             kraftPoints.shift(); kraftPoints.push(y_kraft);
 
@@ -721,6 +721,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                     anchorSettleBwdCount = 0;
                 }
                 anchorSettleBwdCount++;
+                anchorSettleWindowMs = Math.min(400, Math.max(280, Math.round(stepDurationMs * 0.55)));
                 if (anchorSettleBwdCount <= 2) {
                     anchorSettleLastTrigger = now;
                 }
@@ -731,6 +732,10 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             }
             // Capture jerk at trigger moment (same scaling as solo.h)
             let activeJerk_p = isLeft ? preJerkL_s : preJerkR_s;
+            // Kraft-Gate: partner force transfer raises effective jerk threshold to suppress false alarms
+            let forceBoost  = Math.abs(currentW) > 2000 ? 1.8 : 1.0;
+            let jerkThr     = Math.min(200, Math.round(136 * forceBoost));   // 34 g/s base, max 50 g/s cap (200) — genuine slams always fire
+            let jerkThrMod  = Math.round(100 * forceBoost);   // 25 g/s base → 45 g/s at high force
             // Direction badge: reliable only at θ-zone extremes
             let dirEl = document.getElementById('p-dirBadge');
             let angEl = document.getElementById('p-angleVal');
@@ -745,15 +750,15 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             // Strike badge: landing quality, direction-agnostic
             if (strEl) {
                 if (activeTheta >= 8) {
-                    if (activeJerk_p > 88) { strEl.className='p-badge p-red';    strEl.innerText='HEEL SLAM ⚠'; playPartnerBeep(1200); }
-                    else                   { strEl.className='p-badge p-green';  strEl.innerText='HEEL STRIKE ✓'; }
+                    if (activeJerk_p > jerkThr) { strEl.className='p-badge p-red';    strEl.innerText='HEEL SLAM ⚠'; playPartnerBeep(1200); }
+                    else                        { strEl.className='p-badge p-green';  strEl.innerText='HEEL STRIKE ✓'; }
                 } else if (activeTheta < -8) {
-                    if (activeJerk_p > 88) { strEl.className='p-badge p-red';    strEl.innerText='TOE JAM ⚠'; playPartnerBeep(1200); }
-                    else                   { strEl.className='p-badge p-green';  strEl.innerText='TOE-FIRST ✓'; }
+                    if (activeJerk_p > jerkThr) { strEl.className='p-badge p-red';    strEl.innerText='TOE JAM ⚠'; playPartnerBeep(1200); }
+                    else                        { strEl.className='p-badge p-green';  strEl.innerText='TOE-FIRST ✓'; }
                 } else {
-                    if      (activeJerk_p > 88)  { strEl.className='p-badge p-red';    strEl.innerText='HARD IMPACT ⚠'; playPartnerBeep(1200); }
-                    else if (activeJerk_p > 80)  { strEl.className='p-badge p-yellow'; strEl.innerText='MODERATE'; }
-                    else                         { strEl.className='p-badge p-green';  strEl.innerText='SOFT ✓'; }
+                    if      (activeJerk_p > jerkThr)    { strEl.className='p-badge p-red';    strEl.innerText='HARD IMPACT ⚠'; playPartnerBeep(1200); }
+                    else if (activeJerk_p > jerkThrMod) { strEl.className='p-badge p-yellow'; strEl.innerText='MODERATE'; }
+                    else                                { strEl.className='p-badge p-green';  strEl.innerText='SOFT ✓'; }
                 }
             }
             // Start delay ramp monitor
@@ -783,9 +788,11 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                 let lateThr  = isFwd ? 0.38 : 0.50;
                 let dlEl = document.getElementById('p-loadBadge');
                 if (dlEl) {
-                    if      (ratio < quickThr) { dlEl.className='p-badge p-yellow'; dlEl.innerText='QUICK'; }
-                    else if (ratio <= lateThr) { dlEl.className='p-badge p-green';  dlEl.innerText='DELAYED ✓'; }
-                    else                       { dlEl.className='p-badge p-yellow'; dlEl.innerText='LATE'; }
+                    if (Math.abs(currentW) > 1500) {
+                        dlEl.className='p-badge p-green'; dlEl.innerText='DELAYED ✓';
+                    } else if (ratio < quickThr) { dlEl.className='p-badge p-yellow'; dlEl.innerText='QUICK'; }
+                    else if (ratio <= lateThr)   { dlEl.className='p-badge p-green';  dlEl.innerText='DELAYED ✓'; }
+                    else                          { dlEl.className='p-badge p-yellow'; dlEl.innerText='LATE'; }
                 }
             }
         }
@@ -800,7 +807,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             hipActSmoothed = hipActSmoothed * 0.9 + gYawPeak * 0.1;
             let hipEl = document.getElementById('p-hipActBadge');
             if (hipEl) {
-                let hipThrActive = Math.round(60 * 500 / Math.max(400, stepDurationMs));
+                let hipThrActive = Math.round(45 * 500 / Math.max(400, stepDurationMs));
                 let hipThrMod    = Math.round(25 * 500 / Math.max(400, stepDurationMs));
                 if      (hipActSmoothed >= hipThrActive) { hipEl.className='p-badge p-green';  hipEl.innerText='🌀 ACTIVE'; }
                 else if (hipActSmoothed >= hipThrMod)    { hipEl.className='p-badge p-yellow'; hipEl.innerText='MODERATE'; }
@@ -814,6 +821,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             if (latEl) {
                 if      (aXVar < 0.004) { latEl.className='p-badge p-green';  latEl.innerText='STABLE'; }
                 else if (aXVar < 0.015) { latEl.className='p-badge p-yellow'; latEl.innerText='SLIGHT SWAY'; }
+                else if (Math.abs(currentW) > 1500) { latEl.className='p-badge p-yellow'; latEl.innerText='SLIGHT SWAY'; }
                 else                    { latEl.className='p-badge p-red';    latEl.innerText='LATERAL SWAY';
                     if (prevLatBadge !== 'LATERAL SWAY') playPartnerBeep(400, 0.25);
                 }
@@ -826,7 +834,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             let bncEl = document.getElementById('p-bounceBadge');
             if (bncEl) {
                 if      (aZVar < 0.006) { bncEl.className='p-badge p-green';  bncEl.innerText='GROUNDED'; }
-                else if (aZVar < 0.020) { bncEl.className='p-badge p-yellow'; bncEl.innerText='SLIGHT BOUNCE'; }
+                else if (aZVar < 0.038) { bncEl.className='p-badge p-yellow'; bncEl.innerText='SLIGHT BOUNCE'; }
                 else                    { bncEl.className='p-badge p-red';    bncEl.innerText='BOUNCY';
                     if (prevBncBadge !== 'BOUNCY') { playPartnerBeep(600, 0.08); setTimeout(()=>playPartnerBeep(600, 0.08), 130); }
                 }
@@ -865,7 +873,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
                     let score = Math.round((decelScore*0.35+yawDampScore*0.35+stabilScore*0.30)*100);
                     let ab = document.getElementById('p-anchorBadge');
                     if (ab) {
-                        if      (score >= 60) { ab.className='p-badge p-green';  ab.innerText='ANCHORED ('+score+')'; }
+                        if      (score >= 42) { ab.className='p-badge p-green';  ab.innerText='ANCHORED ('+score+')'; }
                         else if (score >= 30) { ab.className='p-badge p-yellow'; ab.innerText='SETTLING ('+score+')'; }
                         else                  { ab.className='p-badge p-red';    ab.innerText='UNSTABLE ('+score+')'; playDescendingSweep(); }
                     }

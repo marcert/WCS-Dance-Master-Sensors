@@ -21,10 +21,10 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  ← g     FLIP CAM   EXIT   FREEZE   ZERO   REC START        │
+│  ← g  START CAM  FLIP CAM  FULL  FREEZE  ZERO  AUDIO  REC   │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│   CONNECTION FORCE  (−5.0 kg to +5.0 kg)                    │
+│   CONNECTION FORCE  (−10.0 kg to +10.0 kg)                  │
 │   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
@@ -34,11 +34,11 @@
 │   ■ Sound/Error Left   ■ Sound/Error Right   ■ Hand Jerk     │
 ├──────────────────────────────────────────────────────────────┤
 │  STEP:  ⬅ BWD R   −7°   TOE-FIRST ✓                         │
-│  PELVIS: 🌀 ACTIVE  STABLE  HIP LEADS  GROUNDED  ANCHORED   │
+│  PELVIS: 🌀 ACTIVE  STABLE  HIP LEADS  GROUNDED  ANCHORED  HIP SETTLE ✓ │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Top-left number** (`114 g`, `−39 g`, `— g`): live connection force reading from the hand sensor. Green = pull/tension, red = push/compression, grey dash = sensor offline.
+**Top-left number** (`114 g`, `−39 g`, `— g`): live connection force reading from the hand sensor. Green (positive) = push/compression, red (negative) = pull/tension, grey dash = sensor offline.
 
 > 📷 **Screenshot placeholder — full dashboard overview**  
 > *(Replace with: full-screen photo of the partner dashboard with all sensors active, camera overlay visible in background, status bar showing step + pelvis badges)*
@@ -47,18 +47,18 @@
 
 ## 3. Connection Force Graph (Top Graph)
 
-Shows the force measured by the strain gauge held between the two dancers, scaled to ±5.0 kg.
+Shows the force measured by the strain gauge held between the two dancers, scaled to ±10.0 kg. Because partner connection force in All-Star-level dancing peaks above 6 kg during compression (Whip catches, redirects), the graph range was widened from the original ±5 kg to prevent clipping.
 
 | Line colour | Meaning |
 | :--- | :--- |
-| **Green** (above centre) | Leader pulling — tension in the connection |
-| **Red** (below centre) | Leader pushing — compression in the connection |
+| **Green** (above centre) | Leader pushing — compression in the connection |
+| **Red** (below centre) | Leader pulling — tension in the connection |
 | **Flat line at centre** | Neutral — no measurable connection force |
 
 **What to watch for:**
 
 - **Calm, low-amplitude line near zero** → light, responsive connection. Ideal.
-- **Sustained green elevation** → leader holding tension throughout — check whether the follow has room to move freely.
+- **Sustained red elevation** → leader holding tension throughout — check whether the follow has room to move freely.
 - **Sharp spikes** → sudden force changes — jerky leading or abrupt stopping. Compare with the yellow Jerk line in the lower graph to confirm.
 - **Alternating green/red** → leader is not holding a directional intention — oscillating between push and pull within the same phrase.
 
@@ -76,11 +76,11 @@ Three overlaid data streams in a single canvas:
 
 ### Cyan line — Left foot roll-off quality
 
-Derived from `|gyroPitch| / (1 + impactDev × 2)`. A higher value means the foot rolled off smoothly with low impact. The line rises when the left foot steps with good technique and drops during heavy, flat impacts.
+A higher value means the foot rolled off smoothly with low impact. The line rises when the left foot steps with good technique and drops during heavy, flat impacts.
 
 ### Magenta line — Right foot roll-off quality
 
-Same formula as cyan, for the right foot.
+Same measure as cyan, for the right foot.
 
 **Reading both lines together:**
 - Both lines tracking similarly at mid-height → symmetric, consistent technique.
@@ -89,7 +89,7 @@ Same formula as cyan, for the right foot.
 
 ### Yellow line — Hand Jerk index
 
-A composite of force-rate-of-change and hand acceleration magnitude. Rises on sudden leading impulses, drops during smooth movement.
+Combines how fast the connection force changes with how sharply the hand accelerates. Rises on sudden leading impulses, drops during smooth movement.
 
 - **Yellow near zero** → smooth leading.
 - **Yellow spikes** → abrupt force or acceleration changes in the hand connection.
@@ -103,7 +103,7 @@ A composite of force-rate-of-change and hand acceleration magnitude. Rises on su
 | **Red vertical bar** | Both feet error simultaneously |
 | **Yellow dashed line** | Jerk peak detected by the firmware |
 
-Error markers fire when impact acceleration exceeds 1.5 g with less than 80°/s roll-off — a stomping pattern. Multiple markers in a row on the same side indicate a recurring technique issue on that foot.
+Error markers fire when a foot lands hard (sharp impact) without rolling through — a stomping pattern. Multiple markers in a row on the same side indicate a recurring technique issue on that foot.
 
 > 📷 **Screenshot placeholder — combined analysis graph: asymmetric foot quality**  
 > *(Replace with: screenshot where cyan line is clearly higher than magenta across a full phrase — weaker right foot visible)*
@@ -119,10 +119,10 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 
 | Element | Meaning |
 | :--- | :--- |
-| **➡ FWD L / R** | Forward step (θ ≥ +6°), left or right foot |
-| **⬅ BWD L / R** | Backward step (θ < −6°), left or right foot |
-| **— L / R** | Ambiguous zone (−6° to +5°) — direction not classifiable from angle alone |
-| **θ angle** | Foot pitch at landing (positive = heel up, negative = toe down) |
+| **➡ FWD L / R** | Forward step (foot angle +8° or more), left or right foot |
+| **⬅ BWD L / R** | Backward step (foot angle below −8°), left or right foot |
+| **— L / R** | Ambiguous zone (−8° to +7°) — direction not clear from the angle alone |
+| **Foot angle** | Foot tilt at landing (positive = heel up / toes up, negative = toes down) |
 | **Strike badge** | Classification of the landing — see table below |
 | **Delay badge** | Tempo-normalised weight transfer timing — see table below |
 
@@ -130,14 +130,15 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 
 | Badge | Zone | Jerk | Assessment |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | HEEL (θ ≥ +6°) | ≤ 27.5 g/s | Correct heel-first contact |
-| `HEEL SLAM ⚠` | HEEL (θ ≥ +6°) | > 27.5 g/s | Hard heel impact — too much landing force |
-| `TOE-FIRST ✓` | TOE (θ < −6°) | ≤ 27.5 g/s | Correct toe-ball contact |
-| `TOE JAM ⚠` | TOE (θ < −6°) | > 27.5 g/s | Hard toe impact — over-extended or forced contact |
-| `SOFT ✓` | Ambiguous (−6° to +5°) | ≤ 25 g/s | Light, controlled landing — use camera to check direction |
-| `MODERATE` | Ambiguous (−6° to +5°) | 25–27.5 g/s | Moderate impact in flat zone |
-| `HARD IMPACT ⚠` | Ambiguous (−6° to +5°) | > 27.5 g/s | Hard flat-foot landing — stomping pattern |
-| `BRUSH+HEEL` | → HEEL | — | Ambiguous → heel-set within 200 ms — reclassified to HEEL zone |
+| `HEEL STRIKE ✓` | HEEL (+8° or more) | ≤ 34 g/s | Correct heel-first contact |
+| `HEEL SLAM ⚠` | HEEL (+8° or more) | > 34 g/s | Hard heel impact — too much landing force |
+| `TOE-FIRST ✓` | TOE (below −8°) | ≤ 34 g/s | Correct toe-ball contact |
+| `TOE JAM ⚠` | TOE (below −8°) | > 34 g/s | Hard toe impact — over-extended or forced contact |
+| `SOFT ✓` | Ambiguous (−8° to +7°) | ≤ 25 g/s | Light, controlled landing — use camera to check direction |
+| `MODERATE` | Ambiguous (−8° to +7°) | 25–34 g/s | Moderate impact in flat zone |
+| `HARD IMPACT ⚠` | Ambiguous (−8° to +7°) | > 34 g/s | Hard flat-foot landing — stomping pattern |
+
+> **Connection-force gate on the jerk threshold:** When the connection force exceeds ±2 kg at the moment of the step, the SLAM/JAM/HARD threshold is raised (×1.8, capped at 50 g/s). Partner force transferred through the hands travels down into the foot sensor and registers as a shock spike that is **not** a genuine landing error — the gate suppresses these false alarms. Genuine hard stomps (>50 g/s) still fire even under high force.
 
 > 📷 **Screenshot placeholder — status bar: step badges**  
 > *(Replace with: close-up of the status bar row showing e.g. `⬅ BWD R  −7°  TOE-FIRST ✓` with the pelvis row hidden)*
@@ -154,14 +155,16 @@ Thresholds differ by direction because a backward (toe-first) landing naturally 
 | `QUICK` ⚠️ | < 12% | < 18% | Weight committed immediately at impact — mechanical, not musical |
 | `LATE` ⚠️ | > 38% | > 50% | Weight never fully arrived — floating or incomplete transfer |
 
+> **Connection-force gate:** When the connection force exceeds ±1.5 kg (either direction) at the moment of the step, the delay badge is forced to `DELAYED ✓` regardless of the measured ratio. High connection force loads the foot sensor and distorts the weight-transfer signal in both directions, producing false `QUICK` and `LATE` readings that do not reflect the dancer's actual timing. The gate keys on force magnitude and is disabled below 1.5 kg, where the ratio is trustworthy.
+
 > **Coaching tip:** `QUICK` on every anchor step is the most common finding at Newcomer/Intermediate level. The dancer steps back but immediately drops their weight, losing the stretch in the connection. Watch for `QUICK` in the status bar and cue: *"Step back and breathe before you land."*
 
 > 📷 **Screenshot placeholder — delay badge: DELAYED ✓ on anchor**
 > *(Replace with: status bar showing `⬅ BWD R  −12°  TOE-FIRST ✓  DELAYED ✓` — all green, good technique)*
 
---- (Status Bar — appears when sensor is online)
+## 5b. Pelvis Badges (Status Bar — appears when sensor is online)
 
-All five pelvis metrics are shown simultaneously when the pelvis sensor is active — there is no level selector on the partner view.
+All six pelvis metrics are shown simultaneously when the pelvis sensor is active — there is no level selector on the partner view.
 
 For full descriptions of each badge see [dancer_guide_solo.md — Section 8](dancer_guide_solo.md#8-the-pelvis-card-optional-sensor).
 
@@ -169,12 +172,17 @@ For full descriptions of each badge see [dancer_guide_solo.md — Section 8](dan
 
 | Badge | Green | Yellow | Red |
 | :--- | :--- | :--- | :--- |
-| **Hip Activation** | `🌀 ACTIVE` (≥60°/s) | `MODERATE` (25–60°/s) | `STIFF HIPS` (<25°/s) |
+| **Hip Activation** | `🌀 ACTIVE` (≥45°/s) | `MODERATE` (25–45°/s) | `STIFF HIPS` (<25°/s) |
 | **Lateral Stability** | `STABLE` | `SLIGHT SWAY` | `LATERAL SWAY` |
 | **Hip-Foot Coupling** | `HIP LEADS` (>100 ms before foot) | `IN SYNC` (40–100 ms) | `HIP LAGS` (<40 ms) |
-| **Vertical Bounce** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` |
-| **Anchor Settle** | `ANCHORED (n)` (≥50) | `SETTLING (n)` (30–49) | `UNSTABLE (n)` (<30) |
+| **Vertical Bounce** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` (≥0.038) |
+| **Anchor Settle** | `ANCHORED (n)` (≥42) | `SETTLING (n)` (30–41) | `UNSTABLE (n)` (<30) |
 | **Hip Settle** | `HIP SETTLE ✓` | `SLIGHT SETTLE` | `OVERSWING ⚠` / `NO HIP SETTLE` |
+
+> **Connection-force gates on the partner view.** Three pelvis/step badges behave differently here than on the solo view, because connection force contaminates the raw signals:
+> - **Lateral Stability:** `LATERAL SWAY` (red) is downgraded to `SLIGHT SWAY` (yellow) whenever connection force exceeds 1.5 kg. Redirecting the follow generates lateral pelvic acceleration that is structural, not a balance error.
+> - **Vertical Bounce:** the `BOUNCY` threshold was raised from 0.020 to 0.038. Bracing the core against partner force makes the hips register up-and-down movement even without any visible bounce.
+> - **Hip Activation:** the `ACTIVE` threshold was lowered from 60°/s to 45°/s. The partner slot damps rotational velocity, so genuine active hips read slower than in solo dancing.
 
 > 📷 **Screenshot placeholder — status bar: pelvis badges active**  
 > *(Replace with: close-up of the full status bar with both rows visible — step row + PELVIS: row showing all 5 badges lit in various colours)*
@@ -189,11 +197,11 @@ Tap **`🔇 Audio: OFF`** in the header to enable alerts. Tap again to mute.
 
 | Event | Tone | Condition |
 | :--- | :--- | :--- |
-| **`HEEL SLAM ⚠`** | 1200 Hz click (80 ms) | Hard heel impact in the HEEL zone (jerk > 27.5 g/s) |
-| **`TOE JAM ⚠`** | 1200 Hz click (80 ms) | Hard toe impact in the TOE zone (jerk > 27.5 g/s) |
-| **`HARD IMPACT ⚠`** | 1200 Hz click (80 ms) | Hard flat-foot landing in the ambiguous zone (jerk > 27.5 g/s) |
-| **`LATERAL SWAY`** | 400 Hz sustained (250 ms) | Pelvis lateral variance exceeds threshold — fires once on entry into error state |
-| **`BOUNCY`** | 600 Hz double click | Vertical oscillation variance too high — fires once on entry into error state |
+| **`HEEL SLAM ⚠`** | 1200 Hz click (80 ms) | Hard heel impact in the HEEL zone (jerk > 34 g/s, force-gated) |
+| **`TOE JAM ⚠`** | 1200 Hz click (80 ms) | Hard toe impact in the TOE zone (jerk > 34 g/s, force-gated) |
+| **`HARD IMPACT ⚠`** | 1200 Hz click (80 ms) | Hard flat-foot landing in the ambiguous zone (jerk > 34 g/s, force-gated) |
+| **`LATERAL SWAY`** | 400 Hz sustained (250 ms) | Hips sway sideways past the threshold **and** connection force ≤ 1.5 kg — fires once on entry into error state |
+| **`BOUNCY`** | 600 Hz double click | Up-and-down hip movement past the threshold — fires once on entry into error state |
 | **`UNSTABLE` anchor** | 800 → 350 Hz descending sweep (300 ms) | Anchor settle score < 30 after each backward step |
 
 > **Transition-based alerts:** `LATERAL SWAY` and `BOUNCY` fire only when the badge first enters the red state — not on every frame. The alert re-arms once the badge returns to yellow or green.
@@ -232,7 +240,9 @@ The **Hip-Foot Coupling** badge fires on each step. Consistent `HIP LAGS` means 
 
 ### Anchor quality under pressure
 
-After each anchor, the **Anchor Settle** badge shows a 0–100 score. A score below 50 consistently across a full song means the dancer's pelvis is still moving after the anchor step lands. Low scores late in a song (but not early) indicate fatigue-driven anchor collapse.
+After each anchor, the **Anchor Settle** badge shows a 0–100 score. A score below 42 consistently across a full song means the dancer's pelvis is still moving after the anchor step lands. Low scores late in a song (but not early) indicate fatigue-driven anchor collapse.
+
+> **Partner context:** The ANCHORED threshold on the partner view (≥42) is lower than on the solo view (≥50). Sustained connection tension keeps the pelvis under slight residual load, so a true "zero-motion" anchor is physically impossible while the connection is live — the lower bar reflects this.
 
 ### Using FREEZE for discussion
 

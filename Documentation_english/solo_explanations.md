@@ -113,19 +113,19 @@ In WCS **forward steps** all three rockers are present: heel strike → ankle ad
    The strike badge evaluates *how* the foot landed, independent of direction. This is useful for both forward and backward steps: `SOFT ✓` at θ ≈ 0° indicates a controlled backward flat step; `HARD IMPACT ⚠` at θ ≈ 0° means the dancer fell onto the foot.
 
    Jerk thresholds (same scaling as the Impact Jerk display value ÷ 4):
-   - **HARD:** J > 27.5 g/s (internal > 110)
-   - **MODERATE:** 25 g/s < J ≤ 27.5 g/s (internal 100–110)
-   - **SOFT:** J ≤ 25 g/s (internal ≤ 100)
+   - **HARD:** J > 130 g/s (internal > 520)
+   - **MODERATE:** 55 g/s < J ≤ 130 g/s (internal 220–520)
+   - **SOFT:** J ≤ 55 g/s (internal ≤ 220)
 
    | θ zone | Jerk | Badge | Meaning |
    | :---: | :---: | :--- | :--- |
-   | ≥ +6° (heel) | ≤ 27.5 g/s | `HEEL STRIKE ✓` (Green) | Clean heel-first landing — correct forward technique |
-   | ≥ +6° (heel) | > 27.5 g/s | `HEEL SLAM ⚠` (Red) | Heel contact but impact too abrupt — absorb with knee/ankle |
-   | < −6° (toe) | ≤ 27.5 g/s | `TOE-FIRST ✓` (Green) | Controlled toe-first landing — correct for deep backward steps or ball-steps |
-   | < −6° (toe) | > 27.5 g/s | `TOE JAM ⚠` (Red) | Toe contact too hard |
-   | −6° to +5° (ambiguous) | ≤ 25 g/s | `SOFT ✓` (Green) | Controlled landing — good quality regardless of direction |
-   | −6° to +5° (ambiguous) | 25–27.5 g/s | `MODERATE` (Yellow) | Acceptable; reduce impact |
-   | −6° to +5° (ambiguous) | > 27.5 g/s | `HARD IMPACT ⚠` (Red) | Fell onto foot — triggers 1200 Hz click |
+   | ≥ +6° (heel) | ≤ 130 g/s | `HEEL STRIKE ✓` (Green) | Clean heel-first landing — correct forward technique |
+   | ≥ +6° (heel) | > 130 g/s | `HEEL SLAM ⚠` (Red) | Heel contact but impact too abrupt — absorb with knee/ankle |
+   | < −6° (toe) | ≤ 130 g/s | `TOE-FIRST ✓` (Green) | Controlled toe-first landing — correct for deep backward steps or ball-steps |
+   | < −6° (toe) | > 130 g/s | `TOE JAM ⚠` (Red) | Toe contact too hard |
+   | −6° to +5° (ambiguous) | ≤ 55 g/s | `SOFT ✓` (Green) | Controlled landing — good quality regardless of direction |
+   | −6° to +5° (ambiguous) | 55–130 g/s | `MODERATE` (Yellow) | Acceptable; reduce impact |
+   | −6° to +5° (ambiguous) | > 130 g/s | `HARD IMPACT ⚠` (Red) | Fell onto foot — triggers 1200 Hz click |
 
    * **BRUSH+HEEL reclassification (200 ms window):** if a landing in the ambiguous zone is followed within 200 ms by a second aZ > 1.05 g peak with accelAngle > 8° on the same foot, the badge upgrades to `BRUSH+HEEL` (green) and the direction badge shows ➡ FWD.
 
@@ -166,9 +166,9 @@ $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\
 
 > **Unit note:** This $J$ is in $g/\text{s}$, not in $N/\text{s}$ or $\text{BW/s}$ as used in ground-reaction-force literature. The thresholds below are device- and algorithm-specific heuristics, not direct equivalents of GRF loading rate studies.
 
-* **Soft Cushioning ($1\text{ to }15\text{ g/s}$):** Excellent joint absorption (`SOFT`).
-* **Moderate Impact ($15\text{ to }30\text{ g/s}$):** Acceptable step impact.
-* **Harsh Stomping ($> 30\text{ g/s}$ or $J_{\text{native}} > 120$):** Excessive shock transmitted to joints; triggers a 500 Hz low-frequency impact click.
+* **Soft Cushioning ($\le 55\text{ g/s}$):** Good joint absorption (`SOFT ✓`).
+* **Moderate Impact ($55\text{ to }130\text{ g/s}$):** Elevated but normal step impact (`MODERATE`).
+* **Harsh Stomping ($> 130\text{ g/s}$):** Excessive shock transmitted to joints (`HARD IMPACT ⚠`); triggers a 500 Hz low-frequency impact click. (Internal scale: badge boundaries are 220 and 520 raw units = 55 and 130 g/s displayed after the ÷4 scaling.)
 
 ---
 
@@ -195,7 +195,7 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
 | :---: | :---: | :--- |
 | **15% to 60%** | `OPTIMAL ROLL` | Ideal grounded roll-off phase for walks and extensions. |
 | **< 15%** | `HECTIC` | Rushed weight transfer; lack of rolling articulation through the foot. |
-| **> 60%** | `SLUGGISH` | Over-invested ground contact; sluggish tempo transition. |
+| **> sluggishThr (tempo-adaptive)** | `SLUGGISH` | Over-invested ground contact; sluggish tempo transition. Threshold: 60 % at ≥ 120 BPM, 67 % at 90 BPM, 70 % at 80 BPM, 72 % at 75 BPM. Formula: `min(80, 60 + max(0, stepDurationMs − 500) × 0.04)` |
 
 ---
 
@@ -205,6 +205,36 @@ $$\text{Stance Ratio} = \left( \frac{\Delta t_{\text{double-stance}}}{t_{\text{s
    Compares total angular work integrated across Left and Right foot roll-off cycles while feet are actively moving ($|\omega_{\text{pitch}}| > 15^\circ/\text{s}$):
    $$\text{ASI} = \frac{2 \cdot \left|\int|\omega_{\text{left}}|\,dt - \int|\omega_{\text{right}}|\,dt\right|}{\int|\omega_{\text{left}}|\,dt + \int|\omega_{\text{right}}|\,dt} \times 100\%$$
    * **Target:** $< 15\%$ (`SYMMETRIC`), $16\text{--}35\%$ (`MINOR ASYM`), $>35\%$ (`ASYMMETRIC`).
+
+---
+
+### Role Mode: Leader / Follower
+
+The **👤 LEADER / 💃 FOLLOWER** toggle (persisted in localStorage) adjusts threshold groups for three metrics to reflect the biomechanical differences between leader and follower roles in WCS.
+
+**Why different thresholds:**
+- **Timing:** Followers react to the lead — their weight transfer is inherently faster. The same quick timing that signals "early" for a leader is correct and intentional for a follower.
+- **Push-off:** Follower push-offs are structurally more compact (less preparatory stance-phase extension, shorter lever arm).
+- **Asymmetry:** Followers have a structural connection-side bias that creates persistent asymmetry independent of skill level.
+
+**Threshold comparison:**
+
+| Metric | Leader | Follower |
+|---|---|---|
+| DELAY RAMP forward — DELAYED ✓ | 12–38 % | 6–30 % |
+| DELAY RAMP backward — DELAYED ✓ | 18–50 % | 10–40 % |
+| Push-Off forward (POWER PUSH) | ≥ 200 °/s peak OR ≥ 20° integral | ≥ 160 °/s peak OR ≥ 16° integral |
+| Push-Off backward (POWER PUSH) | ≥ 160 °/s peak OR ≥ 16° integral | ≥ 130 °/s peak OR ≥ 13° integral |
+| ASI — SYMMETRIC | ≤ 15 % | ≤ 25 % |
+| ASI — MINOR ASYM | ≤ 35 % | ≤ 40 % |
+
+**Calibration display (Follower mode only):**
+In Follower mode, two additional raw values become visible to support algorithm validation:
+- **Direction badge:** appends the measured foot angle θ at impact (e.g. `⬅ BWD −4°`, `— +2°`). This enables validation of whether the ±6° zone boundary needs adjustment for follower backward steps.
+- **Push-Off badge:** appends the peak angular velocity of the pushing foot (e.g. `↗ PUSH 148 °/s`). This enables validation of the 160 °/s / 130 °/s follower push thresholds.
+Both values are hidden in Leader mode to keep the UI clean during normal training use.
+
+**Status:** DELAY RAMP and ASI thresholds validated (Gemini video analysis, Sep 2026). Push-Off °/s thresholds and θ zone boundaries for follower backward steps are pending validation with dedicated follower video material.
 
 ---
 
@@ -239,21 +269,21 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | rollIntegral $< 1°$ | `STIFF ANKLE` (Yellow) | Minimal roll — impact likely transmitted up the kinetic chain |
 | Metric / Parameter | Value / Range | Visual Badge / State | Audio Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Heel zone — clean** | θ ≥ +6°, Jerk ≤ 27.5 g/s | `HEEL STRIKE ✓` (Green) | None |
-| **Heel zone — slam** | θ ≥ +6°, Jerk > 27.5 g/s | `HEEL SLAM ⚠` (Red) | 1200 Hz Click |
-| **Toe zone — clean** | θ < −6°, Jerk ≤ 27.5 g/s | `TOE-FIRST ✓` (Green) | None |
-| **Toe zone — jam** | θ < −6°, Jerk > 27.5 g/s | `TOE JAM ⚠` (Red) | 1200 Hz Click |
-| **Ambiguous zone — soft** | −6° ≤ θ < +6°, Jerk ≤ 25 g/s | `SOFT ✓` (Green) | None |
-| **Ambiguous zone — moderate** | −6° ≤ θ < +6°, 25 < Jerk ≤ 27.5 g/s | `MODERATE` (Yellow) | None |
-| **Ambiguous zone — hard** | −6° ≤ θ < +6°, Jerk > 27.5 g/s | `HARD IMPACT ⚠` (Red) | 1200 Hz Click |
+| **Heel zone — clean** | θ ≥ +6°, Jerk ≤ 130 g/s | `HEEL STRIKE ✓` (Green) | None |
+| **Heel zone — slam** | θ ≥ +6°, Jerk > 130 g/s | `HEEL SLAM ⚠` (Red) | 1200 Hz Click |
+| **Toe zone — clean** | θ < −6°, Jerk ≤ 130 g/s | `TOE-FIRST ✓` (Green) | None |
+| **Toe zone — jam** | θ < −6°, Jerk > 130 g/s | `TOE JAM ⚠` (Red) | 1200 Hz Click |
+| **Ambiguous zone — soft** | −6° ≤ θ < +6°, Jerk ≤ 55 g/s | `SOFT ✓` (Green) | None |
+| **Ambiguous zone — moderate** | −6° ≤ θ < +6°, 55 < Jerk ≤ 130 g/s | `MODERATE` (Yellow) | None |
+| **Ambiguous zone — hard** | −6° ≤ θ < +6°, Jerk > 130 g/s | `HARD IMPACT ⚠` (Red) | 1200 Hz Click |
 | **Brush+Heel reclassification** | Ambiguous landing + second aZ > 1.05g, accelAngle > 8° within 200 ms | `BRUSH+HEEL` (Green) — upgrades from any ambiguous badge | None |
 | **Trailing Foot Push-off (forward, optimal)**| BACKWARD last step + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
 | **Trailing Foot Push-off (backward/anchor, optimal)**| FORWARD last step + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ AND $aY > 0.15g$ | `🚀 POWER PUSH` (Green) — real-time, holds 400 ms | None |
 | **Trailing Foot Push-off (weak)** | Either direction, $120\text{–}159/199^\circ/\text{s}$ AND $aY > 0.15g$ | `↗ PUSH` (Yellow) — real-time, holds 400 ms | None |
-| **Impact Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
+| **Impact Jerk ($J_{\text{impact}}$)** | $> 130\text{ g/s}$ | Flash Card Boundary | 500 Hz Low Impact Click (80 ms) |
 | **Double Stance Ratio** | 15% to 60% | `OPTIMAL ROLL` (Green) | None |
 | **Double Stance Hectic** | $< 15\%$ | `HECTIC` (Yellow) | None |
-| **Double Stance Sluggish**| $> 60\%$ | `SLUGGISH` (Yellow) | None |
+| **Double Stance Sluggish**| $> \text{sluggishThr}$ (60–72 %, tempo-adaptive) | `SLUGGISH` (Yellow) | None |
 | **Weight Transfer — Progressive** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Green) | None |
 | **Weight Transfer — Instant** | $-0.10 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Yellow) | None |
 | **Weight Transfer — Early Unload** | loadRise $< -0.10\,g$ | `EARLY UNLOAD` (Yellow) | None |
@@ -282,9 +312,9 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 | **SDR — Shock Damping Ratio — absorbing** | SDR > 0.65 | `ABSORBING ✓` (Green) | None |
 | **SDR — Shock Damping Ratio — partial** | SDR 0.35–0.65 | `PARTIAL SDR` (Yellow) | None |
 | **SDR — Shock Damping Ratio — stiff** | SDR < 0.35 | `STIFF` (Red) | None |
-| **SETTLE — Pelvis Settle Delay — healthy** | 12–42 % of step interval | `SETTLING ✓ Xms` (Green) | None |
-| **SETTLE — Pelvis Settle Delay — quick** | < 12 % of step interval | `QUICK Xms` (Yellow) | None |
-| **SETTLE — Pelvis Settle Delay — slow** | > 42 % of step interval | `SLOW Xms` (Yellow) | None |
+| **SETTLE — Pelvis Settle Delay — healthy** | 10–32 % of step interval (max 220 ms) | `SETTLING ✓ Xms` (Green) | None |
+| **SETTLE — Pelvis Settle Delay — quick** | < 10 % of step interval | `QUICK Xms` (Yellow) | None |
+| **SETTLE — Pelvis Settle Delay — slow** | > 32 % of step interval (within 220 ms) | `SLOW Xms` (Yellow) | None |
 | **GND Score — grounded** | GND ≥ 65 | Score + progress bar (Green) | None |
 | **GND Score — partial** | 35 ≤ GND < 65 | Score + progress bar (Yellow) | None |
 | **GND Score — stiff** | GND < 35 | Score + progress bar (Red) | None |
@@ -296,7 +326,7 @@ $$\text{rollReversal} = |\overline{\omega}_{[0\text{–}3]}| > 8°/\text{s} \;\;
 
 During a well-executed backward anchor, the foot initially contacts on the ball (negative θ — plantarflexion) and then lowers to the heel as bodyweight settles. The sensor quantifies this progression by tracking foot pitch angle θ through a tempo-adaptive window after every backward step.
 
-**Window:** `anchorWindowMs = clamp(stepDurationMs × 1.05, 280 ms, 900 ms)` — tempo-adaptive, independent of the pelvis Anchor Settle metric (which uses a fixed 500 ms gap after the last backward step).
+**Window:** `anchorWindowMs = clamp(stepDurationMs × 1.05, 280 ms, 900 ms)` — tempo-adaptive, independent of the pelvis Anchor Settle metric (which uses a tempo-adaptive 280–400 ms window after the last backward step).
 
 **Calculation:**
 
@@ -304,7 +334,7 @@ At the moment of the backward step trigger, the foot angle from T-1 (pre-reset) 
 
 $$\theta_{T-1} = \text{foot angle at trigger, pre-reset (T-1 snapshot)}$$
 
-$$\theta_{\text{late}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]} \quad \text{(second half of 280–500 ms post-reset window)}$$
+$$\theta_{\text{late}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]} \quad \text{(second half of the 280–900 ms post-reset window)}$$
 
 | Condition | Badge | Biomechanical Meaning |
 | :---: | :---: | :--- |
@@ -508,13 +538,17 @@ The offset is captured at `📐 ZERO` press (dancer stands in neutral dance posi
 
 Evaluates the quality of deceleration and pelvis settling at the end of each anchor backward step — the defining moment where WCS stretch converts into grounded, controlled weight transfer.
 
-**Trigger:** Any confirmed BACKWARD step (not gated by pelvis sensor availability) opens a fresh evaluation window. The window stays open while AMBIGUOUS steps follow within 2 seconds and bwd < 2. The timer fires 700 ms after the last relevant backward step:
+**Trigger:** Any confirmed BACKWARD step (not gated by pelvis sensor availability) opens a fresh evaluation window. The window stays open while AMBIGUOUS steps follow within 2 seconds and bwd < 2. The timer fires after a tempo-adaptive window following the last relevant backward step:
 
-$$t_{\text{eval}} = t_{\text{last BACKWARD step}} + 700\,\text{ms}$$
+$$t_{\text{eval}} = t_{\text{last BACKWARD step}} + t_{\text{settle window}}$$
 
-In practice the badge appears around Beat 1 of the following phrase (AMBIGUOUS &-steps extend the deadline through the triple; the window closes when the first FORWARD step force-triggers evaluation or the 700 ms timer expires naturally). A 3-second hold keeps the score visible until the next anchor.
+$$t_{\text{settle window}} = \text{clamp}(\text{stepDurationMs} \times 0.55,\ 280\,\text{ms},\ 400\,\text{ms})$$
 
-**Minimum samples:** 3 pelvis data points required (pelvis sensor transmits at ~7–12 Hz over WiFi; a 700 ms window yields 5–8 samples under normal conditions).
+Typical values: 367 ms at 90 BPM · 400 ms at 80 BPM · 400 ms at 75 BPM (capped). The window closes earlier if the first FORWARD step is detected (force-triggers evaluation immediately). A 3-second hold keeps the score visible until the next anchor.
+
+**Rationale for shorter window:** At standard WCS tempos (80–100 BPM), a fixed 700 ms window extended into the next beat, capturing the transition motion of the next pattern rather than the anchor settle. The tempo-adaptive window closes before Count 1 of the following phrase, ensuring only the genuine deceleration phase is measured.
+
+**Minimum samples:** 3 pelvis data points required (pelvis sensor transmits at ~7–12 Hz over WiFi; a 280–400 ms window yields 2–5 samples under normal conditions).
 
 Samples collected: sagittal pelvis acceleration (`aSagP`) and hip yaw rate (`gYawP`), and lateral pelvis acceleration (`aLatP`) for Hip Settle.
 
@@ -573,15 +607,15 @@ where *foot jerk* is $J_\text{impact}$ (§2D) and *pelvis jerk* is the peak rate
 
 #### SETTLE — Pelvis Impact Response (`phaseDelayBadge`)
 
-Measures the time from foot impact to the **first** pelvis vertical acceleration (`pAz`) minimum — the initial downward response of the leg chain to the landing impulse (Loading Response phase). This is distinct from the full WCS delayed settle, which occurs at 60–90 % of the step interval after complete weight transfer and is captured separately by the Anchor Settle badge. A healthy impact response (12–42 % of the current step interval; floor 30 ms) confirms that the knee and hip joints actively decelerate the descending body mass in the loading phase rather than transmitting the impulse rigidly upward. The evaluation window also scales: `max(200 ms, stepDuration × 0.45)`.
+Measures the time from foot impact to the **first** pelvis vertical acceleration (`pAz`) minimum — the initial downward response of the leg chain to the landing impulse (Loading Response phase, Dip 1). This is distinct from the full WCS delayed settle (Dip 2), which occurs at 60–90 % of the step interval after complete weight transfer and is captured separately by the Anchor Settle badge. A healthy impact response (10–32 % of the current step interval; floor 40 ms) confirms that the knee and hip joints actively decelerate the descending body mass in the loading phase rather than transmitting the impulse rigidly upward. The search window is hard-capped at 220 ms (`min(220 ms, stepDuration × 0.35)`) to ensure only Dip 1 is detected.
 
 $$\Delta t_{\text{settle}} = t(\text{pAz}_{\min}) - t_{\text{impact}} \quad [\text{ms}]$$
 
 | State | Condition | Colour | Biomechanical Meaning |
 | :--- | :---: | :--- | :--- |
-| `SETTLING ✓ Xms` | `pdLo`–`pdHi` (12–42 % of step interval) | Green | Healthy deceleration phase — compliant leg chain |
-| `QUICK Xms` | < `pdLo` (< 12 % of step interval) | Yellow | Stiff absorption — no measurable deceleration phase |
-| `SLOW Xms` | > `pdHi` (> 42 % of step interval) | Yellow | Very delayed response — sluggish weight transfer |
+| `SETTLING ✓ Xms` | `pdLo`–`pdHi` (10–32 % of step interval) | Green | Healthy deceleration phase — compliant leg chain |
+| `QUICK Xms` | < `pdLo` (< 10 % of step interval, min 40 ms) | Yellow | Stiff absorption — no measurable deceleration phase |
+| `SLOW Xms` | > `pdHi` (> 32 % of step interval, within 220 ms cap) | Yellow | Very delayed response — sluggish weight transfer |
 | `— SETTLE` | No pelvis sensor **or** no measurable dip in `pAz` | Grey | Also displays `QUICK 0ms` when hip absorption is stiff and no dip is detectable |
 
 #### GND Score — Composite Grounding Quality
@@ -606,5 +640,5 @@ where each component score is normalised to 0–100 from its respective badge st
 | 35–64 | Yellow | Partial absorption — one or more components suboptimal |
 | < 35 | Red | Poor shock dissipation — stiff kinetic chain or uncontrolled forefoot |
 
-**Note:** If the pelvis sensor is absent the Grounding Card is not displayed. ROLL alone (foot sensor) cannot produce a GND Score without the pelvis components.
+**Note:** The Grounding Card is shown at ADV level whenever the layout permits, regardless of the pelvis sensor. If the pelvis sensor is absent, the SDR and SETTLE components stay grey (unmeasured) and are dropped from the weighted average — the GND Score is then computed from the ROLL component alone (foot sensors). The score reflects only the components that are currently live.
 

@@ -114,19 +114,19 @@ Im WCS sind bei **Vorwärtsschritten** alle drei Rocker vorhanden: Fersenaufsatz
    Das Strike-Badge bewertet *wie* der Fuß gelandet ist, unabhängig von der Richtung. Dies ist für Vorwärts- und Rückwärtsschritte gleichermaßen nützlich: `SOFT ✓` bei θ ≈ 0° zeigt einen kontrollierten Rückwärtsschritt an; `HARD IMPACT ⚠` bei θ ≈ 0° bedeutet, dass der Tänzer auf den Fuß gefallen ist.
 
    Jerk-Schwellenwerte:
-   - **HART:** J > 27,5 g/s (intern > 110)
-   - **MODERAT:** 25 g/s < J ≤ 27,5 g/s (intern 100–110)
-   - **WEICH:** J ≤ 25 g/s (intern ≤ 100)
+   - **HART:** J > 130 g/s (intern > 520)
+   - **MODERAT:** 55 g/s < J ≤ 130 g/s (intern 220–520)
+   - **WEICH:** J ≤ 55 g/s (intern ≤ 220)
 
    | θ-Zone | Jerk | Badge | Bedeutung |
    | :---: | :---: | :--- | :--- |
-   | ≥ +6° (Ferse) | ≤ 27,5 g/s | `HEEL STRIKE ✓` (Grün) | Saubere Fersenlandung — korrekte Vorwärtstechnik |
-   | ≥ +6° (Ferse) | > 27,5 g/s | `HEEL SLAM ⚠` (Rot) | Fersenkontakt, aber zu abrupt — mit Knie/Knöchel abfedern |
-   | < −6° (Zehe) | ≤ 27,5 g/s | `TOE-FIRST ✓` (Grün) | Kontrollierter Zehenerstkontakt — korrekt für tiefe Rückwärtsschritte oder Ball-Steps |
-   | < −6° (Zehe) | > 27,5 g/s | `TOE JAM ⚠` (Rot) | Zehenkontakt zu hart |
-   | −6° bis +5° (mehrdeutig) | ≤ 25 g/s | `SOFT ✓` (Grün) | Kontrollierte Landung — gute Qualität unabhängig von der Richtung |
-   | −6° bis +5° (mehrdeutig) | 25–27,5 g/s | `MODERATE` (Gelb) | Akzeptabel; Aufprall reduzieren |
-   | −6° bis +5° (mehrdeutig) | > 27,5 g/s | `HARD IMPACT ⚠` (Rot) | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
+   | ≥ +6° (Ferse) | ≤ 130 g/s | `HEEL STRIKE ✓` (Grün) | Saubere Fersenlandung — korrekte Vorwärtstechnik |
+   | ≥ +6° (Ferse) | > 130 g/s | `HEEL SLAM ⚠` (Rot) | Fersenkontakt, aber zu abrupt — mit Knie/Knöchel abfedern |
+   | < −6° (Zehe) | ≤ 130 g/s | `TOE-FIRST ✓` (Grün) | Kontrollierter Zehenerstkontakt — korrekt für tiefe Rückwärtsschritte oder Ball-Steps |
+   | < −6° (Zehe) | > 130 g/s | `TOE JAM ⚠` (Rot) | Zehenkontakt zu hart |
+   | −6° bis +5° (mehrdeutig) | ≤ 55 g/s | `SOFT ✓` (Grün) | Kontrollierte Landung — gute Qualität unabhängig von der Richtung |
+   | −6° bis +5° (mehrdeutig) | 55–130 g/s | `MODERATE` (Gelb) | Akzeptabel; Aufprall reduzieren |
+   | −6° bis +5° (mehrdeutig) | > 130 g/s | `HARD IMPACT ⚠` (Rot) | Auf den Fuß gefallen — löst 1200-Hz-Klick aus |
 
    * **BRUSH+HEEL-Neuklassifikation (200-ms-Fenster):** Wenn eine Landung in der mehrdeutigen Zone innerhalb von 200 ms von einem zweiten aZ > 1,05 g-Peak mit accelAngle > 8° am gleichen Fuß gefolgt wird, wird das Badge zu `BRUSH+HEEL` (grün) aufgewertet und das Richtungs-Badge zeigt ➡ FWD.
 
@@ -169,9 +169,9 @@ $$J_{\text{impact}} = \left| \frac{aZ_{\text{current}} - aZ_{\text{previous}}}{\
 
 > **Einheitenhinweis:** Dieses $J$ ist in $g/\text{s}$, nicht in $N/\text{s}$ oder $\text{BW/s}$ wie in der Bodenreaktionskraft-Literatur. Die folgenden Schwellenwerte sind geräte- und algorithmusspezifische Heuristiken, keine direkten Äquivalente zu GRF-Belastungsratenstudien.
 
-* **Weiche Dämpfung ($1\text{ bis }15\text{ g/s}$):** Hervorragende Gelenkabsorption (`SOFT`).
-* **Moderater Aufprall ($15\text{ bis }30\text{ g/s}$):** Akzeptabler Schrittaufprall.
-* **Hartes Stampfen ($> 30\text{ g/s}$ oder $J_{\text{native}} > 120$):** Übermäßiger Schock auf die Gelenke; löst einen niederfrequenten 500-Hz-Aufprallklick aus.
+* **Weiche Dämpfung ($\le 55\text{ g/s}$):** Gute Gelenkabsorption (`SOFT ✓`).
+* **Moderater Aufprall ($55\text{ bis }130\text{ g/s}$):** Erhöhter, aber normaler Schrittaufprall (`MODERATE`).
+* **Hartes Stampfen ($> 130\text{ g/s}$):** Übermäßiger Schock auf die Gelenke (`HARD IMPACT ⚠`); löst einen niederfrequenten 500-Hz-Aufprallklick aus. (Interne Skala: Badge-Grenzen bei 220 und 520 Roheinheiten = 55 und 130 g/s angezeigt nach ÷4-Skalierung.)
 
 ---
 
@@ -199,7 +199,7 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
 | :---: | :---: | :--- |
 | **15% bis 60%** | `OPTIMAL ROLL` | Ideale geerdete Abrollphase für Läufe und Ausdehnung. |
 | **< 15%** | `HECTIC` | Gehetzter Gewichtstransfer; fehlende Abrollartikulierung. |
-| **> 60%** | `SLUGGISH` | Übermäßiger Bodenkontakt; schwerfälliger Tempoübergang. |
+| **> sluggishThr (tempoadaptiv)** | `SLUGGISH` | Übermäßiger Bodenkontakt; schwerfälliger Tempoübergang. Schwellenwert: 60 % bei ≥ 120 BPM, 67 % bei 90 BPM, 70 % bei 80 BPM, 72 % bei 75 BPM. Formel: `min(80, 60 + max(0, stepDurationMs − 500) × 0,04)` |
 
 ---
 
@@ -209,6 +209,36 @@ $$\text{Standphasenverhältnis} = \left( \frac{\Delta t_{\text{double-stance}}}{
    Vergleicht die integrierte Winkelarbeit über linke und rechte Fuß-Abrollzyklen während die Füße aktiv in Bewegung sind ($|\omega_{\text{pitch}}| > 15^\circ/\text{s}$):
    $$\text{ASI} = \frac{2 \cdot \left|\int|\omega_{\text{left}}|\,dt - \int|\omega_{\text{right}}|\,dt\right|}{\int|\omega_{\text{left}}|\,dt + \int|\omega_{\text{right}}|\,dt} \times 100\%$$
    * **Ziel:** $< 15\%$ (`SYMMETRIC`), $16\text{--}35\%$ (`MINOR ASYM`), $>35\%$ (`ASYMMETRIC`).
+
+---
+
+### Rollen-Modus: Leader / Follower
+
+Der **👤 LEADER / 💃 FOLLOWER**-Schalter (in localStorage gespeichert) passt Schwellenwert-Gruppen für drei Metriken an, um die biomechanischen Unterschiede zwischen Leader- und Follower-Rolle im WCS widerzuspiegeln.
+
+**Warum unterschiedliche Schwellenwerte:**
+- **Timing:** Follower reagieren auf die Führung — ihr Gewichtstransfer ist von Natur aus schneller. Das gleiche schnelle Timing, das beim Leader „zu früh" signalisiert, ist für den Follower korrekt und beabsichtigt.
+- **Push-Off:** Follower-Abstoß ist strukturell kompakter (kürzere Hebellänge, weniger vorbereitende Standphasenverlängerung).
+- **Asymmetrie:** Follower haben eine strukturelle Verbindungsseiten-Asymmetrie, die unabhängig vom Können besteht.
+
+**Schwellenwert-Vergleich:**
+
+| Metrik | Leader | Follower |
+|---|---|---|
+| DELAY RAMP vorwärts — DELAYED ✓ | 12–38 % | 6–30 % |
+| DELAY RAMP rückwärts — DELAYED ✓ | 18–50 % | 10–40 % |
+| Push-Off vorwärts (POWER PUSH) | ≥ 200 °/s Peak ODER ≥ 20° Integral | ≥ 160 °/s Peak ODER ≥ 16° Integral |
+| Push-Off rückwärts (POWER PUSH) | ≥ 160 °/s Peak ODER ≥ 16° Integral | ≥ 130 °/s Peak ODER ≥ 13° Integral |
+| ASI — SYMMETRISCH | ≤ 15 % | ≤ 25 % |
+| ASI — GERINGE ASYM. | ≤ 35 % | ≤ 40 % |
+
+**Kalibrierungsanzeige (nur Follower-Modus):**
+Im Follower-Modus werden zwei zusätzliche Rohwerte zur Algorithmus-Validierung angezeigt:
+- **Richtungs-Badge:** Zeigt den gemessenen Fußwinkel θ beim Aufprall (z. B. `⬅ BWD −4°`, `— +2°`). Ermöglicht die Validierung der ±6°-Zonengrenze für Follower-Rückwärtsschritte.
+- **Push-Off-Badge:** Zeigt die Spitzen-Winkelgeschwindigkeit des abstoßenden Fußes (z. B. `↗ PUSH 148 °/s`). Ermöglicht die Validierung der 160 °/s / 130 °/s Follower-Push-Schwellen.
+Beide Werte sind im Leader-Modus ausgeblendet.
+
+**Status:** DELAY RAMP- und ASI-Schwellen validiert (Gemini-Videoanalyse, Sep 2026). Push-Off-°/s-Schwellen und θ-Zonengrenzen für Follower-Rückwärtsschritte warten auf Validierung mit dediziertem Follower-Videomaterial.
 
 ---
 
@@ -270,21 +300,21 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 
 | Metrik / Parameter | Wert / Bereich | Visuelles Badge / Zustand | Audio-Biofeedback |
 | :--- | :--- | :--- | :--- |
-| **Fersenzone — kontrolliert** | $\theta \ge +6°$, Jerk $\le 27{,}5$ g/s | `HEEL STRIKE ✓` (Grün) | Kein |
-| **Fersenzone — abrupt** | $\theta \ge +6°$, Jerk $> 27{,}5$ g/s | `HEEL SLAM ⚠` (Rot) | 1200-Hz-Klick |
-| **Zehenzone — kontrolliert** | $\theta < -6°$, Jerk $\le 27{,}5$ g/s | `TOE-FIRST ✓` (Grün) | Kein |
-| **Zehenzone — abrupt** | $\theta < -6°$, Jerk $> 27{,}5$ g/s | `TOE JAM ⚠` (Rot) | 1200-Hz-Klick |
-| **Mehrdeutig — weich** | $-6° \le \theta < +6°$, Jerk $\le 25$ g/s | `SOFT ✓` (Grün) | Kein |
-| **Mehrdeutig — moderat** | $-6° \le \theta < +6°$, Jerk $25\text{–}27{,}5$ g/s | `MODERATE` (Gelb) | Kein |
-| **Mehrdeutig — hart** | $-6° \le \theta < +6°$, Jerk $> 27{,}5$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
+| **Fersenzone — kontrolliert** | $\theta \ge +6°$, Jerk $\le 130$ g/s | `HEEL STRIKE ✓` (Grün) | Kein |
+| **Fersenzone — abrupt** | $\theta \ge +6°$, Jerk $> 130$ g/s | `HEEL SLAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Zehenzone — kontrolliert** | $\theta < -6°$, Jerk $\le 130$ g/s | `TOE-FIRST ✓` (Grün) | Kein |
+| **Zehenzone — abrupt** | $\theta < -6°$, Jerk $> 130$ g/s | `TOE JAM ⚠` (Rot) | 1200-Hz-Klick |
+| **Mehrdeutig — weich** | $-6° \le \theta < +6°$, Jerk $\le 55$ g/s | `SOFT ✓` (Grün) | Kein |
+| **Mehrdeutig — moderat** | $-6° \le \theta < +6°$, Jerk $55\text{–}130$ g/s | `MODERATE` (Gelb) | Kein |
+| **Mehrdeutig — hart** | $-6° \le \theta < +6°$, Jerk $> 130$ g/s | `HARD IMPACT ⚠` (Rot) | 1200-Hz-Klick |
 | **BRUSH+HEEL-Neuklassifikation** | mehrdeutig → zweites aZ $> 1{,}05\,g$ + accelAngle $> 8°$ innerhalb 200 ms | `BRUSH+HEEL` (Grün) → ➡ FWD | Kein |
 | **Standbein-Abstoß (vorwärts, optimal)** | BACKWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 200^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (rückwärts/Anker, optimal)** | FORWARD letzter Schritt + $-\omega_{\text{pitch}} \ge 160^\circ/\text{s}$ UND $aY > 0.15g$ | `🚀 POWER PUSH` (Grün) — hält 400 ms | Kein |
 | **Standbein-Abstoß (schwach)** | Beide Richtungen, $120\text{–}159/199^\circ/\text{s}$ UND $aY > 0.15g$ | `↗ PUSH` (Gelb) — hält 400 ms | Kein |
-| **Aufprall-Jerk ($J_{\text{impact}}$)** | $> 30\text{ g/s}$ | Karten-Rand blinkt | 500-Hz-Aufprallklick (80 ms) |
+| **Aufprall-Jerk ($J_{\text{impact}}$)** | $> 130\text{ g/s}$ | Karten-Rand blinkt | 500-Hz-Aufprallklick (80 ms) |
 | **Doppelstandphase — Optimal** | 15% bis 60% | `OPTIMAL ROLL` (Grün) | Kein |
 | **Doppelstandphase — Hetzen** | $< 15\%$ | `HECTIC` (Gelb) | Kein |
-| **Doppelstandphase — Träge** | $> 60\%$ | `SLUGGISH` (Gelb) | Kein |
+| **Doppelstandphase — Träge** | $> \text{sluggishThr}$ (60–72 %, tempoadaptiv) | `SLUGGISH` (Gelb) | Kein |
 | **Gewichtstransfer — Progressiv** | loadRise $> 0.12\,g$ | `SMOOTH LOAD` (Grün) | Kein |
 | **Gewichtstransfer — Sofort** | $-0.10 \le$ loadRise $\le 0.12$ | `INSTANT LOAD` (Gelb) | Kein |
 | **Gewichtstransfer — Frühzeitig** | loadRise $< -0.10\,g$ | `EARLY UNLOAD` (Gelb) | Kein |
@@ -313,9 +343,9 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 | **SDR — gut gedämpft** | SDR > 0,65 | `ABSORBING ✓` (Grün) — nur ADV + Pelvis | Kein |
 | **SDR — partiell** | SDR 0,35–0,65 | `PARTIAL SDR` (Gelb) — nur ADV + Pelvis | Kein |
 | **SDR — steif** | SDR < 0,35 | `STIFF` (Rot) — nur ADV + Pelvis | Kein |
-| **SETTLE — gesund** | 12–42 % des Schrittintervalls | `SETTLING ✓ Xms` (Grün) — nur ADV + Pelvis | Kein |
-| **SETTLE — starr** | < 12 % des Schrittintervalls | `QUICK Xms` (Gelb) — nur ADV + Pelvis | Kein |
-| **SETTLE — verzögert** | > 42 % des Schrittintervalls | `SLOW Xms` (Gelb) — nur ADV + Pelvis | Kein |
+| **SETTLE — gesund** | 10–32 % des Schrittintervalls (max. 220 ms) | `SETTLING ✓ Xms` (Grün) — nur ADV + Pelvis | Kein |
+| **SETTLE — starr** | < 10 % des Schrittintervalls | `QUICK Xms` (Gelb) — nur ADV + Pelvis | Kein |
+| **SETTLE — verzögert** | > 32 % des Schrittintervalls (max. 220 ms) | `SLOW Xms` (Gelb) — nur ADV + Pelvis | Kein |
 | **GND-Score — gut** | ≥ 65 | Grounding-Kachel grün — nur ADV | Kein |
 | **GND-Score — mittel** | ≥ 35 | Grounding-Kachel gelb — nur ADV | Kein |
 | **GND-Score — schwach** | < 35 | Grounding-Kachel rot — nur ADV | Kein |
@@ -327,7 +357,7 @@ $$\text{ratio} = \frac{t_{\text{ramp}}}{t_{\text{step}}}$$
 
 Bei einem gut ausgeführten Rückwärts-Anker setzt der Fuß zunächst auf dem Ballen auf (θ negativ — Plantarflexion) und senkt sich dann zur Ferse, während das Körpergewicht einsinkt. Der Sensor quantifiziert diese Progression durch Tracking des Fußneigungswinkels θ während eines tempoadaptiven Fensters nach jedem Rückwärtsschritt.
 
-**Fenster:** `anchorWindowMs = clamp(stepDurationMs × 1,05; 280 ms; 900 ms)` — tempoadaptiv, unabhängig vom Becken-Anchor-Settle (der einen festen 500-ms-Abstand nach dem letzten Rückwärtsschritt verwendet).
+**Fenster:** `anchorWindowMs = clamp(stepDurationMs × 1,05; 280 ms; 900 ms)` — tempoadaptiv, unabhängig vom Becken-Anchor-Settle (der ein tempoadaptives Fenster von 280–400 ms nach dem letzten Rückwärtsschritt verwendet).
 
 **Berechnung:**
 
@@ -335,7 +365,7 @@ Zum Zeitpunkt des Rückwärtsschritt-Auslösers wird der Fußwinkel aus T-1 (vor
 
 $$\theta_{T-1} = \text{Fußwinkel zum Auslösezeitpunkt, vor Reset (T-1-Snapshot)}$$
 
-$$\theta_{\text{spät}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]} \quad \text{(zweite Hälfte des 280–500 ms Post-Reset-Fensters)}$$
+$$\theta_{\text{spät}} = \overline{\theta}_{[\lfloor n/2 \rfloor,\,n]} \quad \text{(zweite Hälfte des 280–900 ms Post-Reset-Fensters)}$$
 
 | Bedingung | Badge | Biomechanische Bedeutung |
 | :---: | :---: | :--- |
@@ -439,13 +469,13 @@ Misst die Zeit vom Fußkontakt bis zum **ersten** Minimum der vertikalen Beckenb
 
 $$\text{SETTLE-Zeit} = t\!\left(\min(pA_z)\right) - t_{\text{Fußkontakt}} \quad [\text{ms}]$$
 
-Ein gesundes Impact-Absorptions-Fenster von 12–42 % des aktuellen Schrittintervalls (Untergrenze 30 ms) zeigt an, dass Knie- und Hüftgelenk den Aufprall in der Loading-Response-Phase aktiv abfedern — nicht starr in die kinetische Kette weiterleiten. Das Auswertungsfenster skaliert ebenfalls: `max(200 ms, t_Schritt × 0,45)`.
+Ein gesundes Impact-Absorptions-Fenster von 10–32 % des aktuellen Schrittintervalls (Untergrenze 40 ms) zeigt an, dass Knie- und Hüftgelenk den Aufprall in der Loading-Response-Phase aktiv abfedern — nicht starr in die kinetische Kette weiterleiten. Das Suchfenster ist auf max. 220 ms begrenzt (`min(220 ms, t_Schritt × 0,35)`), um sicherzustellen, dass nur Dip 1 (Impact-Absorption) erfasst wird, nicht Dip 2 (vollständiges WCS-Settle).
 
 | Badge | Bedingung | Farbe | Biomechanische Bedeutung |
 | :---: | :---: | :---: | :--- |
-| `SETTLING ✓ Xms` | `pdLo`–`pdHi` (12–42 % des Schrittintervalls) | Grün | Gesunde Beinketten-Compliance — kontrolliertes Einsinken |
-| `QUICK Xms` | < `pdLo` (< 12 % des Schrittintervalls) | Gelb | Starre Absorption, kein messbares Verzögerungsplateau; zeigt auch `QUICK 0ms` bei völlig starrer Hüftabsorption (kein messbarer Dip in Becken-aZ) |
-| `SLOW Xms` | > `pdHi` (> 42 % des Schrittintervalls) | Gelb | Sehr verzögerte Reaktion — übermäßig nachgebende Kette |
+| `SETTLING ✓ Xms` | `pdLo`–`pdHi` (10–32 % des Schrittintervalls) | Grün | Gesunde Beinketten-Compliance — kontrolliertes Einsinken |
+| `QUICK Xms` | < `pdLo` (< 10 % des Schrittintervalls, min. 40 ms) | Gelb | Starre Absorption, kein messbares Verzögerungsplateau; zeigt auch `QUICK 0ms` bei völlig starrer Hüftabsorption (kein messbarer Dip in Becken-aZ) |
+| `SLOW Xms` | > `pdHi` (> 32 % des Schrittintervalls, max. 220 ms) | Gelb | Sehr verzögerte Reaktion — träge Gelenkaktivierung |
 | `— SETTLE` | Kein Pelvis-Sensor | Grau | Beckensensor nicht verbunden |
 
 ---
@@ -605,13 +635,17 @@ Der Offset wird beim Drücken von `📐 ZERO` erfasst (Tänzer steht in neutrale
 
 Bewertet die Qualität des Abbremsens und Einschwingens des Beckens nach jedem Anker-Rückwärtsschritt — der entscheidende Moment, in dem WCS-Dehnung in geerdet kontrollierten Gewichtstransfer umgewandelt wird.
 
-**Auslöser:** Jeder bestätigte BACKWARD-Schritt (unabhängig vom Pelvis-Sensor-Status) öffnet ein frisches Auswertungsfenster. Das Fenster bleibt offen, solange AMBIGUOUS-Schritte innerhalb von 2 Sekunden folgen und bwd < 2. Der Timer feuert 700 ms nach dem letzten relevanten Rückwärtsschritt:
+**Auslöser:** Jeder bestätigte BACKWARD-Schritt (unabhängig vom Pelvis-Sensor-Status) öffnet ein frisches Auswertungsfenster. Das Fenster bleibt offen, solange AMBIGUOUS-Schritte innerhalb von 2 Sekunden folgen und bwd < 2. Der Timer feuert nach einem tempoadaptiven Fenster nach dem letzten relevanten Rückwärtsschritt:
 
-$$t_{\text{eval}} = t_{\text{letzter BACKWARD-Schritt}} + 700\,\text{ms}$$
+$$t_{\text{eval}} = t_{\text{letzter BACKWARD-Schritt}} + t_{\text{Settle-Fenster}}$$
 
-In der Praxis erscheint der Badge ca. auf Beat 1 der Folgephrase (AMBIGUOUS &-Schritte verlängern die Deadline durch das Triple; das Fenster schließt beim ersten Vorwärtsschritt oder nach Ablauf des 700-ms-Timers). Der Score bleibt 3 Sekunden sichtbar.
+$$t_{\text{Settle-Fenster}} = \text{clamp}(\text{stepDurationMs} \times 0{,}55,\ 280\,\text{ms},\ 400\,\text{ms})$$
 
-**Mindest-Samples:** 3 Pelvis-Datenpunkte erforderlich (Pelvis-Sensor überträgt bei ~7–12 Hz über WLAN; ein 700-ms-Fenster liefert unter normalen Bedingungen 5–8 Samples).
+Typische Werte: 367 ms bei 90 BPM · 400 ms bei 80 BPM · 400 ms bei 75 BPM (begrenzt). Das Fenster schließt früher, wenn der erste Vorwärtsschritt erkannt wird (erzwingt sofortige Auswertung). Der Score bleibt 3 Sekunden sichtbar.
+
+**Hintergrund des kürzeren Fensters:** Bei typischen WCS-Tempos (80–100 BPM) reichte das alte 700-ms-Fenster in den nächsten Beat hinein und erfasste die Übergangsbewegung der nächsten Figur statt des Anchor-Einschwingvorgangs. Das tempoadaptive Fenster schließt vor Count 1 der Folgephrase.
+
+**Mindest-Samples:** 3 Pelvis-Datenpunkte erforderlich (Pelvis-Sensor überträgt bei ~7–12 Hz über WLAN; ein 280–400-ms-Fenster liefert unter normalen Bedingungen 2–5 Samples).
 
 Gesammelte Signale: sagittale Beckenbeschleunigung (`aSagP`), Hüftgier-Rate (`gYawP`) und laterale Beckenbeschleunigung (`aLatP`) für Hip Settle.
 
