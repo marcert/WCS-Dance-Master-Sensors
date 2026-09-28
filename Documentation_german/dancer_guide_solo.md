@@ -37,7 +37,7 @@ Im Querformat ist der Bildschirm in zwei Spalten unterteilt:
 ```
 
 - **Oben links**: zeigt die Karte **Becken — Hüftmechanik**, wenn der Beckensensor angebracht und eingeschaltet ist; andernfalls leer, damit die Kamera ungehindert sichtbar ist.
-- **Unten links**: Live-Roll-off-Dynamik-Diagramm (Nickwinkel-Winkelgeschwindigkeit beider Füße über die Zeit).
+- **Unten links**: Live-Roll-off-Dynamik-Diagramm (wie schnell sich jeder Fuß beim Abrollen dreht, über die Zeit).
 - **Oben rechts**: Doppelstand-Überschneidungs-Karte.
 - **Unten rechts**: Letzter-Schritt-Karte (dein primäres Echtzeit-Feedback).
 - **Unten Mitte**: Roll-off-Symmetrie- und Gleichmäßigkeits-Karte.
@@ -78,6 +78,23 @@ Zwei Karten unten. [Schritttechnik](#4-die-schritt-badge-karte) rechts, [Timing-
 
 Vier Metrikkarten plus das Live-Diagramm: [Schritt-Badge](#4-die-schritt-badge-karte), [Doppelstand](#6-die-doppelstand-karte), [Roll-off-Symmetrie & Gleichmäßigkeit](#7-die-roll-off-symmetrie--und-gleichmäßigkeits-karte) und [Grounding-Kachel](#8-die-grounding-kachel-adv). Die Grounding-Kachel erscheint links neben dem (schmaleren) Diagramm und fasst SDR, SETTLE und den GND-Score in einem Panel zusammen. Verwende diesen Grad für detaillierte Analysesitzungen, nicht zum Erlernen neuer Muster.
 
+### Leader / Follower Modus
+
+Der **👤 LEADER**-Button (blau) in der oberen Leiste schaltet auf **💃 FOLLOWER**-Modus (pink) um und zurück. Die Einstellung wird im Browser gespeichert und bleibt über Sessions hinweg erhalten.
+
+**Wann Follower-Modus aktivieren:** Wenn du die Follower-Rolle tanzt. Das System passt drei Metriken an, um die strukturellen Unterschiede reaktiver (Follower-)Bewegung zu berücksichtigen:
+
+| Metrik | Leader-Schwelle | Follower-Schwelle | Grund |
+|---|---|---|---|
+| DELAY RAMP vorwärts | 12–38 % → DELAYED ✓ | 6–30 % → DELAYED ✓ | Follower reagieren auf die Führung — Gewichtsübergabe ist von Natur aus schneller |
+| DELAY RAMP rückwärts | 18–50 % → DELAYED ✓ | 10–40 % → DELAYED ✓ | Gleicher Grund: reaktives Timing ist kompakter |
+| Push-Off (vorwärts) | ≥ 200 °/s → POWER PUSH | ≥ 160 °/s → POWER PUSH | Follower-Push-Off ist kompakter |
+| Push-Off (rückwärts) | ≥ 160 °/s → POWER PUSH | ≥ 130 °/s → POWER PUSH | Gleicher Grund |
+| ASI Symmetrisch | ≤ 15 % | ≤ 25 % | Follower sind strukturell asymmetrischer (Verbindungsseite, reaktives Timing) |
+| ASI Geringe Asym. | ≤ 35 % | ≤ 40 % | Breitere Toleranz für strukturelle Asymmetrie |
+
+**Kalibrierungsanzeige:** Im Follower-Modus zeigt der Richtungs-Badge den gemessenen Fußwinkel an (z. B. `⬅ BWD −4°`) und der Push-Off-Badge die Spitzenwinkelgeschwindigkeit (z. B. `↗ PUSH 148 °/s`). Diese Werte sind im Leader-Modus ausgeblendet, um die UI übersichtlich zu halten.
+
 ---
 
 ## 4. Die Schritt-Badge-Karte
@@ -88,7 +105,7 @@ Dies ist die **primäre Echtzeit-Feedback-Karte**. Sie wird bei jedem erkannten 
 
 | Element | Was es dir sagt |
 | :--- | :--- |
-| **Richtungs-Badge** | ➡ FWD (θ ≥ +6°), ⬅ BWD (θ < −6°), oder — wenn der Winkel in der unklaren Zone liegt |
+| **Richtungs-Badge** | ➡ FWD (Fußwinkel +6° oder mehr), ⬅ BWD (unter −6°), oder — wenn der Winkel in der unklaren Zone liegt |
 | **Strike-Badge** (großes farbiges Label) | Klassifizierung dieser Landung — siehe Tabellen unten |
 | **ROLL-Badge** | Abrollqualität — wie der Vorfuß nach dem Fersenkontakt abgesenkt wird (alle Stufen) — [siehe Abschnitt unten](#roll-badge-alle-stufen) |
 | **PUSH-OFF-Badge** | Push-off-Kraft deines hinteren Fußes (Anfänger: ausgeblendet) |
@@ -98,22 +115,22 @@ Dies ist die **primäre Echtzeit-Feedback-Karte**. Sie wird bei jedem erkannten 
 
 ### Wie die Richtung bestimmt wird
 
-Das System klassifiziert die Richtung anhand des Nickwinkels θ des Fußes. Die Richtung ist **nur an den Extremen zuverlässig**:
+Das System liest die Richtung aus der Neigung deines Fußes beim Aufsetzen ab (als Winkel angezeigt). Die Richtung ist **nur an den Extremen zuverlässig**:
 
-| Richtungs-Badge | θ beim Aufsetzen | Bedeutung |
+| Richtungs-Badge | Fußwinkel beim Aufsetzen | Bedeutung |
 | :--- | :--- | :--- |
-| **➡ FWD** | θ ≥ +6° | Klare Dorsalflexion — Ferse hat zuerst Kontakt |
-| **—** (grau) | −6° bis +5° | Unklare Zone — Fuß zu flach für Richtungsbestimmung |
-| **⬅ BWD** | θ < −6° | Klare Plantarflexion — Ballen hat zuerst Kontakt |
+| **➡ FWD** | +6° oder mehr (Zehen hoch) | Ferse hatte klar zuerst Kontakt |
+| **—** (grau) | −6° bis +5° | Unklare Zone — Fuß zu flach, um die Richtung zu erkennen |
+| **⬅ BWD** | unter −6° (Zehen runter) | Ballen hatte klar zuerst Kontakt |
 
-Liegt θ zwischen −6° und +5°, kann das System die Richtung nicht zuverlässig bestimmen. Der Richtungs-Badge zeigt — (grau). Zur Richtungsprüfung die Kameraansicht nutzen.
+Liegt der Fußwinkel zwischen −6° und +5°, kann das System die Richtung nicht zuverlässig bestimmen. Der Richtungs-Badge zeigt — (grau). Zur Richtungsprüfung die Kameraansicht nutzen.
 
-### HEEL-Zone-Badges (➡ FWD, θ ≥ +6°)
+### HEEL-Zone-Badges (➡ FWD, +6° oder mehr)
 
 | Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | ≤ 27,5 g/s | Sauberer Fersenauftritt — kontrollierter Kontakt | Ziel für alle Vorwärtsgänge und Breaks |
-| `HEEL SLAM ⚠` | > 27,5 g/s | Harter Fersenaufprall — zu viel Landekraft | Knie beim Aufsetzen beugen und Sprunggelenk weicher machen |
+| `HEEL STRIKE ✓` | ≤ 130 g/s | Sauberer Fersenauftritt — kontrollierter Kontakt | Ziel für alle Vorwärtsgänge und Breaks |
+| `HEEL SLAM ⚠` | > 130 g/s | Harter Fersenaufprall — zu viel Landekraft | Knie beim Aufsetzen beugen und Sprunggelenk weicher machen |
 
 ### Unklare Zone (—, −6° bis +5°)
 
@@ -121,33 +138,33 @@ Der Fuß ist zu flach, um die Richtung zu bestimmen. Der Qualitäts-Badge wird d
 
 | Badge | Jerk | Was es bedeutet |
 | :--- | :--- | :--- |
-| `SOFT ✓` | ≤ 25 g/s | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
-| `MODERATE` | 25–27,5 g/s | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
-| `HARD IMPACT ⚠` | > 27,5 g/s | Schwerer Flachfuß-Aufprall — Stampfmuster |
+| `SOFT ✓` | ≤ 55 g/s | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
+| `MODERATE` | 55–130 g/s | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
+| `HARD IMPACT ⚠` | > 130 g/s | Schwerer Flachfuß-Aufprall — Stampfmuster |
 | `BRUSH+HEEL` | — | Flache Landung gefolgt von Fersenauftritt innerhalb von 200 ms — automatisch zu ➡ FWD umklassifiziert; korrekte Technik bestätigt |
 
 Wenn der Richtungs-Badge — zeigt, die Kameraansicht zur Richtungsprüfung nutzen.
 
-### TOE-Zone-Badges (⬅ BWD, θ < −6°)
+### TOE-Zone-Badges (⬅ BWD, unter −6°)
 
 | Badge | Jerk | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `TOE-FIRST ✓` | ≤ 27,5 g/s | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
-| `TOE JAM ⚠` | > 27,5 g/s | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
+| `TOE-FIRST ✓` | ≤ 130 g/s | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
+| `TOE JAM ⚠` | > 130 g/s | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
 
 > **Hinweis zu frühem Fersenabsatz:** Setzt die Ferse beim Rückwärtsschritt vor dem Ballen auf, landet der Schritt in der unklaren Zone (—) statt bei ⬅ BWD. Wenn bei Schritten, die als Rückwärtsschritte gemeint sind, konstant SOFT/MODERATE/HARD IMPACT erscheinen, setzt die Ferse zu früh auf. Darauf achten, zuerst den Ballen aufkommen zu lassen und das Sprunggelenk entspannt zu halten, bis der Fuß vollständig steht.
 
 ### ROLL-Badge (alle Stufen)
 
-Das ROLL-Badge misst, wie gleichmäßig der Vorfuß nach dem Fersenkontakt abgesenkt wird — genauer gesagt, ob der M. tibialis anterior den Vorfuß dabei exzentrisch abbremst.
+Das ROLL-Badge misst, wie gleichmäßig sich der vordere Teil deines Fußes nach dem Fersenkontakt absenkt — ob du ihn kontrolliert herunterführst oder fallen lässt.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
-| `CLEAN ROLL ✓` ✅ | Gleichmäßiges, kontrolliertes Absenken des Vorfußes — aktive Sprunggelenksanspannung während des gesamten Abrollens | Gut — beibehalten |
-| `MODERATE ROLL` ⚠️ | Etwas ungleichmäßiges Abrollen | Auf die Sequenz Ferse → Außenkante → Ballen achten; Sprunggelenk leicht angespannt halten |
-| `SLAPPING` ❌ | Vorfuß fällt unkontrolliert nach dem Fersenkontakt — der M. tibialis anterior bremst nicht exzentrisch | Fuß bewusst abrollen: Ferse setzt auf, Gewicht wandert entlang der Außenkante, dann zum Ballen — mit aktiver Sprunggelenksanspannung während des gesamten Abrollens |
+| `CLEAN ROLL ✓` ✅ | Gleichmäßiges, kontrolliertes Absenken des Fußes — Sprunggelenk bleibt durchgehend aktiv | Gut — beibehalten |
+| `MODERATE ROLL` ⚠️ | Etwas ungleichmäßiges Abrollen | Auf die Sequenz Ferse → Außenkante → Ballen achten; Sprunggelenk leicht aktiv halten |
+| `SLAPPING` ❌ | Der vordere Fuß fällt unkontrolliert nach dem Fersenkontakt | Fuß bewusst abrollen: Ferse setzt auf, Gewicht wandert entlang der Außenkante, dann zum Ballen — Sprunggelenk durchgehend aktiv |
 
-> **SLAPPING erklärt:** Nach dem Fersenkontakt muss der Vorfuß *aktiv abgesenkt* werden — er darf nicht einfach fallen gelassen werden. Wenn der M. tibialis anterior (der Muskel entlang der Schienbeinkante) diese Bewegung nicht exzentrisch abbremst, klatscht der Vorfuß auf den Boden. Das erzeugt ein Auftrittgeräusch, vermindert die Stoßdämpfung und schwächt die Verbindungsqualität. Die Lösung: bewusste Sequenz Ferse → Außenkante → Ballen, mit leicht angespanntem Sprunggelenk während des gesamten Kontakts.
+> **SLAPPING erklärt:** Nach dem Fersenkontakt muss der vordere Teil des Fußes *aktiv abgesenkt* werden — er darf nicht einfach fallen gelassen werden. Lässt du ihn fallen, klatscht er auf den Boden — meist hörbar. Das erzeugt einen harten Aufprall, dämpft weniger Stoß und schwächt deine Verbindung. Die Lösung: bewusste Sequenz Ferse → Außenkante → Ballen, mit durchgehend leicht aktivem Sprunggelenk.
 
 > 📸 **[Screenshot: Schritt-Badge-Karte mit CLEAN ROLL ✓ Badge in der unteren Badge-Reihe]**
 
@@ -170,7 +187,7 @@ Diese Badges erscheinen in der unteren Badge-Reihe der Schritt-Karte und werden 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
 | `SMOOTH LOAD` ✅ | Gewicht wurde schrittweise auf den Landefuß übertragen | Gute Gelenkbiomechanik — beibehalten |
-| `INSTANT LOAD` ⚠️ | Gewicht wurde beim Aufprall sofort und vollständig auf den Landefuß übertragen | Massenschwerpunkt verlangsamen; den Boden „empfangen" statt darauf zu fallen |
+| `INSTANT LOAD` ⚠️ | Gewicht wurde beim Aufprall sofort und vollständig auf den Landefuß übertragen | Dein Gewicht langsamer ankommen lassen; den Boden „empfangen" statt darauf zu fallen |
 | `EARLY UNLOAD` ⚠️ | Gewicht verlagert sich, bevor der Fuß sicher steht | Du eilst zum nächsten Schritt. Aktuelle Gewichtsverlagerung vollständig abschließen, bevor du dich bewegst |
 
 ### Verzögerungs-Badge (INT + ADV)
@@ -210,7 +227,7 @@ Sichtbar ab **Fortgeschritten**. Diese Karte zeigt, wie lange beide Füße währ
 | :--- | :--- | :--- | :--- |
 | `OPTIMAL ROLL` ✅ | 15 %–60 % | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
 | `HECTIC` ⚠️ | < 15 % | Gehetzt — ein Fuß verlässt den Boden, bevor der andere sicher steht | „Abrollen, nicht abheben" — durch den Fuß rollen, bevor man schreitet |
-| `SLUGGISH` ⚠️ | > 60 % | Verlängerter Doppelkontakt — Zögern oder schwere Stellung | Den Massenschwerpunkt früher verlagern |
+| `SLUGGISH` ⚠️ | > 60–72 % (tempoadaptiv) | Verlängerter Doppelkontakt — Zögern oder schwere Stellung. Schwellenwert steigt mit langsamem Tempo: 60 % bei 120 BPM, 67 % bei 90 BPM, 72 % bei 75 BPM | Dein Gewicht früher verlagern |
 
 Beobachte diese Karte während **Tripleschritten und Gängen**. `HECTIC` bei einem Ankerschritt bedeutet oft, dass du den Anker verlässt, bevor du Verbindung aufgebaut hast.
 
@@ -225,7 +242,7 @@ Nur auf **Experten**-Stufe sichtbar.
 | Anzeige | Was es dir sagt | Grünes Ziel |
 | :--- | :--- | :--- |
 | **ASI %** | Unterschied zwischen linkem und rechtem Fuß-Roll-off | `SYMMETRIC` — unter 15 % |
-| **Gleichmäßigkeit** | Flüssigkeit der Sprunggelenks-Artikulation über beide Füße | `SMOOTH` — 40 oder höher |
+| **Gleichmäßigkeit** | Flüssigkeit der Sprunggelenks-Artikulation über beide Füße | `SMOOTH` — 16 oder höher (`MODERATE` 10–15, `ROUGH` unter 10) |
 
 - Hoher **ASI** (z. B. `ASYMMETRIC` > 35 %) bedeutet meist, dass ein Sprunggelenk steifer ist oder eine Seite eine alte Verletzung kompensiert.
 - Niedrige **Gleichmäßigkeit** bedeutet, dass deine Sprunggelenksbewegungen ruckartig sind. Verlangsame das Tempo und konzentriere dich darauf, durch den ganzen Fuß zu rollen statt flach aufzusetzen.
@@ -242,7 +259,7 @@ Nur auf **Experten**-Stufe sichtbar. Die Grounding-Kachel erscheint **links nebe
 | :--- | :--- | :--- |
 | **SDR-Badge** | Beckensensor | Stoßdämpfung durch die Bein-Kette — wie gut Aufprallenergie vom Fuß bis zur Hüfte absorbiert wird |
 | **SETTLE-Badge** | Beckensensor | Becken-Reaktionszeit nach dem Fußkontakt — wie schnell sich das Becken setzt |
-| **GND-Score + Balken** | Fußsensoren | Zusammengesetzter Grounding-Wert (0–100) aus SDR + SETTLE + ROLL; Balken wird grün / gelb / rot |
+| **GND-Score + Balken** | Fußsensoren | Kombinierter Grounding-Wert (0–100) aus SDR + SETTLE + ROLL; Balken wird grün / gelb / rot |
 
 > Wenn der Beckensensor offline ist, werden SDR- und SETTLE-Badge ausgeblendet. Der GND-Score spiegelt dann nur die ROLL-Qualität der Fußsensoren wider.
 
@@ -258,23 +275,23 @@ SDR (Shock-absorbing Dynamic Response) misst, wie viel der Aufprallkraft vom Fu�
 
 ### SETTLE-Badge
 
-Misst die Zeit vom Fußkontakt bis zur **ersten Abwärtsbewegung des Beckens** (Impact-Absorptions-Latenz). Das zeigt, wie aktiv die Beinkette — Knie und Hüfte — den Aufprall abfedert. Das Zielfenster **skaliert automatisch mit dem Musiktempo** — ca. 12–42 % des Schrittintervalls (≈ 60–210 ms bei 120 BPM, ≈ 45–158 ms bei 160 BPM).
+Misst die Zeit vom Fußkontakt bis zur **ersten Abwärtsbewegung des Beckens** (Impact-Absorptions-Latenz). Das zeigt, wie aktiv die Beinkette — Knie und Hüfte — den Aufprall abfedert. Das Zielfenster **skaliert automatisch mit dem Musiktempo** — ca. 10–32 % des Schrittintervalls (≈ 50–160 ms bei 120 BPM), mit einer harten Obergrenze von 220 ms um nur die erste Impact-Reaktion (Dip 1) zu erfassen.
 
 | Badge | Timing | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- | :--- |
-| `SETTLING ✓ Xms` ✅ | 12–42 % des Schrittintervalls | Beinkette federt den Aufprall aktiv ab — nachgiebige Knie- und Hüftreaktion | Beibehalten |
-| `QUICK Xms` ⚠️ | < 12 % des Schrittintervalls | Becken dips vor korrekter Lastaufnahme — Gelenke zu steif für messbare Dämpfungsphase | Knie beim Aufsetzen weicher lassen; Beinkette zuerst abfedern lassen |
-| `SLOW Xms` ⚠️ | > 42 % des Schrittintervalls | Beckenreaktion verzögert — träge Gelenkaktivierung, Aufprall passiv übertragen | Knie und Hüfte beim Fußkontakt aktiv einsetzen, nicht erst danach |
+| `SETTLING ✓ Xms` ✅ | 10–32 % des Schrittintervalls | Beinkette federt den Aufprall aktiv ab — nachgiebige Knie- und Hüftreaktion | Beibehalten |
+| `QUICK Xms` ⚠️ | < 10 % des Schrittintervalls | Becken dips vor korrekter Lastaufnahme — Gelenke zu steif für messbare Dämpfungsphase | Knie beim Aufsetzen weicher lassen; Beinkette zuerst abfedern lassen |
+| `SLOW Xms` ⚠️ | > 32 % des Schrittintervalls (max. 220 ms) | Beckenreaktion verzögert — träge Gelenkaktivierung, Aufprall passiv übertragen | Knie und Hüfte beim Fußkontakt aktiv einsetzen, nicht erst danach |
 
 ### GND-Score
 
-Ein zusammengesetzter Wert von 0–100 aus allen drei Grounding-Signalen:
+Ein kombinierter Wert von 0–100 aus allen drei Grounding-Signalen:
 
 - **SDR** — Stoßdämpfungsqualität (Beckensensor erforderlich)
 - **SETTLE** — Becken-Reaktionszeit (Beckensensor erforderlich)
 - **ROLL** — Vorfuß-Abrollqualität aus der Schritt-Karte
 
-Der Balken unterhalb des Scores wird **grün** (≥ 70), **gelb** (40–69) oder **rot** (< 40).
+Der Balken unterhalb des Scores wird **grün** (≥ 65), **gelb** (35–64) oder **rot** (< 35).
 
 > Den GND-Score als schnellen Überblick während intensiver Übungseinheiten nutzen. Wenn er abfällt, prüfen, welches Komponenten-Badge zuerst die Farbe gewechselt hat.
 
@@ -298,9 +315,10 @@ Sobald der Beckensensor aktiv ist, erscheint die Beckenkarte oben links. Wenn di
 | :--- | :--- | :--- |
 | **Hüftaktivierung** | BEG+ | Wie stark sich das Becken während der Bewegung dreht (Gieren) |
 | **Laterale Stabilität** | INT+ | Seitliches Schwingen des Beckens während der Bewegung |
+| **Beckenkippung** | INT+ | Vor-/Rückwärts-Neigung des Beckens — Haltungsprüfung (`ALIGNED` / `SLIGHT ARCH` / `LORDOSIS ⚠` / `TUCKED`) |
 | **Hüft-Fuß-Kopplung** | INT+ | Ob die Hüften jeden Schritt initiieren oder den Füßen folgen |
 | **Vertikales Auf-und-Ab** | INT+ | Wie viel vertikale Bewegung das Becken erzeugt |
-| **Anchor Settle** | ADV | Qualität der Beckensetzung in den 500 ms nach jedem Ankerschritt |
+| **Anchor Settle** | ADV | Qualität der Beckensetzung in den 280–400 ms nach jedem Ankerschritt |
 | **Hip Settle** | ADV | Ob du dich nach dem Ankerschritt in die Hüfte setzt (laterale Beckenneigung) |
 
 > 📸 **[Screenshot: Beckenkarte oben links mit allen Badge-Reihen (Hüftaktivierung bis Anchor Settle) bei aktivem Sensor]**
@@ -309,7 +327,7 @@ Sobald der Beckensensor aktiv ist, erscheint die Beckenkarte oben links. Wenn di
 
 ### Hüftaktivierung
 
-Misst die maximale transversale Hüftrotation (Gierrate) über ein rollendes 500-ms-Fenster.
+Misst, wie schnell sich deine Hüften drehen — der stärkste Moment innerhalb der letzten halben Sekunde.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
@@ -323,7 +341,7 @@ Misst die maximale transversale Hüftrotation (Gierrate) über ein rollendes 500
 
 ### Laterale Stabilität (INT+)
 
-Misst die laterale Beschleunigungsvarianz des Beckens über 1 Sekunde.
+Misst, wie stark deine Hüften seitlich schwingen, über 1 Sekunde.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
@@ -359,19 +377,19 @@ Misst, wie stark sich das Becken beim Tanzen auf und ab bewegt. Der Sensor erken
 
 ### Anchor Settle (ADV)
 
-Nach jedem Rückwärts-(Anker-)Schritt öffnet das System ein **tempo-adaptives Messfenster** (280–500 ms, automatisch je nach Schritttempo berechnet) und wertet drei Signale aus:
+Nach jedem Rückwärts-(Anker-)Schritt öffnet das System ein **tempo-adaptives Messfenster** (280–400 ms, automatisch je nach Schritttempo berechnet) und wertet drei Signale aus:
 
-1. **Verzögerung** — hat sich das Becken in der anterior-posterioren Richtung (vorwärts-rückwärts, d. h. Abstopp-Bewegung beim Anker) verlangsamt?
-2. **Gier-Dämpfung** — hat die Hüftrotation nach dem Schritt abgenommen?
-3. **Stabilität** — wie ruhig war das Becken in der zweiten Hälfte des Fensters?
+1. **Abbremsen** — haben deine Hüften ihre Vorwärts-/Rückwärtsbewegung abgestoppt?
+2. **Rotation lässt nach** — hat deine Hüftrotation nach dem Schritt nachgelassen?
+3. **Ruhe** — wie ruhig waren deine Hüften in der zweiten Hälfte des Fensters?
 
-> **Was gemessen wird:** Das System wertet Abstopp-Bewegung (vorwärts-rückwärts) und Rotationsdämpfung aus. Das „In-die-Hüfte-Setzen" (leichte seitliche Beckenneigung beim Anker) wird derzeit **nicht** erfasst — dafür eignet sich die Kameraansicht.
+> **Was gemessen wird:** Der Anchor-Settle-Score wertet Abstopp-Bewegung (vorwärts-rückwärts), Rotationsdämpfung und Stabilität aus. Das „In-die-Hüfte-Setzen" (leichte seitliche Beckenneigung beim Anker) wird separat vom **Hip-Settle**-Badge erfasst (siehe unten) — es fließt nicht in den Anchor-Settle-Score ein.
 
 Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im Badge angezeigt wird.
 
 | Badge | Wert | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- | :--- |
-| `ANCHORED (n)` ✅ | ≥ 50 | Starke Verzögerung + Gier-Dämpfung + stabile Haltung | Gut — an Konsistenz bei jedem Ankerschritt arbeiten |
+| `ANCHORED (n)` ✅ | ≥ 50 | Starkes Abbremsen + nachlassende Rotation + stabile Haltung | Gut — an Konsistenz bei jedem Ankerschritt arbeiten |
 | `SETTLING (n)` ⚠️ | 30–49 | Teilweise Setzung — eine oder zwei Komponenten schwach | Schwache Komponente mit den untenstehenden Tipps identifizieren |
 | `UNSTABLE (n)` ❌ | < 30 | Becken bewegt sich oder wackelt noch nach dem Anker | „Anker festsetzen" — das Ende des Slots erreichen und halten |
 
@@ -384,7 +402,7 @@ Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im 
 
 ### Hip Settle (ADV)
 
-Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob eine kurze laterale Beckenneigung zur Standbeinseite hin stattfindet und dann stabil gehalten wird. Das System wertet `aLatP` (laterale Beschleunigung des Beckensensors) in dem gleichen 500-ms-Fenster wie Anchor Settle aus.
+Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob eine kurze seitliche Hüftbewegung zur Standbeinseite hin stattfindet und dann stabil gehalten wird. Das System betrachtet deine seitliche Hüftbewegung in dem gleichen 280–400-ms-Fenster wie Anchor Settle.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
@@ -416,7 +434,7 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 
 **Zwei Fokuspunkte: Technik-Konsistenz + Gewichtsübertragungs-Timing.**
 
-1. Vorwärtsgänge → auf konstantes `HEEL STRIKE ✓` achten. ROLL-Badge prüfen: `CLEAN ROLL ✓` bedeutet, dass der M. tibialis anterior den Vorfuß kontrolliert absetzt.
+1. Vorwärtsgänge → auf konstantes `HEEL STRIKE ✓` achten. ROLL-Badge prüfen: `CLEAN ROLL ✓` bedeutet, dass du den vorderen Teil des Fußes kontrolliert absetzt.
 2. Rückwärtsgänge → auf `TOE-FIRST ✓` achten. Ein — Richtungs-Badge bei einem Rückwärtsschritt bedeutet, dass der Fuß zu flach landet — die Ferse setzt vor dem Ballen auf.
 3. Das **POWER PUSH-Badge** beobachten: ist dein hinteres Bein passiv?
 4. Die **Doppelstand-Karte** einführen: bei Tripleschritten auf `OPTIMAL ROLL` hinarbeiten.
@@ -433,9 +451,9 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 3. **ASI** zwischen links und rechts über eine vollständige Trainingssitzung vergleichen. Eine konstant schlechtere Seite weist auf ein Kompensationsmuster hin.
 4. **ANKLE FLEX vs. STIFF ANKLE** zur Ermüdungsüberwachung nutzen — Sprunggelenkssteifigkeit nimmt bei Muskelermüdung zu.
 5. Mit `📷 CAM` aufnehmen und während der Pausen abspielen.
-5. Das **Roll-off-Dynamik-Diagramm** verwenden, um Gyrospitzenwerte zwischen den Füßen zu vergleichen.
+6. Das **Roll-off-Dynamik-Diagramm** verwenden, um zu vergleichen, wie schnell sich jeder Fuß beim Abrollen dreht.
 
-**Mit Beckensensor:** **Anchor Settle** als Anker-Qualitäts-KPI verwenden. Grundfiguren wie Sugar Push, Left Side Pass oder Underarm Turn tanzen und den Wert nach jedem Ankerschritt prüfen. Den **GND-Score** auf der Grounding-Kachel als Gesamt-Grounding-Indikator nutzen — fällt er ab, prüfen, welches Komponenten-Badge (ROLL, SDR oder SETTLE) zuerst die Farbe gewechselt hat.
+**Mit Beckensensor:** **Anchor Settle** als Maß für die Anker-Qualität verwenden. Grundfiguren wie Sugar Push, Left Side Pass oder Underarm Turn tanzen und den Wert nach jedem Ankerschritt prüfen. Den **GND-Score** auf der Grounding-Kachel als Gesamt-Grounding-Indikator nutzen — fällt er ab, prüfen, welches Komponenten-Badge (ROLL, SDR oder SETTLE) zuerst die Farbe gewechselt hat.
 
 ---
 
@@ -444,7 +462,7 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 | Was du siehst | Ursache | Lösung |
 | :--- | :--- | :--- |
 | `HEEL SLAM ⚠` / `HARD IMPACT ⚠` bei Vorwärtsgängen | Zu wenig Knie- oder Sprunggelenksdämpfung beim Aufsetzen | Verlangsamen. Knie stärker beugen und Sprunggelenk weicher halten beim Aufsetzen. |
-| `SLAPPING` bei Vorwärtsschritten | M. tibialis anterior bremst den Vorfuß nach dem Fersenkontakt nicht exzentrisch ab | Bewusst abrollen: Ferse → Außenkante → Ballen, mit aktiver Sprunggelenksanspannung durchgehend. Der Vorfuß muss aktiv abgesenkt werden, nicht fallen gelassen. |
+| `SLAPPING` bei Vorwärtsschritten | Der vordere Teil des Fußes fällt nach dem Fersenkontakt unkontrolliert herab | Bewusst abrollen: Ferse → Außenkante → Ballen, Sprunggelenk durchgehend aktiv. Der vordere Fuß muss aktiv abgesenkt werden, nicht fallen gelassen. |
 | — Richtungs-Badge bei Rückwärtsschritten | Ferse setzt vor dem Ballen auf | Zuerst den Ballen aufkommen lassen, Sprunggelenk entspannt halten, bis der Fuß vollständig steht. |
 | `TOE JAM ⚠` konstant | Harter Ballenaufprall bei Rückwärtsschritten | Streckung mäßigen; Landung durch das Sprunggelenk abfedern. |
 | `HECTIC`-Doppelstand | Verlagerung gehetzt; Fuß hebt zu früh ab | „Als Letztes den Boden verlassen" — den ganzen Fuß von der Zehe abrollen lassen. |

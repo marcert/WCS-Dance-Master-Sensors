@@ -21,10 +21,10 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  ← g     FLIP CAM   EXIT   FREEZE   ZERO   REC START        │
+│  ← g  START CAM  FLIP CAM  FULL  FREEZE  ZERO  AUDIO  REC   │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│   CONNECTION FORCE  (−5.0 kg to +5.0 kg)                    │
+│   CONNECTION FORCE  (−10,0 kg bis +10,0 kg)                 │
 │   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
@@ -34,11 +34,11 @@
 │   ■ Sound/Error Left   ■ Sound/Error Right   ■ Hand Jerk     │
 ├──────────────────────────────────────────────────────────────┤
 │  STEP:  ⬅ BWD R   −7°   TOE-FIRST ✓                         │
-│  PELVIS: 🌀 ACTIVE  STABLE  HIP LEADS  GROUNDED  ANCHORED   │
+│  PELVIS: 🌀 ACTIVE  STABLE  HIP LEADS  GROUNDED  ANCHORED  HIP SETTLE ✓ │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Zahl oben links** (`114 g`, `−39 g`, `— g`): aktueller Verbindungskraft-Messwert vom Hand-Sensor. Grün = Zug/Spannung, Rot = Druck/Kompression, grauer Strich = Sensor offline.
+**Zahl oben links** (`114 g`, `−39 g`, `— g`): aktueller Verbindungskraft-Messwert vom Hand-Sensor. Grün (positiv) = Druck/Kompression, Rot (negativ) = Zug/Spannung, grauer Strich = Sensor offline.
 
 > 📷 **Screenshot-Platzhalter — vollständige Dashboard-Übersicht**  
 > *(Ersetzen durch: Vollbild-Foto des Partner-Dashboards mit allen aktiven Sensoren, sichtbarer Kamera-Einblendung im Hintergrund, Statusleiste mit Schritt- und Becken-Badges)*
@@ -47,18 +47,18 @@
 
 ## 3. Verbindungskraft-Diagramm (Oberes Diagramm)
 
-Zeigt die vom Dehnungsmessstreifen zwischen den beiden Tänzern gemessene Kraft, skaliert auf ±5,0 kg.
+Zeigt die vom Dehnungsmessstreifen zwischen den beiden Tänzern gemessene Kraft, skaliert auf ±10,0 kg. Da die Verbindungskraft auf All-Star-Niveau bei Kompression (Whip-Catches, Redirects) über 6 kg erreicht, wurde der Diagrammbereich von ursprünglich ±5 kg erweitert, um Clipping zu vermeiden.
 
 | Linienfarbe | Bedeutung |
 | :--- | :--- |
-| **Grün** (oberhalb der Mitte) | Leader zieht — Spannung in der Verbindung |
-| **Rot** (unterhalb der Mitte) | Leader drückt — Druck in der Verbindung |
+| **Grün** (oberhalb der Mitte) | Leader drückt — Kompression in der Verbindung |
+| **Rot** (unterhalb der Mitte) | Leader zieht — Spannung in der Verbindung |
 | **Flache Linie in der Mitte** | Neutral — keine messbare Verbindungskraft |
 
 **Worauf zu achten ist:**
 
 - **Ruhige Linie mit geringer Amplitude nahe null** → leichte, reaktionsfähige Verbindung. Ideal.
-- **Anhaltende grüne Erhöhung** → Leader hält durchgehend Spannung — prüfen, ob die Follow genug Bewegungsfreiheit hat.
+- **Anhaltende rote Erhöhung** → Leader hält durchgehend Spannung — prüfen, ob die Follow genug Bewegungsfreiheit hat.
 - **Scharfe Spitzen** → plötzliche Kraftänderungen — ruckartiges Führen oder abruptes Stoppen. Zum Bestätigen mit der gelben Jerk-Linie im unteren Diagramm vergleichen.
 - **Abwechselnd grün/rot** → Leader hält keine gerichtete Absicht — Wechsel zwischen Druck und Zug innerhalb derselben Phrase.
 
@@ -76,11 +76,11 @@ Drei überlagerte Datenströme in einer einzigen Zeichenfläche:
 
 ### Cyan-Linie — Abrollqualität linker Fuß
 
-Abgeleitet aus `|gyroPitch| / (1 + impactDev × 2)`. Ein höherer Wert bedeutet, dass der Fuß mit geringem Aufprall sauber abgerollt ist. Die Linie steigt, wenn der linke Fuß mit guter Technik aufgesetzt wird, und fällt bei schweren, flachen Aufprallen.
+Ein höherer Wert bedeutet, dass der Fuß mit geringem Aufprall sauber abgerollt ist. Die Linie steigt, wenn der linke Fuß mit guter Technik aufgesetzt wird, und fällt bei schweren, flachen Aufprallen.
 
 ### Magenta-Linie — Abrollqualität rechter Fuß
 
-Gleiche Formel wie Cyan, für den rechten Fuß.
+Gleiches Maß wie Cyan, für den rechten Fuß.
 
 **Beide Linien zusammen lesen:**
 - Beide Linien verlaufen ähnlich auf mittlerer Höhe → symmetrische, konsistente Technik.
@@ -89,7 +89,7 @@ Gleiche Formel wie Cyan, für den rechten Fuß.
 
 ### Gelbe Linie — Hand-Jerk-Index
 
-Eine Kombination aus Kraftänderungsrate und Beschleunigungsbetrag der Hand. Steigt bei plötzlichen Führungsimpulsen, fällt bei gleichmäßiger Bewegung.
+Kombiniert, wie schnell sich die Verbindungskraft ändert, mit der Ruckartigkeit der Handbewegung. Steigt bei plötzlichen Führungsimpulsen, fällt bei gleichmäßiger Bewegung.
 
 - **Gelb nahe null** → gleichmäßiges Führen.
 - **Gelbe Spitzen** → abrupte Kraft- oder Beschleunigungsänderungen in der Handverbindung.
@@ -103,7 +103,7 @@ Eine Kombination aus Kraftänderungsrate und Beschleunigungsbetrag der Hand. Ste
 | **Roter vertikaler Balken** | Fehler beider Füße gleichzeitig |
 | **Gelbe gestrichelte Linie** | Jerk-Spitze von der Firmware erkannt |
 
-Fehler-Markierungen werden ausgelöst, wenn die Aufprallbeschleunigung 1,5 g übersteigt und die Abrollbewegung weniger als 80°/s beträgt — ein Stampfmuster. Mehrere Markierungen hintereinander auf derselben Seite weisen auf ein wiederkehrendes Technkproblem an diesem Fuß hin.
+Fehler-Markierungen werden ausgelöst, wenn ein Fuß hart aufsetzt (scharfer Aufprall), ohne abzurollen — ein Stampfmuster. Mehrere Markierungen hintereinander auf derselben Seite weisen auf ein wiederkehrendes Technikproblem an diesem Fuß hin.
 
 > 📷 **Screenshot-Platzhalter — kombiniertes Analyse-Diagramm: asymmetrische Fußqualität**  
 > *(Ersetzen durch: Screenshot, auf dem die Cyan-Linie über eine vollständige Phrase deutlich höher liegt als die Magenta-Linie — schwächerer rechter Fuß sichtbar)*
@@ -119,10 +119,10 @@ Wird bei jedem erkannten Fußkontakt aktualisiert. Verwendet dieselbe Klassifizi
 
 | Element | Bedeutung |
 | :--- | :--- |
-| **➡ FWD L / R** | Vorwärtsschritt (θ ≥ +6°), linker oder rechter Fuß |
-| **⬅ BWD L / R** | Rückwärtsschritt (θ < −6°), linker oder rechter Fuß |
-| **— L / R** | Ambiguous Zone (−6° bis +5°) — Richtung aus dem Winkel allein nicht klassifizierbar |
-| **θ Winkel** | Fußneigung beim Aufsetzen (positiv = Ferse hoch, negativ = Zehe runter) |
+| **➡ FWD L / R** | Vorwärtsschritt (Fußwinkel +8° oder mehr), linker oder rechter Fuß |
+| **⬅ BWD L / R** | Rückwärtsschritt (Fußwinkel unter −8°), linker oder rechter Fuß |
+| **— L / R** | Unklare Zone (−8° bis +7°) — Richtung aus dem Winkel allein nicht erkennbar |
+| **Fußwinkel** | Fußneigung beim Aufsetzen (positiv = Zehen hoch, negativ = Zehen runter) |
 | **Schritt-Badge** | Klassifizierung der Landung — siehe Tabelle unten |
 | **Verzögerungs-Badge** | Temponormierte Zeitgebung der Gewichtsverlagerung — siehe Tabelle unten |
 
@@ -130,14 +130,15 @@ Wird bei jedem erkannten Fußkontakt aktualisiert. Verwendet dieselbe Klassifizi
 
 | Badge | Zone | Jerk | Bewertung |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | HEEL (θ ≥ +6°) | ≤ 27,5 g/s | Korrekter Fersen-zuerst-Kontakt |
-| `HEEL SLAM ⚠` | HEEL (θ ≥ +6°) | > 27,5 g/s | Harter Fersenaufprall — zu viel Landekraft |
-| `TOE-FIRST ✓` | TOE (θ < −6°) | ≤ 27,5 g/s | Korrekter Zehenball-Kontakt |
-| `TOE JAM ⚠` | TOE (θ < −6°) | > 27,5 g/s | Harter Zehenaufprall — überstreckter oder erzwungener Kontakt |
-| `SOFT ✓` | Ambiguous (−6° bis +5°) | ≤ 25 g/s | Leichte, kontrollierte Landung — Kamera für Richtungsprüfung nutzen |
-| `MODERATE` | Ambiguous (−6° bis +5°) | 25–27,5 g/s | Mittlerer Aufprall in der Flachzone |
-| `HARD IMPACT ⚠` | Ambiguous (−6° bis +5°) | > 27,5 g/s | Harte Flachfuß-Landung — Stampfmuster |
-| `BRUSH+HEEL` | → HEEL | — | Ambiguous → Fersenauflage innerhalb 200 ms — neu klassifiziert als HEEL-Zone |
+| `HEEL STRIKE ✓` | HEEL (+8° oder mehr) | ≤ 34 g/s | Korrekter Fersen-zuerst-Kontakt |
+| `HEEL SLAM ⚠` | HEEL (+8° oder mehr) | > 34 g/s | Harter Fersenaufprall — zu viel Landekraft |
+| `TOE-FIRST ✓` | TOE (unter −8°) | ≤ 34 g/s | Korrekter Zehenball-Kontakt |
+| `TOE JAM ⚠` | TOE (unter −8°) | > 34 g/s | Harter Zehenaufprall — überstreckter oder erzwungener Kontakt |
+| `SOFT ✓` | Ambiguous (−8° bis +7°) | ≤ 25 g/s | Leichte, kontrollierte Landung — Kamera für Richtungsprüfung nutzen |
+| `MODERATE` | Ambiguous (−8° bis +7°) | 25–34 g/s | Mittlerer Aufprall in der Flachzone |
+| `HARD IMPACT ⚠` | Ambiguous (−8° bis +7°) | > 34 g/s | Harte Flachfuß-Landung — Stampfmuster |
+
+> **Verbindungskraft-Gate für die Jerk-Schwelle:** Überschreitet die Verbindungskraft im Schritt-Moment ±2 kg, wird die SLAM/JAM/HARD-Schwelle angehoben (×1,8, gedeckelt bei 50 g/s). Die über die Hände übertragene Partnerkraft läuft bis in den Fußsensor und erzeugt eine Schock-Spitze, die **kein** echter Landefehler ist — das Gate unterdrückt diese Falschalarme. Echtes hartes Aufstampfen (>50 g/s) löst auch unter hoher Kraft weiterhin aus.
 
 > 📷 **Screenshot-Platzhalter — Statusleiste: Schritt-Badges**  
 > *(Ersetzen durch: Nahaufnahme der Statusleistenzeile, z. B. `⬅ BWD R  −7°  TOE-FIRST ✓` mit ausgeblendeter Becken-Zeile)*
@@ -154,14 +155,16 @@ Die Schwellenwerte unterscheiden sich je nach Richtung, da eine Rückwärtslandu
 | `QUICK` ⚠️ | < 12 % | < 18 % | Gewicht sofort beim Aufprall verlagert — mechanisch, nicht musikalisch |
 | `LATE` ⚠️ | > 38 % | > 50 % | Gewicht nie vollständig angekommen — schwebendes oder unvollständiges Transfer |
 
+> **Verbindungskraft-Gate:** Überschreitet die Verbindungskraft im Schritt-Moment ±1,5 kg (in beide Richtungen), wird das Verzögerungs-Badge unabhängig vom gemessenen Verhältnis auf `DELAYED ✓` gesetzt. Hohe Verbindungskraft belastet den Fußsensor und verzerrt das Gewichtsverlagerungs-Signal in beide Richtungen und erzeugt falsche `QUICK`- und `LATE`-Anzeigen, die nicht das tatsächliche Timing des Tänzers widerspiegeln. Das Gate reagiert auf den Kraftbetrag und ist unter 1,5 kg deaktiviert, dort ist das Verhältnis verlässlich.
+
 > **Coaching-Tipp:** `QUICK` bei jedem Anchor-Schritt ist der häufigste Befund auf Newcomer-/Intermediate-Niveau. Der Tänzer tritt zurück, verlagert aber sofort das Gewicht und verliert damit die Dehnung in der Verbindung. Auf `QUICK` in der Statusleiste achten und als Cue geben: *„Tritt zurück und atme, bevor du landest."*
 
 > 📷 **Screenshot-Platzhalter — Verzögerungs-Badge: DELAYED ✓ im Anchor**
 > *(Ersetzen durch: Statusleiste mit `⬅ BWD R  −12°  TOE-FIRST ✓  DELAYED ✓` — alles grün, gute Technik)*
 
---- (Statusleiste — erscheint wenn der Sensor online ist)
+## 5b. Becken-Badges (Statusleiste — erscheint wenn der Sensor online ist)
 
-Alle fünf Becken-Metriken werden gleichzeitig angezeigt, wenn der Becken-Sensor aktiv ist — es gibt keine Stufenauswahl in der Partner-Ansicht.
+Alle sechs Becken-Metriken werden gleichzeitig angezeigt, wenn der Becken-Sensor aktiv ist — es gibt keine Stufenauswahl in der Partner-Ansicht.
 
 Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.md — Abschnitt 8](dancer_guide_solo.md#8-die-beckenkarte-optionaler-sensor) zu finden.
 
@@ -169,12 +172,17 @@ Vollständige Beschreibungen der einzelnen Badges sind unter [dancer_guide_solo.
 
 | Badge | Grün | Gelb | Rot |
 | :--- | :--- | :--- | :--- |
-| **Hüftaktivierung** | `🌀 ACTIVE` (≥60°/s) | `MODERATE` (25–60°/s) | `STIFF HIPS` (<25°/s) |
+| **Hüftaktivierung** | `🌀 ACTIVE` (≥45°/s) | `MODERATE` (25–45°/s) | `STIFF HIPS` (<25°/s) |
 | **Seitliche Stabilität** | `STABLE` | `SLIGHT SWAY` | `LATERAL SWAY` |
 | **Hüft-Fuß-Kopplung** | `HIP LEADS` (>100 ms vor dem Fuß) | `IN SYNC` (40–100 ms) | `HIP LAGS` (<40 ms) |
-| **Vertikales Wippen** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` |
-| **Anchor Settle** | `ANCHORED (n)` (≥50) | `SETTLING (n)` (30–49) | `UNSTABLE (n)` (<30) |
+| **Vertikales Wippen** | `GROUNDED` | `SLIGHT BOUNCE` | `BOUNCY` (≥0,038) |
+| **Anchor Settle** | `ANCHORED (n)` (≥42) | `SETTLING (n)` (30–41) | `UNSTABLE (n)` (<30) |
 | **Hip Settle** | `HIP SETTLE ✓` | `SLIGHT SETTLE` | `OVERSWING ⚠` / `NO HIP SETTLE` |
+
+> **Verbindungskraft-Gates in der Partner-Ansicht.** Drei Becken-/Schritt-Badges verhalten sich hier anders als in der Solo-Ansicht, weil die Verbindungskraft die Rohsignale verfälscht:
+> - **Seitliche Stabilität:** `LATERAL SWAY` (rot) wird auf `SLIGHT SWAY` (gelb) herabgestuft, sobald die Verbindungskraft 1,5 kg überschreitet. Das Umlenken der Followerin erzeugt laterale Beckenbeschleunigung, die strukturell ist, kein Gleichgewichtsfehler.
+> - **Vertikales Wippen:** Die `BOUNCY`-Schwelle wurde von 0,020 auf 0,038 angehoben. Das Anspannen des Rumpfes gegen Partner-Kraftspitzen lässt die Hüften eine Auf-und-Ab-Bewegung registrieren, auch ohne sichtbares Wippen.
+> - **Hüftaktivierung:** Die `ACTIVE`-Schwelle wurde von 60°/s auf 45°/s gesenkt. Der Partner-Slot dämpft die Rotationsgeschwindigkeit, sodass echte aktive Hüften langsamer messen als im Solo-Tanz.
 
 > 📷 **Screenshot-Platzhalter — Statusleiste: Becken-Badges aktiv**  
 > *(Ersetzen durch: Nahaufnahme der vollständigen Statusleiste mit beiden Zeilen sichtbar — Schritt-Zeile + PELVIS:-Zeile mit allen 5 Badges in verschiedenen Farben)*
@@ -189,11 +197,11 @@ Das Partner-Dashboard gibt synthetische Töne aus, wenn kritische Technikfehler 
 
 | Ereignis | Ton | Bedingung |
 | :--- | :--- | :--- |
-| **`HEEL SLAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Fersenaufprall in der HEEL-Zone (Jerk > 27,5 g/s) |
-| **`TOE JAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Zehenaufprall in der TOE-Zone (Jerk > 27,5 g/s) |
-| **`HARD IMPACT ⚠`** | 1200-Hz-Klick (80 ms) | Harte Flachfuß-Landung in der Ambiguous-Zone (Jerk > 27,5 g/s) |
-| **`LATERAL SWAY`** | 400-Hz-Ton, gehalten (250 ms) | Laterale Beckenvarianz überschreitet Schwellenwert — feuert einmalig beim Eintritt in den Fehlerzustand |
-| **`BOUNCY`** | 600-Hz-Doppelklick | Vertikale Schwingungsvarianz zu hoch — feuert einmalig beim Eintritt in den Fehlerzustand |
+| **`HEEL SLAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Fersenaufprall in der HEEL-Zone (Jerk > 34 g/s, kraft-gegated) |
+| **`TOE JAM ⚠`** | 1200-Hz-Klick (80 ms) | Harter Zehenaufprall in der TOE-Zone (Jerk > 34 g/s, kraft-gegated) |
+| **`HARD IMPACT ⚠`** | 1200-Hz-Klick (80 ms) | Harte Flachfuß-Landung in der Ambiguous-Zone (Jerk > 34 g/s, kraft-gegated) |
+| **`LATERAL SWAY`** | 400-Hz-Ton, gehalten (250 ms) | Hüften schwingen seitlich über die Schwelle **und** Verbindungskraft ≤ 1,5 kg — feuert einmalig beim Eintritt in den Fehlerzustand |
+| **`BOUNCY`** | 600-Hz-Doppelklick | Auf-und-Ab-Bewegung der Hüften über die Schwelle — feuert einmalig beim Eintritt in den Fehlerzustand |
 | **`UNSTABLE`-Anker** | 800 → 350-Hz-Absteigsweep (300 ms) | Anchor-Settle-Score < 30 nach jedem Rückwärtsschritt |
 
 > **Zustandsübergangsbasierte Alarme:** `LATERAL SWAY` und `BOUNCY` feuern nur einmal, wenn das Badge erstmals rot wird — nicht bei jedem Frame. Der Alarm wird zurückgesetzt, sobald das Badge wieder gelb oder grün wird.
@@ -232,7 +240,9 @@ Der **Hüft-Fuß-Kopplungs**-Badge wird bei jedem Schritt ausgelöst. Konstantes
 
 ### Anchor-Qualität unter Belastung
 
-Nach jedem Anchor zeigt der **Anchor Settle**-Badge einen Wert von 0–100. Ein Wert konstant unter 50 über einen ganzen Song bedeutet, dass das Becken des Tänzers sich noch bewegt, nachdem der Anchor-Schritt gelandet ist. Niedrige Werte gegen Ende eines Songs (aber nicht am Anfang) weisen auf einen erschöpfungsbedingten Anchor-Zusammenbruch hin.
+Nach jedem Anchor zeigt der **Anchor Settle**-Badge einen Wert von 0–100. Ein Wert konstant unter 42 über einen ganzen Song bedeutet, dass das Becken des Tänzers sich noch bewegt, nachdem der Anchor-Schritt gelandet ist. Niedrige Werte gegen Ende eines Songs (aber nicht am Anfang) weisen auf einen erschöpfungsbedingten Anchor-Zusammenbruch hin.
+
+> **Partner-Kontext:** Die ANCHORED-Schwelle in der Partner-Ansicht (≥42) ist niedriger als in der Solo-Ansicht (≥50). Anhaltende Verbindungsspannung hält das Becken unter leichter Restlast, sodass ein echter „Null-Bewegungs"-Anchor bei aktiver Verbindung physikalisch unmöglich ist — die niedrigere Schwelle bildet das ab.
 
 ### FREEZE für die Besprechung nutzen
 

@@ -250,10 +250,16 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
         /* --- LEVEL-BASED VISIBILITY --- */
 
-        /* BEGINNER: only step direction + strikeBadge visible; hide Double Stance, ASI, jerk, lower badges */
+        /* BEGINNER: only step direction + strikeBadge + ROLL visible; hide Double Stance, ASI, jerk, and the advanced lower badges (keep rollSmoothBadge) */
         main.level-beginner #doubleStanceCard,
         main.level-beginner #asiCard,
         main.level-beginner .jerk-section,
+        main.level-beginner #powerBadge,
+        main.level-beginner #loadBadge,
+        main.level-beginner #rollBadge,
+        main.level-beginner #delayBadge,
+        main.level-beginner #ballHeelBadge,
+        main.level-beginner #heelBallBadge,
         main.level-beginner .bar-container { display: none !important; }
         .step-lower-badges { display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-top:3px; }
         .step-lower-badges .badge { display:block; text-align:center; margin-left:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; font-size:min(2.9vw,11px); }
@@ -313,6 +319,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                 <button id="tareBtn" class="audio-toggle" style="background: rgba(0, 122, 255, 0.4);" onclick="tareFootAngles()">📐 ZERO</button>
                 <button id="audioBtn" class="audio-toggle" onclick="toggleAudio()">🔇 Biofeedback: OFF</button>
                 <button id="levelBtn" class="audio-toggle" style="background: rgba(46, 160, 67, 0.6);" onclick="cycleLevel()">👤 BEG</button>
+                <button id="roleBtn"  class="audio-toggle" style="background: rgba(30,120,220,0.6);"  onclick="toggleRole()">👤 LEADER</button>
                 <button id="dbgBtn"   class="audio-toggle" style="background: rgba(80,80,80,0.5); display:none;" onclick="toggleDebug()">🔍 DBG</button>
             </div>
         </header>
@@ -696,7 +703,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let anchorSettleHoldUntil    = 0;              // score stays visible until this time; no new MEASURING triggers during hold
         let anchorSettleBwdCount     = 0;              // consecutive backward steps in current window; evaluation only if >= 3 (anchor triple)
         let anchorWindowMs          = 500;            // Ball→Heel window: tempo-adaptive, capped 280–900 ms (1.05× step)
-        let anchorSettleWindowMs    = 700;            // min gap after last backward step before Anchor Settle evaluates; >500ms so beat-& at 60BPM can extend the deadline before timer fires
+        let anchorSettleWindowMs    = 400;            // tempo-adaptive, updated on each BWD trigger — see below
         let anchorSettleEvalCount   = 0;              // debug: increments each time the evaluation block is entered
         let anchorSettleLastScore   = -1;             // debug: last computed score (-1 = no score yet)
         let anchorSettleSamples   = { aSagP: [], gYawP: [], aLatP: [] };
@@ -1044,11 +1051,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                         // energy integral accumulated since last landing (catches sustained lower-amplitude drives).
                                         let   sfPush            = 500 / Math.max(400, stepDurationMs);
                                         const PUSH_DETECT       = Math.round(120 * sfPush);
-                                        const PUSH_OPT_FWD      = Math.round(200 * sfPush);
-                                        const PUSH_OPT_BWD      = Math.round(160 * sfPush);
-                                        const PUSH_INT_DETECT   = 12;   // integral (°) — tempo-independent
-                                        const PUSH_INT_OPT_FWD  = 20;   // integral (°) — tempo-independent
-                                        const PUSH_INT_OPT_BWD  = 16;   // integral (°) — tempo-independent
+                                        // Follower push-off is more compact — lower POWER threshold.
+                                        // bwd→fwd (BACKWARD last step): 200→160°/s | fwd→bwd (FORWARD last step): 160→130°/s
+                                        const PUSH_OPT_FWD      = Math.round((followerMode ? 160 : 200) * sfPush);
+                                        const PUSH_OPT_BWD      = Math.round((followerMode ? 130 : 160) * sfPush);
+                                        const PUSH_INT_DETECT   = 12;
+                                        const PUSH_INT_OPT_FWD  = followerMode ? 16 : 20;
+                                        const PUSH_INT_OPT_BWD  = followerMode ? 13 : 16;
                                         let pushPeakL = aYL > 0.15 ? -gPitchL : 0;
                                         let pushPeakR = aYR > 0.15 ? -gPitchR : 0;
                                         let pushOptL    = (lastDirectionL === "BACKWARD") ? PUSH_OPT_FWD : PUSH_OPT_BWD;
@@ -1069,11 +1078,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                 if (pushLevel === 2) {
                                                     powerBadge.className = "badge badge-green";
                                                     powerBadge.style.cssText = "";
-                                                    powerBadge.innerText = "🚀 POWER PUSH";
+                                                    powerBadge.innerText = followerMode ? "🚀 POWER PUSH " + Math.round(Math.max(pushPeakL, pushPeakR)) + "°/s" : "🚀 POWER PUSH";
                                                 } else {
                                                     powerBadge.className = "badge badge-yellow";
                                                     powerBadge.style.cssText = "";
-                                                    powerBadge.innerText = "↗ PUSH";
+                                                    powerBadge.innerText = followerMode ? "↗ PUSH " + Math.round(Math.max(pushPeakL, pushPeakR)) + "°/s" : "↗ PUSH";
                                                 }
                                             } else {
                                                 powerBadge.className = "badge";
@@ -1134,27 +1143,27 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                                                 // Direction badge: reliable only at θ-zone extremes
                                                 if (activeTheta >= 6) {
-                                                    dirBadge.innerText = "➡ FWD";
+                                                    dirBadge.innerText = followerMode ? "➡ FWD " + activeTheta + "°" : "➡ FWD";
                                                     dirBadge.style.background = "#1f6beb";
                                                 } else if (activeTheta < -6) {
-                                                    dirBadge.innerText = "⬅ BWD";
+                                                    dirBadge.innerText = followerMode ? "⬅ BWD " + activeTheta + "°" : "⬅ BWD";
                                                     dirBadge.style.background = "#a371f7";
                                                 } else {
-                                                    dirBadge.innerText = "—";
+                                                    dirBadge.innerText = followerMode ? "— " + activeTheta + "°" : "—";
                                                     dirBadge.style.background = "#555";
                                                 }
 
                                                 // Strike badge: landing quality, direction-agnostic
                                                 badge.style.cssText = "";
                                                 if (activeTheta >= 6) {
-                                                    if (activeJerk > 110) {
+                                                    if (activeJerk > 520) {
                                                         badge.className = "badge badge-red";    badge.innerText = "HEEL SLAM ⚠";
                                                         playImpactClick(1200);
                                                     } else {
                                                         badge.className = "badge badge-green";  badge.innerText = "HEEL STRIKE ✓";
                                                     }
                                                 } else if (activeTheta < -6) {
-                                                    if (activeJerk > 110) {
+                                                    if (activeJerk > 520) {
                                                         badge.className = "badge badge-red";    badge.innerText = "TOE JAM ⚠";
                                                         playImpactClick(1200);
                                                     } else {
@@ -1162,10 +1171,12 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                                     }
                                                 } else {
                                                     // Ambiguous zone: quality only (all backward steps + flat forward steps)
-                                                    if (activeJerk > 110) {
+                                                    // Internal values are 4× displayed g/s (50 Hz poll / 200 Hz dt divisor)
+                                                    // 520 = 130 g/s displayed (genuine hard impact), 220 = 55 g/s (elevated but normal)
+                                                    if (activeJerk > 520) {
                                                         badge.className = "badge badge-red";    badge.innerText = "HARD IMPACT ⚠";
                                                         playImpactClick(1200);
-                                                    } else if (activeJerk > 100) {
+                                                    } else if (activeJerk > 220) {
                                                         badge.className = "badge badge-yellow"; badge.innerText = "MODERATE";
                                                     } else {
                                                         badge.className = "badge badge-green";  badge.innerText = "SOFT ✓";
@@ -1219,6 +1230,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 anchorSettleLastTrigger = now;  // extend deadline only for triple (beat5 + beat6); subsequent backward steps don't reopen window
                             }
                             anchorWindowMs = Math.min(900, Math.max(280, Math.round(stepDurationMs * 1.05)));
+                            // Close settle window before next FWD step: at 90 BPM → 367ms, at 80 BPM → 400ms (cap)
+                            anchorSettleWindowMs = Math.min(400, Math.max(280, Math.round(stepDurationMs * 0.55)));
                             let ab = document.getElementById('anchorSettleBadge');
                             if (ab) { ab.className = 'badge'; ab.style.cssText = 'background:#1e272e;color:#8b949e;'; ab.innerText = 'MEASURING...'; }
                             let hse = document.getElementById('hipSettleBadge');
@@ -1273,7 +1286,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         stepCard.classList.add('card-flash');
 
 
-                        if (activeJerk > 120) playImpactClick(500); // threshold scaled to native 200 Hz dt (×4 vs 20 ms poll)
+                        if (activeJerk > 520) playImpactClick(500); // 520 = 130 g/s displayed (genuine hard impact; ×4 scale: 50 Hz poll / 200 Hz dt)
 
                         // Start post-impact monitoring windows — reset badges to pending
                         loadingSamples = []; loadingActive = true; loadingFoot = activeFoot;
@@ -1305,7 +1318,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         peakDsThisStep = 0; // reset for next interval
 
                                                 let stanceBadge = document.getElementById('stanceBadge');
-                        if (stanceRatio >= 15 && stanceRatio <= 60) {
+                        // At slow tempo, WCS naturally has longer double stance — raise SLUGGISH cap up to 80% at ≤75 BPM.
+                        let sluggishThreshold = Math.min(80, 60 + Math.max(0, (stepDurationMs - 500)) * 0.04);
+                        if (stanceRatio >= 15 && stanceRatio <= sluggishThreshold) {
                             stanceBadge.className = "badge badge-green"; stanceBadge.innerText = "OPTIMAL ROLL";
                         } else if (stanceRatio < 15) {
                             stanceBadge.className = "badge badge-yellow"; stanceBadge.innerText = "HECTIC";
@@ -1399,8 +1414,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             let rampMs   = delayMonConsec >= 2 ? elapsed : 500;
                             let ratio    = rampMs / stepDurationMs;
                             let isFwd    = (delayMonDir === "FORWARD");
-                            let quickThr = isFwd ? 0.12 : 0.18;
-                            let lateThr  = isFwd ? 0.38 : 0.50;
+                            // Follower reacts to the lead — weight transfer is faster by design.
+                            // fwd: 6–30 % (was 12–38 %) | bwd: 10–40 % (was 18–50 %)
+                            let quickThr = isFwd ? (followerMode ? 0.06 : 0.12) : (followerMode ? 0.10 : 0.18);
+                            let lateThr  = isFwd ? (followerMode ? 0.30 : 0.38) : (followerMode ? 0.40 : 0.50);
                             let dBadge = document.getElementById('delayBadge');
                             if (dBadge) {
                                 if (ratio < quickThr) {
@@ -1575,9 +1592,13 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         document.getElementById('asiVal').innerText = asiRounded + " %";
                         let asiBadge = document.getElementById('asiBadge');
                         if (asiBadge) {
-                            if (asiRounded <= 15)      { asiBadge.className = "badge badge-green";  asiBadge.innerText = "SYMMETRIC"; }
-                            else if (asiRounded <= 35) { asiBadge.className = "badge badge-yellow"; asiBadge.innerText = "MINOR ASYM"; }
-                            else                       { asiBadge.className = "badge badge-red";    asiBadge.innerText = "ASYMMETRIC"; }
+                            // Follower pattern is structurally more asymmetric (connection side, reactive timing).
+                            // Leader: ≤15 % SYMMETRIC, ≤35 % MINOR | Follower: ≤25 % SYMMETRIC, ≤40 % MINOR
+                            let asiSymThr = followerMode ? 25 : 15;
+                            let asiMinThr = followerMode ? 40 : 35;
+                            if (asiRounded <= asiSymThr)      { asiBadge.className = "badge badge-green";  asiBadge.innerText = "SYMMETRIC"; }
+                            else if (asiRounded <= asiMinThr) { asiBadge.className = "badge badge-yellow"; asiBadge.innerText = "MINOR ASYM"; }
+                            else                              { asiBadge.className = "badge badge-red";    asiBadge.innerText = "ASYMMETRIC"; }
                         }
                     }
 
@@ -1594,8 +1615,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     document.getElementById('smoothVal').innerText = smoothnessAvg;
                     let smoothBadge = document.getElementById('smoothBadge');
                     if (smoothBadge) {
-                        if (smoothnessAvg >= 65)      { smoothBadge.className = "badge badge-green";  smoothBadge.innerText = "SMOOTH"; }
-                        else if (smoothnessAvg >= 40) { smoothBadge.className = "badge badge-yellow"; smoothBadge.innerText = "MODERATE"; }
+                        // Recalibrated to observed range: good dancers score 10–15, max ~20 during dance.
+                        // Previous thresholds (≥65/≥40) were unreachable; real dance motion always high-jerkiness.
+                        if (smoothnessAvg >= 16)      { smoothBadge.className = "badge badge-green";  smoothBadge.innerText = "SMOOTH"; }
+                        else if (smoothnessAvg >= 10) { smoothBadge.className = "badge badge-yellow"; smoothBadge.innerText = "MODERATE"; }
                         else                          { smoothBadge.className = "badge badge-red";    smoothBadge.innerText = "ROUGH"; }
                     }
 
@@ -1618,13 +1641,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         }
                         if (pdActive) {
                             if (aVertP < pdMinAz) { pdMinAz = aVertP; pdMinTime = now; }
-                            let pdWindow = Math.max(200, Math.round(stepDurationMs * 0.45));
+                            // Cap search window at 220ms — ensures only Dip 1 (impact absorption, 80–150ms) is detected,
+                            // not Dip 2 (full WCS settle at 400–600ms). Previous max(200, step×0.45) allowed 300ms at 90BPM.
+                            let pdWindow = Math.min(220, Math.max(160, Math.round(stepDurationMs * 0.35)));
                             if (now - pdStartTime >= pdWindow) {
                                 pdActive = false;
                                 if (pdMinTime > pdStartTime) {
                                     let dt = pdMinTime - pdStartTime;
-                                    let pdLo = Math.max(30, Math.round(stepDurationMs * 0.12));
-                                    let pdHi = Math.round(stepDurationMs * 0.42);
+                                    let pdLo = Math.max(40, Math.round(stepDurationMs * 0.10));
+                                    let pdHi = Math.min(180, Math.max(120, Math.round(stepDurationMs * 0.32)));
                                     let el = document.getElementById('phaseDelayBadge');
                                     if (el) {
                                         el.style.cssText = 'display:block;margin-top:3px;text-align:center;';
@@ -1767,6 +1792,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
     const LEVEL_COLOR = { beginner: 'rgba(46,160,67,0.6)', intermediate: 'rgba(255,149,0,0.6)', advanced: 'rgba(139,92,246,0.6)' };
 
     let currentLevel = localStorage.getItem('soloLevel') || 'beginner';
+    let followerMode = (localStorage.getItem('followerMode') === '1');
 
     function applyLevel(level) {
         const mainEl = document.getElementById('main-layout');
@@ -1782,6 +1808,23 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         const next = LEVELS[(LEVELS.indexOf(currentLevel) + 1) % LEVELS.length];
         applyLevel(next);
     }
+
+    function toggleRole() {
+        followerMode = !followerMode;
+        localStorage.setItem('followerMode', followerMode ? '1' : '0');
+        const btn = document.getElementById('roleBtn');
+        if (followerMode) {
+            btn.innerText        = '💃 FOLLOWER';
+            btn.style.background = 'rgba(220,60,140,0.6)';
+        } else {
+            btn.innerText        = '👤 LEADER';
+            btn.style.background = 'rgba(30,120,220,0.6)';
+        }
+    }
+
+    // Apply persisted role state on load
+    { const btn = document.getElementById('roleBtn');
+      if (followerMode && btn) { btn.innerText = '💃 FOLLOWER'; btn.style.background = 'rgba(220,60,140,0.6)'; } }
 
     function toggleDebug() {
         debugMode = !debugMode;

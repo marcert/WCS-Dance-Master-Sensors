@@ -37,7 +37,7 @@ In landscape mode the screen is divided into two columns:
 ```
 
 - **Top-left area**: shows the **Pelvis — Hip Mechanics** card when the pelvis sensor is clipped on and powered; otherwise empty so the camera shows through unobstructed.
-- **Bottom-left**: live roll-off dynamics graph (pitch angular velocity of both feet over time).
+- **Bottom-left**: live roll-off dynamics graph (how fast each foot rotates as it rolls through, over time).
 - **Top-right**: Double Stance Overlap card.
 - **Bottom-right**: Last Step card (your primary real-time feedback).
 - **Bottom-centre**: Roll-off Symmetry & Smoothness card.
@@ -80,6 +80,25 @@ Four metric cards plus the live graph: [Step Badge](#4-the-step-badge-card), [Do
 
 ---
 
+### Leader / Follower Mode
+
+The **👤 LEADER** button (blue) in the top bar switches to **💃 FOLLOWER** mode (pink) and back. The setting is saved in the browser and persists across sessions.
+
+**When to use Follower mode:** Activate it when you are dancing the follower role. The system adjusts three metrics to account for the structural differences of reactive (follower) movement:
+
+| Metric | Leader threshold | Follower threshold | Why |
+|---|---|---|---|
+| DELAY RAMP forward | 12–38 % → DELAYED ✓ | 6–30 % → DELAYED ✓ | Followers react to the lead — weight transfer is faster by design |
+| DELAY RAMP backward | 18–50 % → DELAYED ✓ | 10–40 % → DELAYED ✓ | Same reason: reactive timing is more compact |
+| Push-Off (forward) | ≥ 200 °/s → POWER PUSH | ≥ 160 °/s → POWER PUSH | Follower push-off is more compact |
+| Push-Off (backward) | ≥ 160 °/s → POWER PUSH | ≥ 130 °/s → POWER PUSH | Same |
+| ASI Symmetric | ≤ 15 % | ≤ 25 % | Followers are structurally more asymmetric (connection side, reactive timing) |
+| ASI Minor Asym | ≤ 35 % | ≤ 40 % | Wider tolerance for structural asymmetry |
+
+**Calibration display:** In Follower mode, the Direction badge shows the measured foot angle (e.g. `⬅ BWD −4°`) and the Push-Off badge shows the peak angular velocity (e.g. `↗ PUSH 148 °/s`). These values are hidden in Leader mode to keep the UI clean.
+
+---
+
 ## 4. The Step Badge Card
 
 This is the **primary real-time feedback card**. It updates on every detected foot contact.
@@ -88,7 +107,7 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 
 | Element | What it tells you |
 | :--- | :--- |
-| **Direction badge** | ➡ FWD (θ ≥ +6°), ⬅ BWD (θ < −6°), or — when the angle is in the ambiguous zone |
+| **Direction badge** | ➡ FWD (foot angle +6° or more), ⬅ BWD (below −6°), or — when the angle is in the ambiguous zone |
 | **Strike badge** (large coloured label) | Classification of that landing — see tables below |
 | **ROLL badge** | Foot roll quality — how the forefoot lowers after heel contact (all levels) — [see section below](#roll-badge-all-levels) |
 | **PUSH-OFF badge** | Push-off power of your trailing foot (Beginner: hidden) |
@@ -98,22 +117,22 @@ This is the **primary real-time feedback card**. It updates on every detected fo
 
 ### How direction is determined
 
-The system classifies direction from foot pitch angle θ. Direction is **reliable only at the extremes**:
+The system reads the direction from the tilt of your foot as it lands (shown as an angle). Direction is **reliable only at the extremes**:
 
-| Direction badge | θ at landing | Meaning |
+| Direction badge | Foot angle at landing | Meaning |
 | :--- | :--- | :--- |
-| **➡ FWD** | θ ≥ +6° | Clear dorsiflexion — heel contacted first |
-| **—** (grey) | −6° to +5° | Ambiguous zone — foot too flat to classify direction |
-| **⬅ BWD** | θ < −6° | Clear plantarflexion — toe-ball contacted first |
+| **➡ FWD** | +6° or more (toes up) | Heel clearly touched first |
+| **—** (grey) | −6° to +5° | Ambiguous zone — foot too flat to tell direction |
+| **⬅ BWD** | below −6° (toes down) | Ball of the foot clearly touched first |
 
-When θ is between −6° and +5°, the system cannot reliably determine direction. The direction badge shows — (grey). Use the camera view to check actual direction.
+When the foot angle is between −6° and +5°, the system cannot reliably determine direction. The direction badge shows — (grey). Use the camera view to check actual direction.
 
-### HEEL zone badges (➡ FWD, θ ≥ +6°)
+### HEEL zone badges (➡ FWD, +6° or more)
 
 | Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | ≤ 27.5 g/s | Clean heel strike — controlled contact | Target for all forward walks and breaks |
-| `HEEL SLAM ⚠` | > 27.5 g/s | Hard heel impact — excessive landing force | Bend the knee on contact and soften the ankle |
+| `HEEL STRIKE ✓` | ≤ 130 g/s | Clean heel strike — controlled contact | Target for all forward walks and breaks |
+| `HEEL SLAM ⚠` | > 130 g/s | Hard heel impact — excessive landing force | Bend the knee on contact and soften the ankle |
 
 ### Ambiguous zone (—, −6° to +5°)
 
@@ -121,33 +140,33 @@ The foot is too flat to classify direction. The quality badge still fires:
 
 | Badge | Jerk | What it means |
 | :--- | :--- | :--- |
-| `SOFT ✓` | ≤ 25 g/s | Light, controlled landing — good absorption in this zone |
-| `MODERATE` | 25–27.5 g/s | Moderate impact — acceptable, but worth reducing |
-| `HARD IMPACT ⚠` | > 27.5 g/s | Heavy flat-foot landing — stomping pattern |
+| `SOFT ✓` | ≤ 55 g/s | Light, controlled landing — good absorption in this zone |
+| `MODERATE` | 55–130 g/s | Moderate impact — acceptable, but worth reducing |
+| `HARD IMPACT ⚠` | > 130 g/s | Heavy flat-foot landing — stomping pattern |
 | `BRUSH+HEEL` | — | Ambiguous landing followed by heel-set within 200 ms — reclassified to ➡ FWD; correct technique confirmed |
 
 Use the camera view to check actual direction when the direction badge shows —.
 
-### TOE zone badges (⬅ BWD, θ < −6°)
+### TOE zone badges (⬅ BWD, below −6°)
 
 | Badge | Jerk | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `TOE-FIRST ✓` | ≤ 27.5 g/s | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
-| `TOE JAM ⚠` | > 27.5 g/s | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
+| `TOE-FIRST ✓` | ≤ 130 g/s | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
+| `TOE JAM ⚠` | > 130 g/s | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
 
 > **Note on early heel drops:** A backward step where the heel contacts before the toe will land in the ambiguous zone (—) rather than ⬅ BWD. If you see consistent SOFT/MODERATE/HARD IMPACT on what you believe are backward steps, your heel is contacting too early. Focus on sending the toe out first and keeping the ankle relaxed until the foot settles.
 
 ### ROLL badge (all levels)
 
-The ROLL badge measures how smoothly the forefoot lowers after heel contact — specifically whether the tibialis anterior is eccentrically braking the forefoot on the way down.
+The ROLL badge measures how smoothly the front of your foot lowers after your heel touches down — whether you control it down or let it drop.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
-| `CLEAN ROLL ✓` ✅ | Smooth, controlled forefoot lowering — active ankle tension throughout | Good — maintain |
-| `MODERATE ROLL` ⚠️ | Some unevenness in the roll-through | Focus on the heel → lateral edge → ball sequence; keep the ankle lightly tensioned |
-| `SLAPPING` ❌ | Forefoot drops uncontrolled after heel contact — the tibialis anterior is not eccentrically braking | Roll through the foot deliberately: heel contacts first, weight travels along the lateral edge, then crosses to the ball with active ankle tension throughout |
+| `CLEAN ROLL ✓` ✅ | Smooth, controlled lowering of the foot — ankle stays engaged throughout | Good — maintain |
+| `MODERATE ROLL` ⚠️ | Some unevenness as the foot rolls through | Focus on the heel → outside edge → ball sequence; keep the ankle lightly engaged |
+| `SLAPPING` ❌ | The front of the foot drops uncontrolled after the heel lands | Roll through the foot deliberately: heel touches first, weight travels along the outside edge, then crosses to the ball with the ankle engaged throughout |
 
-> **SLAPPING explained:** After the heel contacts the floor, the forefoot needs to be *lowered* actively, not allowed to fall. When the tibialis anterior (the muscle along the shin) fails to brake this movement eccentrically, the forefoot slaps down. This creates an audible impact, reduces shock absorption, and softens the connection quality. The fix is a conscious heel → lateral edge → ball sequence with the ankle under light muscular tension throughout.
+> **SLAPPING explained:** After your heel touches the floor, the front of your foot needs to be *lowered* actively, not allowed to fall. If you let it drop, it slaps down — you can usually hear it. This creates a hard impact, absorbs less shock, and softens your connection. The fix is a conscious heel → outside edge → ball sequence, keeping your ankle gently engaged the whole time.
 
 > 📸 **[Screenshot: Step Badge card showing CLEAN ROLL ✓ badge in the lower badge row]**
 
@@ -210,7 +229,7 @@ Visible from **Intermediate** level. This card tells you how long both feet are 
 | :--- | :--- | :--- | :--- |
 | `OPTIMAL ROLL` ✅ | 15%–60% | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
 | `HECTIC` ⚠️ | < 15% | Rushed — one foot leaves before the other is secure | "Peel, don't lift" — roll through the foot before stepping |
-| `SLUGGISH` ⚠️ | > 60% | Prolonged double contact — hesitation or heavy stance | Commit to the COM shift earlier |
+| `SLUGGISH` ⚠️ | > 60–72 % (tempo-adaptive) | Prolonged double contact — hesitation or heavy stance. Threshold rises with slower tempo: 60 % at 120 BPM, 67 % at 90 BPM, 72 % at 75 BPM | Commit to the COM shift earlier |
 
 Watch this card during **triple steps and walks**. `HECTIC` on an anchor step often means you are rushing out of the anchor before building connection.
 
@@ -225,7 +244,7 @@ Visible at **Advanced** level only.
 | Display | What it tells you | Green target |
 | :--- | :--- | :--- |
 | **ASI %** | Difference between left and right foot roll-off | `SYMMETRIC` — below 15% |
-| **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` — 40 or above |
+| **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` — 16 or above (`MODERATE` 10–15, `ROUGH` below 10) |
 
 - High **ASI** (e.g. `ASYMMETRIC` > 35%) usually means one ankle is stiffer, or one side is compensating for an old injury.
 - Low **Smoothness** means your ankle movements are jerky. Slow the tempo and focus on rolling through the full foot rather than stepping flat.
@@ -242,7 +261,7 @@ Visible only at **Advanced** level. The Grounding Card appears to the **left of 
 | :--- | :--- | :--- |
 | **SDR badge** | Pelvis sensor | Shock attenuation through the leg chain — how well impact energy is absorbed from foot to hip |
 | **SETTLE badge** | Pelvis sensor | Pelvis response timing after foot contact — how quickly the pelvis settles |
-| **GND Score + bar** | Foot sensors | Composite grounding score (0–100) combining SDR + SETTLE + ROLL; bar turns green / yellow / red |
+| **GND Score + bar** | Foot sensors | Combined grounding score (0–100) blending SDR + SETTLE + ROLL; bar turns green / yellow / red |
 
 > When the pelvis sensor is offline, SDR and SETTLE badges are hidden. The GND Score still reflects ROLL quality from the foot sensors alone.
 
@@ -258,23 +277,23 @@ SDR (Shock-absorbing Dynamic Response) measures how much of the foot-impact forc
 
 ### SETTLE badge
 
-Measures the time from foot contact to the pelvis's **first downward response** (impact absorption latency). This reflects how actively the leg chain — knee and hip — cushions the landing impulse. The target window **scales automatically with the music tempo** — approximately 12–42 % of the step interval (≈ 60–210 ms at 120 BPM, ≈ 45–158 ms at 160 BPM).
+Measures the time from foot contact to the pelvis's **first downward response** (impact absorption latency). This reflects how actively the leg chain — knee and hip — cushions the landing impulse. The target window **scales automatically with the music tempo** — approximately 10–32 % of the step interval (≈ 50–160 ms at 120 BPM), with a hard cap of 220 ms to ensure only the initial impact response (Dip 1) is captured.
 
 | Badge | Timing | What it means | How to improve |
 | :--- | :--- | :--- | :--- |
-| `SETTLING ✓ Xms` ✅ | 12–42 % of step interval | Leg chain actively cushions the impact — compliant knee and hip response | Maintain |
-| `QUICK Xms` ⚠️ | < 12 % of step interval | Pelvis dips before proper loading — joints too stiff to produce a measurable cushioning phase | Soften the knee on landing; let the leg chain absorb before committing weight |
-| `SLOW Xms` ⚠️ | > 42 % of step interval | Pelvis response is delayed — sluggish joint activation, impact absorbed passively | Engage the knee and hip actively at the moment of contact, not after |
+| `SETTLING ✓ Xms` ✅ | 10–32 % of step interval | Leg chain actively cushions the impact — compliant knee and hip response | Maintain |
+| `QUICK Xms` ⚠️ | < 10 % of step interval | Pelvis dips before proper loading — joints too stiff to produce a measurable cushioning phase | Soften the knee on landing; let the leg chain absorb before committing weight |
+| `SLOW Xms` ⚠️ | > 32 % of step interval (within 220 ms cap) | Pelvis response is delayed — sluggish joint activation, impact absorbed passively | Engage the knee and hip actively at the moment of contact, not after |
 
 ### GND Score
 
-A composite score from 0–100 combining all three grounding signals:
+A combined score from 0–100 blending all three grounding signals:
 
 - **SDR** — shock attenuation quality (requires pelvis sensor)
 - **SETTLE** — pelvis response timing (requires pelvis sensor)
 - **ROLL** — forefoot roll quality from the Step Card
 
-The bar below the score turns **green** (≥ 70), **yellow** (40–69), or **red** (< 40).
+The bar below the score turns **green** (≥ 65), **yellow** (35–64), or **red** (< 35).
 
 > Use the GND Score as a single at-a-glance indicator during intensive drilling sessions. When it drops, check which component badge changed colour first.
 
@@ -290,19 +309,7 @@ Clip the sensor to the **posterior waistband at the small of your back** (L5 / s
 
 ### Mounting verification
 
-At the top of the pelvis card a small grey data line shows three live raw values:
-
-```
-aZ:+0.95  aX:-0.20  gY:   0
-```
-
-| Value | What it shows | Expected at rest |
-| :--- | :--- | :--- |
-| `aZ` | Vertical acceleration | **+0.90 to +1.00** (gravity) |
-| `aX` | Lateral acceleration | −0.30 to +0.30 (small tilt offset is normal) |
-| `gY` | Hip yaw rate (°/s) | Near **0** |
-
-If `aZ` is far from +0.95 (e.g. near 0 or negative), the sensor is not mounted correctly — it may be rotated or facing the wrong way. Re-clip it flat against the back with the display facing outward.
+Once the pelvis sensor is online, the pelvis card appears at the top-left. If the **Hip Activation** badge shows `🌀 ACTIVE` continuously while you are standing still (no movement), the sensor is probably mounted incorrectly or is rotating. Re-clip it flat against the back with the display facing outward.
 
 ### Badge overview
 
@@ -310,9 +317,10 @@ If `aZ` is far from +0.95 (e.g. near 0 or negative), the sensor is not mounted c
 | :--- | :--- | :--- |
 | **Hip Activation** | BEG+ | How much the pelvis is rotating during movement (yaw) |
 | **Lateral Stability** | INT+ | Lateral sway of the pelvis during movement |
+| **Pelvic Tilt** | INT+ | Forward/backward pelvis pitch — posture check (`ALIGNED` / `SLIGHT ARCH` / `LORDOSIS ⚠` / `TUCKED`) |
 | **Hip-Foot Coupling** | INT+ | Whether hips initiate each step or follow the feet |
 | **Vertical Bounce** | INT+ | How much vertical movement the pelvis generates |
-| **Anchor Settle** | ADV | Quality of the pelvis settle in the 500 ms after each anchor step |
+| **Anchor Settle** | ADV | Quality of the pelvis settle in the 280–400 ms after each anchor step |
 | **Hip Settle** | ADV | Whether the pelvis shifts into the standing hip after each anchor step (lateral tilt) |
 
 > 📸 **[Screenshot: Pelvis card in the top-left slot showing all badge rows (Hip Activation through Anchor Settle) with sensor active]**
@@ -321,7 +329,7 @@ If `aZ` is far from +0.95 (e.g. near 0 or negative), the sensor is not mounted c
 
 ### Hip Activation
 
-Measures peak transverse hip rotation (yaw rate) over a rolling 500 ms window.
+Measures how fast your hips rotate, taking the strongest moment over the last half-second.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
@@ -335,7 +343,7 @@ Measures peak transverse hip rotation (yaw rate) over a rolling 500 ms window.
 
 ### Lateral Stability (INT+)
 
-Measures lateral acceleration variance of the pelvis over 1 second.
+Measures how much your hips sway side to side over one second.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
@@ -359,7 +367,7 @@ Compares when peak hip rotation occurred relative to the moment of foot contact.
 
 ### Vertical Bounce (INT+)
 
-Measures the variance of vertical pelvis acceleration (gravity removed) over 1 second.
+Measures how much your hips bounce up and down over one second.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
@@ -371,17 +379,17 @@ Measures the variance of vertical pelvis acceleration (gravity removed) over 1 s
 
 ### Anchor Settle (ADV)
 
-After every backward (anchor) step, the system opens a **tempo-adaptive measurement window** (280–500 ms, automatically scaled to the current step tempo) and evaluates three signals:
+After every backward (anchor) step, the system opens a **tempo-adaptive measurement window** (280–400 ms, automatically scaled to the current step tempo) and evaluates three signals:
 
-1. **Deceleration** — did the pelvis slow down in the anterior-posterior direction?
-2. **Yaw damping** — did hip rotation slow after the step?
-3. **Stability** — how still was the pelvis in the second half of the window?
+1. **Slowing down** — did your hips brake their forward/backward motion?
+2. **Rotation settling** — did your hip rotation slow down after the step?
+3. **Stillness** — how still were your hips in the second half of the window?
 
 These three components are combined into a 0–100 score displayed in the badge.
 
 | Badge | Score | What it means | How to improve |
 | :--- | :--- | :--- | :--- |
-| `ANCHORED (n)` ✅ | ≥ 50 | Strong deceleration + yaw damping + stable hold | Good — work on consistency across every anchor step |
+| `ANCHORED (n)` ✅ | ≥ 50 | Strong braking + settling rotation + stable hold | Good — work on consistency across every anchor step |
 | `SETTLING (n)` ⚠️ | 30–49 | Partial settle — one or two components weak | Identify the weak component using the tips below |
 | `UNSTABLE (n)` ❌ | < 30 | Pelvis still moving or wobbling after the anchor | Focus on "sticking" the anchor — reach the end of the slot and hold |
 
@@ -394,7 +402,7 @@ These three components are combined into a 0–100 score displayed in the badge.
 
 ### Hip Settle (ADV)
 
-Measures whether you "settle into the hip" after an anchor step — i.e. whether a brief lateral pelvic shift towards the standing leg occurs and then holds. The system evaluates `aLatP` (lateral acceleration of the pelvis sensor) within the same 500 ms window as Anchor Settle.
+Measures whether you "settle into the hip" after an anchor step — i.e. whether a brief sideways shift of the hips towards the standing leg happens and then holds. The system looks at your sideways hip movement within the same 280–400 ms window as Anchor Settle.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
@@ -426,7 +434,7 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 
 **Two focuses: technique consistency + weight transfer timing.**
 
-1. Forward walks → aim for consistent `HEEL STRIKE ✓`. Check the ROLL badge: `CLEAN ROLL ✓` means your tibialis anterior is controlling the forefoot all the way down.
+1. Forward walks → aim for consistent `HEEL STRIKE ✓`. Check the ROLL badge: `CLEAN ROLL ✓` means you are controlling the front of your foot all the way down.
 2. Backward walks → aim for `TOE-FIRST ✓`. A — direction badge on a backward step means the foot is landing too flat — the heel is dropping before the toe.
 3. Watch the **POWER PUSH badge**: is your trailing leg passive?
 4. Introduce the **Double Stance card**: work toward `OPTIMAL ROLL` during triple steps.
@@ -443,9 +451,9 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 3. Compare **ASI** between left and right over a full practice session. A consistently worse side points to a compensation pattern.
 4. Use **ANKLE FLEX vs STIFF ANKLE** to monitor fatigue — ankle stiffness increases as muscles tire.
 5. Film with `📷 CAM` and replay during pauses.
-5. Use the **Roll-off Dynamics graph** to compare peak gyro values between feet.
+6. Use the **Roll-off Dynamics graph** to compare how fast each foot rotates as it rolls.
 
-**With pelvis sensor:** Focus on **Anchor Settle** as your anchor quality KPI. Run a full 8-count basic and check the score after each anchor step. Use the **GND Score** on the Grounding Card as a single at-a-glance grounding indicator — when it drops, check which component badge (ROLL, SDR, or SETTLE) changed colour first.
+**With pelvis sensor:** Focus on **Anchor Settle** as your measure of anchor quality. Run a full 8-count basic and check the score after each anchor step. Use the **GND Score** on the Grounding Card as a single at-a-glance grounding indicator — when it drops, check which component badge (ROLL, SDR, or SETTLE) changed colour first.
 
 ---
 
@@ -454,7 +462,7 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 | What you see | Root cause | Fix |
 | :--- | :--- | :--- |
 | `HEEL SLAM ⚠` on forward walks | Heel contacting hard — insufficient knee or ankle absorption | Slow down. Bend the knee more on contact and soften the ankle. |
-| `SLAPPING` on forward steps | Tibialis anterior not braking the forefoot eccentrically after heel contact | Roll deliberately: heel → lateral edge → ball with active ankle tension throughout. The forefoot must be *lowered*, not allowed to fall. |
+| `SLAPPING` on forward steps | The front of the foot is dropping uncontrolled after the heel lands | Roll deliberately: heel → outside edge → ball with the ankle engaged throughout. The front of the foot must be *lowered*, not allowed to fall. |
 | `HARD IMPACT ⚠` on forward walks | Ankle held rigid; no heel articulation | Slow down. Exaggerate heel-first contact consciously. |
 | — badge on backward steps | Heel contacting before toe | Send the toe first, keep the ankle relaxed until the foot settles. |
 | `TOE JAM ⚠` consistently | Hard toe impact on backward steps | Moderate the extension; absorb the landing through the ankle. |
