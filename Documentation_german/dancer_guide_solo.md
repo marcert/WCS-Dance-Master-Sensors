@@ -76,24 +76,21 @@ Zwei Karten unten. [Schritttechnik](#4-die-schritt-badge-karte) rechts, [Timing-
 
 ### Experten-Ansicht
 
-Vier Metrikkarten plus das Live-Diagramm: [Schritt-Badge](#4-die-schritt-badge-karte), [Doppelstand](#6-die-doppelstand-karte), [Roll-off-Symmetrie & Gleichmäßigkeit](#7-die-roll-off-symmetrie--und-gleichmäßigkeits-karte) und [Grounding-Kachel](#8-die-grounding-kachel-adv). Die Grounding-Kachel erscheint links neben dem (schmaleren) Diagramm und fasst SDR, SETTLE und den GND-Score in einem Panel zusammen. Verwende diesen Grad für detaillierte Analysesitzungen, nicht zum Erlernen neuer Muster.
+Vier Metrikkarten plus das Live-Diagramm: [Schritt-Badge](#4-die-schritt-badge-karte), [Doppelstand](#6-die-doppelstand-karte), [Roll-off-Symmetrie & Gleichmäßigkeit](#7-die-roll-off-symmetrie--und-gleichmäßigkeits-karte) und [Grounding-Kachel](#8-die-grounding-kachel-adv). Die Grounding-Kachel erscheint links neben dem (schmaleren) Diagramm und fasst Stoßdämpfung, Becken-Reaktion und den Grounding-Gesamtwert in einem Panel zusammen. Verwende diesen Grad für detaillierte Analysesitzungen, nicht zum Erlernen neuer Muster.
 
 ### Leader / Follower Modus
 
 Der **👤 LEADER**-Button (blau) in der oberen Leiste schaltet auf **💃 FOLLOWER**-Modus (pink) um und zurück. Die Einstellung wird im Browser gespeichert und bleibt über Sessions hinweg erhalten.
 
-**Wann Follower-Modus aktivieren:** Wenn du die Follower-Rolle tanzt. Das System passt drei Metriken an, um die strukturellen Unterschiede reaktiver (Follower-)Bewegung zu berücksichtigen:
+**Wann Follower-Modus aktivieren:** Wenn du die Follower-Rolle tanzt. Das System passt drei Bewertungen an, weil reaktive (Follower-)Bewegung strukturell anders ist:
 
-| Metrik | Leader-Schwelle | Follower-Schwelle | Grund |
-|---|---|---|---|
-| DELAY RAMP vorwärts | 12–38 % → DELAYED ✓ | 6–30 % → DELAYED ✓ | Follower reagieren auf die Führung — Gewichtsübergabe ist von Natur aus schneller |
-| DELAY RAMP rückwärts | 18–50 % → DELAYED ✓ | 10–40 % → DELAYED ✓ | Gleicher Grund: reaktives Timing ist kompakter |
-| Push-Off (vorwärts) | ≥ 200 °/s → POWER PUSH | ≥ 160 °/s → POWER PUSH | Follower-Push-Off ist kompakter |
-| Push-Off (rückwärts) | ≥ 160 °/s → POWER PUSH | ≥ 130 °/s → POWER PUSH | Gleicher Grund |
-| ASI Symmetrisch | ≤ 15 % | ≤ 25 % | Follower sind strukturell asymmetrischer (Verbindungsseite, reaktives Timing) |
-| ASI Geringe Asym. | ≤ 35 % | ≤ 40 % | Breitere Toleranz für strukturelle Asymmetrie |
+| Was angepasst wird | Was im Follower-Modus anders ist |
+|---|---|
+| **Gewichtsübergabe-Timing** (DELAY) | Der erwartete Zeitpunkt ist früher — Follower reagieren auf die Führung, ihre Gewichtsübergabe ist von Natur aus schneller |
+| **Abdruck** (Push-Off) | Es wird ein etwas kompakterer Abdruck erwartet als beim Leader |
+| **Seiten-Symmetrie** (ASI, links vs. rechts) | Größere Toleranz — durch die Verbindungsseite sind Follower strukturell etwas asymmetrischer |
 
-**Kalibrierungsanzeige:** Im Follower-Modus zeigt der Richtungs-Badge den gemessenen Fußwinkel an (z. B. `⬅ BWD −4°`) und der Push-Off-Badge die Spitzenwinkelgeschwindigkeit (z. B. `↗ PUSH 148 °/s`). Diese Werte sind im Leader-Modus ausgeblendet, um die UI übersichtlich zu halten.
+**Kalibrierungsanzeige:** Im Follower-Modus zeigt der Richtungs-Badge zusätzlich den gemessenen Fußwinkel an (z. B. `⬅ BWD −4°`) und der Abdruck-Badge einen Stärke-Wert (z. B. `↗ PUSH 148`). Diese Zusatzwerte sind im Leader-Modus ausgeblendet, um die Anzeige übersichtlich zu halten.
 
 ---
 
@@ -170,17 +167,19 @@ Das ROLL-Badge misst, wie gleichmäßig sich der vordere Teil deines Fußes nach
 
 ---
 
-## 5. Push-Off- und Lade-Badges
+## 5. Abdruck- und Lade-Badges
 
-Diese Badges erscheinen in der unteren Badge-Reihe der Schritt-Karte und werden nach jedem Schritt aktualisiert. Push-Off ist ab **Fortgeschritten** sichtbar; Loading und Ankle Roll erst ab **Experte**.
+Diese Badges erscheinen in der unteren Badge-Reihe der Schritt-Karte und werden nach jedem Schritt aktualisiert. Der Abdruck (Push-Off) ist ab **Fortgeschritten** sichtbar; Loading und Ankle Roll erst ab **Experte**.
 
-### Push-Off-Badge (INT + ADV)
+### Abdruck-Badge (Push-Off, INT + ADV)
+
+Zeigt, wie kräftig du dich mit dem hinteren Fuß vom Boden abdrückst.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
-| `🚀 POWER PUSH` ✅ | Starker Abstoß vom hinteren Fuß — optimal sowohl für Vorwärtsantrieb als auch für Anker-Umverteilung | Beibehalten — das System passt seinen Zielwert automatisch an: höherer Schwellenwert für Vorwärtsgänge, niedriger für Anker und Rückwärtsschritte |
-| `↗ PUSH` ⚠️ | Abstoß erkannt, aber unter dem Richtungsziel | Aktiver durch den Ballen des hinteren Fußes drücken; denke „Boden wegschieben" |
-| `— PUSH-OFF` | Kein signifikanter Abstoß erkannt | Hinterbein ist passiv. Am Ende jedes Ganges aktiv das Sprunggelenk strecken |
+| `🚀 POWER PUSH` ✅ | Kräftiger Abdruck vom hinteren Fuß — gut sowohl für Vorwärtsantrieb als auch für die Anker-Umverteilung | Beibehalten — das System erwartet automatisch mehr Abdruck bei Vorwärtsgängen und weniger bei Ankern und Rückwärtsschritten |
+| `↗ PUSH` ⚠️ | Abdruck erkannt, aber schwächer als gewünscht | Aktiver durch den Ballen des hinteren Fußes drücken; denke „Boden wegschieben" |
+| `— PUSH-OFF` | Kein nennenswerter Abdruck erkannt | Hinterbein ist passiv. Am Ende jedes Ganges aktiv das Sprunggelenk strecken |
 
 ### Lade-Badge (nur ADV)
 
@@ -190,17 +189,15 @@ Diese Badges erscheinen in der unteren Badge-Reihe der Schritt-Karte und werden 
 | `INSTANT LOAD` ⚠️ | Gewicht wurde beim Aufprall sofort und vollständig auf den Landefuß übertragen | Dein Gewicht langsamer ankommen lassen; den Boden „empfangen" statt darauf zu fallen |
 | `EARLY UNLOAD` ⚠️ | Gewicht verlagert sich, bevor der Fuß sicher steht | Du eilst zum nächsten Schritt. Aktuelle Gewichtsverlagerung vollständig abschließen, bevor du dich bewegst |
 
-### Verzögerungs-Badge (INT + ADV)
+### Verzögerungs-Badge (DELAY, INT + ADV)
 
-Misst, wie schnell du dein Gewicht nach dem Fußkontakt übertragen hast, ausgedrückt als **Bruchteil deines aktuellen Schrittintervalls** — passt sich also automatisch an das Musiktempo an. Dieselbe körperliche Bewegung liest sich bei 90 BPM und 160 BPM identisch.
+Zeigt, wie schnell du dein Gewicht nach dem Fußkontakt auf den neuen Fuß übertragen hast — im Verhältnis zum Musiktempo, sodass dieselbe Bewegung bei langsamer und schneller Musik gleich bewertet wird. Im Idealfall „schwebt" dein Gewicht kurz und kommt erst nach dem Fuß an (typisches WCS-Gefühl).
 
-Die Schwellenwerte unterscheiden sich je nach Richtung: Ein Rückwärtsschritt (Zehen zuerst) braucht natürlich mehr Setzzeit als ein Vorwärtsschritt (Ferse zuerst).
-
-| Badge | Vorwärtsschritt | Rückwärtsschritt | Was es bedeutet |
-| :--- | :--- | :--- | :--- |
-| `DELAYED ✓` ✅ | 12–38 % des Beats | 18–50 % des Beats | Für WCS typisches Schweben — Gewicht kommt nach dem Fußkontakt an |
-| `QUICK` ⚠️ | < 12 % | < 18 % | Gewicht sofort beim Kontakt auf den Standfuß übertragen — mechanisch, nicht musikalisch |
-| `LATE` ⚠️ | > 38 % | > 50 % | Gewicht nie vollständig übertragen — schwebend oder unvollständige Verlagerung (nur ADV) |
+| Badge | Was es bedeutet |
+| :--- | :--- |
+| `DELAYED ✓` ✅ | Für WCS typisches Schweben — dein Gewicht kommt kurz nach dem Fuß an |
+| `QUICK` ⚠️ | Gewicht sofort beim Kontakt verlagert — mechanisch, nicht musikalisch |
+| `LATE` ⚠️ | Gewicht nie vollständig übertragen — zu langes Schweben oder unvollständige Verlagerung (nur ADV) |
 
 Bei **INT**-Stufe werden nur `DELAYED ✓` / `QUICK` angezeigt — jede verzögerte Übertragung ist bereits Fortschritt. `LATE` wird bei **ADV**-Stufe hinzugefügt, wo übermäßiges Schweben ebenfalls ein Problem wird.
 
@@ -223,11 +220,11 @@ Bei **INT**-Stufe werden nur `DELAYED ✓` / `QUICK` angezeigt — jede verzöge
 
 Sichtbar ab **Fortgeschritten**. Diese Karte zeigt, wie lange beide Füße während jeder Gewichtsverlagerung gleichzeitig auf dem Boden sind.
 
-| Badge | Überschneidungsrate | Was es bedeutet | Trainingsimplikation |
-| :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 15 %–60 % | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
-| `HECTIC` ⚠️ | < 15 % | Gehetzt — ein Fuß verlässt den Boden, bevor der andere sicher steht | „Abrollen, nicht abheben" — durch den Fuß rollen, bevor man schreitet |
-| `SLUGGISH` ⚠️ | > 60–72 % (tempoadaptiv) | Verlängerter Doppelkontakt — Zögern oder schwere Stellung. Schwellenwert steigt mit langsamem Tempo: 60 % bei 120 BPM, 67 % bei 90 BPM, 72 % bei 75 BPM | Dein Gewicht früher verlagern |
+| Badge | Was es bedeutet | Trainingsimplikation |
+| :--- | :--- | :--- |
+| `OPTIMAL ROLL` ✅ | Gleichmäßige, geerdete Gewichtsverlagerung | Die charakteristische WCS-Roll-Verbindung |
+| `HECTIC` ⚠️ | Gehetzt — ein Fuß verlässt den Boden, bevor der andere sicher steht | „Abrollen, nicht abheben" — durch den Fuß rollen, bevor man schreitet |
+| `SLUGGISH` ⚠️ | Zu langer Doppelkontakt — Zögern oder schwere Stellung (die Toleranz ist bei langsamer Musik automatisch größer) | Dein Gewicht früher verlagern |
 
 Beobachte diese Karte während **Tripleschritten und Gängen**. `HECTIC` bei einem Ankerschritt bedeutet oft, dass du den Anker verlässt, bevor du Verbindung aufgebaut hast.
 
@@ -237,15 +234,15 @@ Beobachte diese Karte während **Tripleschritten und Gängen**. `HECTIC` bei ein
 
 ## 7. Die Roll-off-Symmetrie- und Gleichmäßigkeits-Karte
 
-Nur auf **Experten**-Stufe sichtbar.
+Nur auf **Experten**-Stufe sichtbar. Diese Karte vergleicht deine beiden Füße und zeigt, wie flüssig du abrollst.
 
 | Anzeige | Was es dir sagt | Grünes Ziel |
 | :--- | :--- | :--- |
-| **ASI %** | Unterschied zwischen linkem und rechtem Fuß-Roll-off | `SYMMETRIC` — unter 15 % |
-| **Gleichmäßigkeit** | Flüssigkeit der Sprunggelenks-Artikulation über beide Füße | `SMOOTH` — 16 oder höher (`MODERATE` 10–15, `ROUGH` unter 10) |
+| **Seiten-Symmetrie** (ASI) | Wie ähnlich dein linker und rechter Fuß abrollen | `SYMMETRIC` — beide Seiten gleichwertig |
+| **Gleichmäßigkeit** | Wie flüssig deine Sprunggelenke arbeiten | `SMOOTH` |
 
-- Hoher **ASI** (z. B. `ASYMMETRIC` > 35 %) bedeutet meist, dass ein Sprunggelenk steifer ist oder eine Seite eine alte Verletzung kompensiert.
-- Niedrige **Gleichmäßigkeit** bedeutet, dass deine Sprunggelenksbewegungen ruckartig sind. Verlangsame das Tempo und konzentriere dich darauf, durch den ganzen Fuß zu rollen statt flach aufzusetzen.
+- `ASYMMETRIC` bei der Seiten-Symmetrie bedeutet meist, dass ein Sprunggelenk steifer ist oder eine Seite eine alte Verletzung kompensiert.
+- Niedrige **Gleichmäßigkeit** (`ROUGH`) bedeutet, dass deine Sprunggelenksbewegungen ruckartig sind. Verlangsame das Tempo und konzentriere dich darauf, durch den ganzen Fuß zu rollen statt flach aufzusetzen.
 
 ---
 
@@ -257,41 +254,41 @@ Nur auf **Experten**-Stufe sichtbar. Die Grounding-Kachel erscheint **links nebe
 
 | Element | Benötigt | Was gemessen wird |
 | :--- | :--- | :--- |
-| **SDR-Badge** | Beckensensor | Stoßdämpfung durch die Bein-Kette — wie gut Aufprallenergie vom Fuß bis zur Hüfte absorbiert wird |
-| **SETTLE-Badge** | Beckensensor | Becken-Reaktionszeit nach dem Fußkontakt — wie schnell sich das Becken setzt |
-| **GND-Score + Balken** | Fußsensoren | Kombinierter Grounding-Wert (0–100) aus SDR + SETTLE + ROLL; Balken wird grün / gelb / rot |
+| **Stoßdämpfung** (SDR-Badge) | Beckensensor | Wie gut die Aufprallenergie vom Fuß bis zur Hüfte abgefedert wird |
+| **Becken-Reaktion** (SETTLE-Badge) | Beckensensor | Ob dein Becken den Aufprall aktiv und rechtzeitig abfedert |
+| **Grounding-Gesamtwert** (GND-Score) | Fußsensoren | Ein Gesamtwert (0–100), der Stoßdämpfung, Becken-Reaktion und Abrollqualität zusammenfasst; Balken wird grün / gelb / rot |
 
-> Wenn der Beckensensor offline ist, werden SDR- und SETTLE-Badge ausgeblendet. Der GND-Score spiegelt dann nur die ROLL-Qualität der Fußsensoren wider.
+> Wenn der Beckensensor offline ist, werden Stoßdämpfung und Becken-Reaktion ausgeblendet. Der Gesamtwert spiegelt dann nur die Abrollqualität der Fußsensoren wider.
 
-### SDR-Badge
+### Stoßdämpfung (SDR-Badge)
 
-SDR (Shock-absorbing Dynamic Response) misst, wie viel der Aufprallkraft vom Fuß bis zum Becken gedämpft wird — also wie effektiv die Kette aus Sprunggelenk, Knie und Hüfte die Landungsenergie absorbiert.
+Zeigt, wie viel der Aufprallkraft auf dem Weg vom Fuß bis zum Becken abgefedert wird — also wie gut die Kette aus Sprunggelenk, Knie und Hüfte die Landung schluckt.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
-| `ABSORBING ✓` ✅ | Wirksame Stoßdämpfung — die Bein-Kette absorbiert Aufprallenergie | Gut — weiche, entspannte Gelenke beim Aufsetzen beibehalten |
-| `PARTIAL SDR` ⚠️ | Teilweise Dämpfung, aber Aufprall wird anteilig weitergeleitet | Kniebeugetiefe beim Fersenkontakt erhöhen; Sprunggelenk mehr nachgeben lassen |
-| `STIFF` ❌ | Minimale Dämpfung — Aufprall gelangt direkt ins Becken | Mit weicherem Knie landen; bewusst durch Sprunggelenk und Knie abfedern, bevor die Hüfte reagiert |
+| `ABSORBING ✓` ✅ | Wirksame Stoßdämpfung — die Bein-Kette schluckt die Aufprallenergie | Gut — weiche, entspannte Gelenke beim Aufsetzen beibehalten |
+| `PARTIAL SDR` ⚠️ | Teilweise Dämpfung, aber ein Teil des Aufpralls wird weitergeleitet | Tiefer ins Knie gehen beim Fersenkontakt; Sprunggelenk mehr nachgeben lassen |
+| `STIFF` ❌ | Kaum Dämpfung — der Aufprall gelangt direkt ins Becken | Mit weicherem Knie landen; bewusst durch Sprunggelenk und Knie abfedern, bevor die Hüfte reagiert |
 
-### SETTLE-Badge
+### Becken-Reaktion (SETTLE-Badge)
 
-Misst die Zeit vom Fußkontakt bis zur **ersten Abwärtsbewegung des Beckens** (Impact-Absorptions-Latenz). Das zeigt, wie aktiv die Beinkette — Knie und Hüfte — den Aufprall abfedert. Das Zielfenster **skaliert automatisch mit dem Musiktempo** — ca. 10–32 % des Schrittintervalls (≈ 50–160 ms bei 120 BPM), mit einer harten Obergrenze von 220 ms um nur die erste Impact-Reaktion (Dip 1) zu erfassen.
+Zeigt, ob dein Becken nach dem Fußkontakt aktiv nach unten „nachgibt" und damit den Aufprall abfedert — und ob das im richtigen Moment passiert (nicht zu früh, nicht zu spät). Der erwartete Zeitpunkt passt sich automatisch an das Musiktempo an.
 
-| Badge | Timing | Was es bedeutet | Wie man es verbessert |
-| :--- | :--- | :--- | :--- |
-| `SETTLING ✓ Xms` ✅ | 10–32 % des Schrittintervalls | Beinkette federt den Aufprall aktiv ab — nachgiebige Knie- und Hüftreaktion | Beibehalten |
-| `QUICK Xms` ⚠️ | < 10 % des Schrittintervalls | Becken dips vor korrekter Lastaufnahme — Gelenke zu steif für messbare Dämpfungsphase | Knie beim Aufsetzen weicher lassen; Beinkette zuerst abfedern lassen |
-| `SLOW Xms` ⚠️ | > 32 % des Schrittintervalls (max. 220 ms) | Beckenreaktion verzögert — träge Gelenkaktivierung, Aufprall passiv übertragen | Knie und Hüfte beim Fußkontakt aktiv einsetzen, nicht erst danach |
+| Badge | Was es bedeutet | Wie man es verbessert |
+| :--- | :--- | :--- |
+| `SETTLING ✓` ✅ | Die Beinkette federt den Aufprall aktiv ab — nachgiebige Knie- und Hüftreaktion | Beibehalten |
+| `QUICK` ⚠️ | Das Becken gibt zu früh nach — die Gelenke sind zu steif für eine echte Dämpfungsphase | Knie beim Aufsetzen weicher lassen; die Beinkette zuerst abfedern lassen |
+| `SLOW` ⚠️ | Die Beckenreaktion kommt zu spät — Gelenke werden träge aktiviert, der Aufprall wird passiv übertragen | Knie und Hüfte schon beim Fußkontakt aktiv einsetzen, nicht erst danach |
 
-### GND-Score
+### Grounding-Gesamtwert (GND-Score)
 
-Ein kombinierter Wert von 0–100 aus allen drei Grounding-Signalen:
+Ein Gesamtwert von 0–100, der die drei Grounding-Signale zusammenfasst:
 
-- **SDR** — Stoßdämpfungsqualität (Beckensensor erforderlich)
-- **SETTLE** — Becken-Reaktionszeit (Beckensensor erforderlich)
-- **ROLL** — Vorfuß-Abrollqualität aus der Schritt-Karte
+- **Stoßdämpfung** (Beckensensor erforderlich)
+- **Becken-Reaktion** (Beckensensor erforderlich)
+- **Abrollqualität** aus der Schritt-Karte
 
-Der Balken unterhalb des Scores wird **grün** (≥ 65), **gelb** (35–64) oder **rot** (< 35).
+Der Balken unterhalb des Werts wird **grün**, **gelb** oder **rot**. Nutze ihn als schnellen Gesamtüberblick — fällt er ab, prüfe, welches der drei Signale zuerst die Farbe gewechselt hat.
 
 > Den GND-Score als schnellen Überblick während intensiver Übungseinheiten nutzen. Wenn er abfällt, prüfen, welches Komponenten-Badge zuerst die Farbe gewechselt hat.
 
@@ -357,9 +354,9 @@ Vergleicht, wann die maximale Hüftrotation relativ zum Moment des Fußkontakts 
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
-| `HIP LEADS` ✅ | Maximale Hüftrotation mehr als 100 ms vor dem Fußkontakt | Gute Initiierung — Hüften treiben den Schritt an |
-| `IN SYNC` ⚠️ | Hüftmaximum und Fußkontakt innerhalb von 40–100 ms voneinander | Akzeptabel — versuche den „Abschuss" der Hüfte vor dem Schritt zu verstärken |
-| `HIP LAGS` ❌ | Hüften rotieren beim oder nach dem Fußkontakt | Beine bewegen sich unabhängig vom Rumpf. Verlangsamen und jeden Gang von der Hüfte aus initiieren üben, dabei den Fuß folgen lassen |
+| `HIP LEADS` ✅ | Die Hüftrotation ist deutlich vor dem Fußkontakt am stärksten | Gute Initiierung — Hüften treiben den Schritt an |
+| `IN SYNC` ⚠️ | Hüftmaximum und Fußkontakt fallen fast zusammen | Akzeptabel — versuche den „Abschuss" der Hüfte vor dem Schritt zu verstärken |
+| `HIP LAGS` ❌ | Hüften rotieren erst beim oder nach dem Fußkontakt | Beine bewegen sich unabhängig vom Rumpf. Verlangsamen und jeden Gang von der Hüfte aus initiieren üben, dabei den Fuß folgen lassen |
 
 ---
 
