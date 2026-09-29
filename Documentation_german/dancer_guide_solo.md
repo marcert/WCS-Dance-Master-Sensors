@@ -11,7 +11,7 @@
 
 ## 1. Erste Schritte
 
-1. **Befestige dein Smartphone oder Tablet auf einem Stativ** auf Augenhöhe, mit Blick auf dich. Verwende das **Querformat** für beste Ergebnisse.
+1. **Halte dein Smartphone oder Tablet in der Hand** vor dir im **Querformat**, sodass du die Badges zwischen den Schritten ablesen kannst. *(Möchtest du die Kameraüberlagerung nutzen? Dann stell es stattdessen auf ein Stativ auf Augenhöhe mit Blick auf dich.)*
 2. **Öffne das Solo-Dashboard** in deinem Browser (`http://192.168.4.1/solo` im M5-Hotspot oder die auf dem M5-Display angezeigte Heimnetz-IP).
 3. **Tippe auf `📷 CAM`**, um die Kameraüberlagerung zu aktivieren. Dein Live-Bild erscheint hinter den Datenkarten.
 4. **Ziehe deine Tanzschuhe an**, bevor du mit dem nächsten Schritt fortfährst.

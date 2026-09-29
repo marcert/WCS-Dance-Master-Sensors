@@ -11,7 +11,7 @@
 
 ## 1. Getting Started
 
-1. **Mount your phone or tablet on a tripod** at eye level, facing you. Use **landscape orientation** for best results.
+1. **Hold your phone or tablet in your hand** in front of you in **landscape** so you can glance at the badges between steps. *(Prefer the camera overlay? Prop it on a tripod at eye level facing you instead.)*
 2. **Open the Solo Dashboard** in your browser (`http://192.168.4.1/solo` on the M5 hotspot, or the home WiFi IP shown on the M5 display).
 3. **Tap `📷 CAM`** to activate the camera overlay. Your live body appears behind the data cards.
 4. **Put on your dance shoes** before the next step.

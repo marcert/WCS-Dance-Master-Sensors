@@ -9,10 +9,11 @@
 
 **Set up once:**
 
-1. Prop your phone in **landscape** at eye level, facing you.
+1. **Hold your phone in your hand** in front of you (**landscape**) so you can glance at the badges between steps.
 2. Open **`http://192.168.4.1/solo`** in the browser.
-3. Tap **`📷 CAM`** (you appear behind the cards), then stand still in your dance shoes — feet flat, weight even — and tap **`📐 ZERO`**.
-4. Tap **`🔊 Biofeedback: OFF`** to turn the beeps **ON**. The beep is your coach.
+3. Stand still in your dance shoes — feet flat, weight even — and tap **`📐 ZERO`**.
+4. **Leading or following?** The role button (top bar) shows **`👤 LEADER`** by default — tap it to **`💃 FOLLOWER`** if you dance the follower role.
+5. Tap **`🔊 Biofeedback: OFF`** to turn the beeps **ON**. The beep is your coach — you won't have to stare at the screen.
 
 **Your only job:** land softly — **heel first going forward, toe first going back.**
 
