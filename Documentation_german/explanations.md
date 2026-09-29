@@ -127,3 +127,26 @@ Das Partner-Dashboard liest die Live-Verbindungskraft (`currentW`, Gramm) im Mom
 **Warum das Gate auf den Betrag statt die Richtung reagiert:** In der Validierung korrelierten sowohl `QUICK`- als auch `LATE`-Falschalarme mit betragsmäßig hoher Verbindungskraft (überwiegend großen Werten auf einer Seite der Null), unabhängig von der Druck-/Zug-Richtung. Hohe Kraft belastet den Fußsensor und verzerrt die Gewichtsverlagerungs-Rampe in beide Richtungen unvorhersehbar — deshalb reagiert das Delay-Gate auf `|currentW|` (Betrag) statt auf das Kraftvorzeichen.
 
 **Nicht gegated:** `OVERSWING` braucht kein Kraft-Gate — in der Validierung erzeugte es null Falschalarme selbst bei Kraftspitzen über 6 kg; die Schwelle `earlyLatPeak > 0,30 g` ist bereits robust. `BOUNCY` ist nicht kraft-gegated, aber seine Schwelle wurde angehoben (0,020 → 0,038), um den Anstieg der vertikalen Varianz durch Rumpfanspannung gegen Partnerkraft aufzufangen.
+
+---
+
+## 8. Frame / Verbindungs-Kopplung (`p-frameBadge`)
+
+> **⚠ Provisorisch.** Neue Metrik; alle Schwellenwerte unten sind Kalibrier-Startwerte, noch nicht WCS-validiert.
+
+Nutzt **keinen Zusatzsensor** — vergleicht den Führungs-Kraftimpuls (Änderungsrate der Verbindungskraft) mit der horizontalen Bewegungsantwort des Beckens über ein kurzes Fenster. Zweck: Kraft erkennen, die über die Verbindung eingeleitet wird, sich aber **nicht** in Körperbewegung umsetzt (Elastizitätsverlust / Frame-Kollaps).
+
+**Signale (pro Frame, ~50 Hz):**
+- `forceRate = |ΔcurrentW| / dt` (g/s) — bereits für den Jerk-Index (§3) berechnet; nach `lastForceRate` gespiegelt.
+- `pHoriz = √(pAy² + pAx²)` (g) — horizontale (sagittal+lateral) Beckenbeschleunigung; diese Achsen liegen in Ruhe bei ≈ 0, daher keine Schwerkraft-Entfernung nötig.
+- Rollierende Puffer `frRateBuf`, `pHorizBuf` — je 15 Frames (~300 ms).
+
+**Klassifizierung** (braucht Hand **und** Becken online):
+
+| Badge | Bedingung | Bedeutung |
+| :--- | :--- | :--- |
+| `— LINK` | `|currentW| < 1500 g` **oder** `peak(frRateBuf) < 800 g/s` | Kein aktiver Führungsimpuls zu bewerten |
+| `TRANSMITTED ✓` | Impuls aktiv **und** `peak(pHorizBuf) ≥ 0,12 g` | Kraft mit Körperbewegung beantwortet — bis ins Zentrum durchgetragen |
+| `SOFT LINK ⚠` | Impuls aktiv **und** `peak(pHorizBuf) < 0,12 g` | Starker Kraftimpuls, kaum Körperbewegung — elastisch absorbiert |
+
+**Bekannte Einschränkung (im Code und im Tänzerguide dokumentiert):** Die Metrik kann eine *korrekte Counterbalance* (Halten gegen die Verbindung — gut) nicht von einem *Frame-Kollaps* (schlecht) unterscheiden. Beide zeigen sich als „Kraft eingeleitet, Körper statisch". Die Auflösung erfordert einen Oberkörper-/Torso-Sensor (Thorax-Pitch unter Last), den die Poise-Metriken des Solo-Dashboards liefern, den die Partner-Ansicht aber noch nicht auswertet. `SOFT LINK` als Hinweis behandeln, das Paar anzusehen — nicht als Urteil.

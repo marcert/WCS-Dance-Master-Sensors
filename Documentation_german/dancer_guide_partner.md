@@ -125,6 +125,7 @@ Wird bei jedem erkannten Fußkontakt aktualisiert. Verwendet dieselbe Klassifizi
 | **Fußwinkel** | Fußneigung beim Aufsetzen (positiv = Zehen hoch, negativ = Zehen runter) |
 | **Schritt-Badge** | Klassifizierung der Landung — siehe Tabelle unten |
 | **Verzögerungs-Badge** | Temponormierte Zeitgebung der Gewichtsverlagerung — siehe Tabelle unten |
+| **Frame-Badge** (`LINK`) | Ob ein Führungsimpuls den Körper tatsächlich bewegt — siehe unten |
 
 ### Schritt-Badge Referenz
 
@@ -161,6 +162,20 @@ Die Schwellenwerte unterscheiden sich je nach Richtung, da eine Rückwärtslandu
 
 > 📷 **Screenshot-Platzhalter — Verzögerungs-Badge: DELAYED ✓ im Anchor**
 > *(Ersetzen durch: Statusleiste mit `⬅ BWD R  −12°  TOE-FIRST ✓  DELAYED ✓` — alles grün, gute Technik)*
+
+### Frame-Badge (`LINK`) — Kraft-zu-Bewegung-Kopplung
+
+Dieser Badge braucht **keinen Zusatzsensor** — er vergleicht den Führungs-Kraftimpuls (wie schnell sich die Verbindungskraft ändert) mit der tatsächlichen **Becken-Beschleunigung** als Antwort. Er beantwortet eine Frage: *Wenn Kraft über die Verbindung eingeleitet wird — bewegt sich der Körper, oder wird die Kraft irgendwo absorbiert?*
+
+| Badge | Bedeutung |
+| :--- | :--- |
+| `— LINK` | Gerade kein aktiver Führungsimpuls (Verbindung ruhig, oder ein Sensor offline) |
+| `TRANSMITTED ✓` | Ein Kraftimpuls wurde mit Körperbewegung beantwortet — die Verbindung trug bis ins Zentrum durch |
+| `SOFT LINK ⚠` | Ein klarer Kraftimpuls erzeugte kaum Körperbewegung — die Kraft wurde elastisch absorbiert, statt den Tänzer zu bewegen |
+
+> **Wichtige Einschränkung — vor dem Coaching lesen.** Ein `SOFT LINK` bedeutet **nicht** immer einen Fehler. Im WCS zeigt sich das Halten gegen die Verbindung (eine gute Counterbalance am Anchor) *ebenfalls* als „Kraft eingeleitet, Körper bewegt sich nicht" — was genau richtig ist, kein Kollaps. Dieser Badge kann eine korrekte Counterbalance nicht von einem echten Frame-Kollaps unterscheiden; nur ein Oberkörper-/Torso-Sensor (Brust-Haltung unter Last) kann das. Behandle `SOFT LINK` als **Hinweis, das Paar anzusehen**, nicht als Urteil. Benötigt Hand- und Beckensensor gleichzeitig online.
+>
+> **Hinweis zu den Schwellenwerten:** Vorläufige Startwerte — anhand eigener Aufnahmen kalibrieren.
 
 ## 5b. Becken-Badges (Statusleiste — erscheint wenn der Sensor online ist)
 

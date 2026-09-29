@@ -127,3 +127,26 @@ The partner dashboard reads the live connection force (`currentW`, grams) at the
 **Why the gate keys on magnitude, not direction:** In validation, both `QUICK` and `LATE` false alarms correlated with high-magnitude connection force (predominantly large-magnitude readings on one side of zero), regardless of push/pull direction. High force loads the foot sensor and distorts the weight-transfer ramp in both directions unpredictably, so the delay gate keys on `|currentW|` (magnitude) rather than force sign.
 
 **Not gated:** `OVERSWING` needs no force gate — in validation it produced zero false alarms even at force peaks above 6 kg; the `earlyLatPeak > 0.30 g` threshold is already robust. `BOUNCY` is not force-gated but its threshold was raised (0.020 → 0.038) to absorb the vertical-variance rise caused by core bracing against partner force.
+
+---
+
+## 8. Frame / Connection Coupling (`p-frameBadge`)
+
+> **⚠ Provisional.** New metric; all thresholds below are calibration starting points, not yet WCS-validated.
+
+Uses **no extra sensor** — it compares the lead-force impulse (rate of change of connection force) against the pelvis's horizontal motion response over a short window. Purpose: detect force that is applied through the connection but does **not** translate into body movement (elasticity loss / frame collapse).
+
+**Signals (per frame, ~50 Hz):**
+- `forceRate = |ΔcurrentW| / dt` (g/s) — already computed for the jerk index (§3); mirrored into `lastForceRate`.
+- `pHoriz = √(pAy² + pAx²)` (g) — pelvis horizontal (sagittal+lateral) acceleration magnitude; these axes read ≈ 0 at rest, so no gravity removal is needed.
+- Rolling buffers `frRateBuf`, `pHorizBuf` — 15 frames (~300 ms) each.
+
+**Classification** (requires hand **and** pelvis online):
+
+| Badge | Condition | Meaning |
+| :--- | :--- | :--- |
+| `— LINK` | `|currentW| < 1500 g` **or** `peak(frRateBuf) < 800 g/s` | No active lead impulse to evaluate |
+| `TRANSMITTED ✓` | impulse active **and** `peak(pHorizBuf) ≥ 0.12 g` | Force met with body movement — carried through to the centre |
+| `SOFT LINK ⚠` | impulse active **and** `peak(pHorizBuf) < 0.12 g` | Strong force impulse, little body movement — absorbed elastically |
+
+**Known limitation (documented in code and dancer guide):** the metric cannot distinguish a *correct counterbalance* (holding ground against the connection — good) from a *frame collapse* (bad). Both present as "force applied, body static." Disambiguation requires an upper-body/torso sensor (thorax pitch under load), which the solo dashboard's poise metrics provide but the partner view does not yet consume. Treat `SOFT LINK` as a prompt to look at the pair, not a verdict.

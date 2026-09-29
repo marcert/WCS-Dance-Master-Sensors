@@ -20,6 +20,7 @@ A real-time wireless sensor network and video-overlay feedback system built for 
 | **Left & Right Foot** | Foot roll-off quality (gyro angular rate), heel/toe strike angle, impact force (Z-axis g-force), push-off power |
 | **Hand / Scale Unit** | Lead-follow tension in grams (−4.0 kg to +4.0 kg via HX711 strain gauge), connection jerk index |
 | **Pelvis Sensor** *(optional)* | Lateral pelvic tilt, yaw damping (Anchor Settle score), hip activation (yaw rate), hip–foot coupling timing, vertical bounce |
+| **Thorax Sensor** *(optional)* | Upper-body poise: torso pitch (upright vs. slouch), lateral tilt, top-line quiet, and torso–pelvis stack (when the pelvis sensor is also worn) |
 
 Alerts fire immediately as audio beeps and coloured badge overlays — faster than you can read a graph.
 
@@ -132,6 +133,7 @@ When the optional **Pelvis Sensor** is attached, both dashboards display five ad
 | Foot Sensors (×2) | M5StampS3 (internal 6-axis IMU required) |
 | Hand / Scale Unit | M5StickC PLUS2 + HX711 load cell amplifier + strain-gauge load cell (GPIO 33 DOUT / GPIO 32 SCK) |
 | Pelvis Sensor *(optional)* | M5StampS3 (internal 6-axis IMU required) — worn on a belt at the sacrum |
+| Thorax Sensor *(optional)* | M5StampS3 (internal 6-axis IMU required) — worn high on the upper back (C7–T1, base of the neck) |
 
 Full bill of materials and wiring: [parts.md](Documentation_english/parts.md)
 
@@ -169,8 +171,12 @@ Install the following libraries in **Arduino IDE** or **PlatformIO**:
    - Default scale factor: `129.1f` — calibrate against a known weight if needed.
 
 4. **Pelvis Sensor** *(optional)*
-   - Flash `M5Pelvic/` — `#define PELVIS_ID 4`.
+   - Flash `M5Pelvic/` — `#define SENSOR_ID 4`.
    - Mount on a belt at the sacrum with the display facing outward.
+
+5. **Thorax Sensor** *(optional)*
+   - Flash `M5Thorax/` — `#define SENSOR_ID 5`.
+   - Mount high on the upper back (C7–T1, base of the neck) against a tight layer, display facing outward, top edge up — the same orientation as the pelvis sensor.
 
 ---
 

@@ -125,6 +125,7 @@ Updates on each detected foot contact. Uses the same classification as the Solo 
 | **Foot angle** | Foot tilt at landing (positive = heel up / toes up, negative = toes down) |
 | **Strike badge** | Classification of the landing — see table below |
 | **Delay badge** | Tempo-normalised weight transfer timing — see table below |
+| **Frame badge** (`LINK`) | Whether a lead-force impulse actually moves the body — see below |
 
 ### Strike badge reference
 
@@ -161,6 +162,20 @@ Thresholds differ by direction because a backward (toe-first) landing naturally 
 
 > 📷 **Screenshot placeholder — delay badge: DELAYED ✓ on anchor**
 > *(Replace with: status bar showing `⬅ BWD R  −12°  TOE-FIRST ✓  DELAYED ✓` — all green, good technique)*
+
+### Frame badge (`LINK`) — force-to-motion coupling
+
+This badge uses **no extra sensor** — it compares the lead-force impulse (how fast the connection force changes) against how much the **pelvis actually accelerates** in response. It answers one question: *when force is applied through the connection, does the body move, or does the force get absorbed somewhere?*
+
+| Badge | What it means |
+| :--- | :--- |
+| `— LINK` | No active lead impulse right now (connection quiet, or a sensor offline) |
+| `TRANSMITTED ✓` | A force impulse was met with body movement — the connection carried through to the centre |
+| `SOFT LINK ⚠` | A clear force impulse produced little body movement — the force was absorbed elastically instead of moving the dancer |
+
+> **Important limitation — read this before coaching from it.** A `SOFT LINK` does **not** always mean a fault. In WCS, holding ground against the connection (a good counterbalance at the anchor) *also* shows up as "force applied, body doesn't move" — which is exactly right, not a collapse. This badge cannot tell a correct counterbalance apart from a genuine frame collapse; only an upper-body/torso sensor (chest posture under load) can. Treat `SOFT LINK` as a **flag to look at the pair**, not a verdict. Requires both the hand sensor and the pelvis sensor to be online.
+>
+> **Thresholds note:** Provisional starting points — calibrate against your own recordings.
 
 ## 5b. Pelvis Badges (Status Bar — appears when sensor is online)
 

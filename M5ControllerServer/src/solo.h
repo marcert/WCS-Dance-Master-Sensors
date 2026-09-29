@@ -351,7 +351,8 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                 <!-- TOP-LEFT: PELVIS HIP MECHANICS (replaces spacer while sensor is online) -->
                 <div id="pelvicCard" class="card">
-                    <div class="card-title">Pelvis — Hip Mechanics</div>
+                    <div class="card-title">Pelvis &amp; Torso — Core Mechanics</div>
+                    <div id="pelvisRows">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                         <span style="font-size:0.78rem;color:#8b949e;">Hip Activation</span>
                         <span id="hipActBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP</span>
@@ -379,6 +380,26 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;">
                         <span style="font-size:0.78rem;color:#8b949e;">Hip Settle</span>
                         <span id="hipSettleBadge" class="badge" style="background:#1e272e;color:#8b949e;">— HIP SETTLE</span>
+                    </div>
+                    </div><!-- /pelvisRows -->
+                    <div id="torsoRows">
+                        <div class="pelvis-int" style="font-size:0.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;margin:5px 0 2px;border-top:1px solid #2a2a3a;padding-top:4px;">Torso — Poise (needs thorax sensor)</div>
+                        <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                            <span style="font-size:0.78rem;color:#8b949e;">Poise (upright)</span>
+                            <span id="thoraxPoiseBadge" class="badge" style="background:#1e272e;color:#8b949e;">— POISE</span>
+                        </div>
+                        <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                            <span style="font-size:0.78rem;color:#8b949e;">Level (side)</span>
+                            <span id="thoraxRollBadge" class="badge" style="background:#1e272e;color:#8b949e;">— LEVEL</span>
+                        </div>
+                        <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                            <span style="font-size:0.78rem;color:#8b949e;">Top-Line Quiet</span>
+                            <span id="thoraxQuietBadge" class="badge" style="background:#1e272e;color:#8b949e;">— QUIET</span>
+                        </div>
+                        <div class="pelvis-adv" style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:0.78rem;color:#8b949e;">Torso–Pelvis Stack</span>
+                            <span id="thoraxFlexBadge" class="badge" style="background:#1e272e;color:#8b949e;">— STACK</span>
+                        </div>
                     </div>
                 </div>
 
@@ -631,6 +652,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     // Also zero the pelvis sagittal tilt
                     pelvicPitchOffset   = Math.atan2(lastPelvicSagP, lastPelvicVertP) * (180 / Math.PI);
                     pelvicPitchSmoothed = 0;
+                    // Zero the thorax poise (sagittal lean + lateral tilt), standing tall/upright
+                    thoraxPitchOffset   = Math.atan2(lastThoraxSagT, lastThoraxVertT) * (180 / Math.PI);
+                    thoraxRollOffset    = Math.atan2(lastThoraxLatT, lastThoraxVertT) * (180 / Math.PI);
+                    thoraxPitchSmoothed = 0;
+                    thoraxRollSmoothed  = 0;
         
             let btn = document.getElementById('tareBtn');
             btn.innerText = "📐 ZEROED! ✓";
@@ -685,11 +711,15 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
         let gYawAbsHistory = new Array(25).fill(0);   // rolling |gYawP| — 25 frames = 500ms, for hip activation
         let aXPHistory     = new Array(50).fill(0);   // rolling aXP — 50 frames = 1s, for slot adherence
         let aZPDynHistory  = new Array(50).fill(0);   // rolling (aZP−1) — 1s, for vertical bounce
+        let aHorizTHistory = new Array(50).fill(0);   // rolling thorax horizontal accel magnitude — 1s, for top-line quiet
         let gYawTimedBuf   = [];                      // {t, v} pairs — last 600ms, for hip-foot coupling
         let hipActSmoothed = 0;                       // IIR-smoothed hip activation amplitude
         let pelvicPitchOffset   = 0;                  // zeroed at ZERO press, sagittal tilt reference
         let pelvicPitchSmoothed = 0;                  // IIR-smoothed pelvis pitch deviation
         let lastPelvicSagP  = 0, lastPelvicVertP = 1.0; // last known accel values for tare
+        let thoraxPitchOffset = 0, thoraxRollOffset = 0;      // zeroed at ZERO press (standing tall/upright)
+        let thoraxPitchSmoothed = 0, thoraxRollSmoothed = 0;  // IIR-smoothed thorax pitch/roll deviation
+        let lastThoraxSagT = 0, lastThoraxVertT = 1.0, lastThoraxLatT = 0; // last accel values for tare
 
         // --- Grounding metrics state ---
         let prevAVertP_g = 1.0;
@@ -737,6 +767,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let leftOk   = data.lOk === true;
                     let rightOk  = data.rOk === true;
                     let pelvicOk = data.pOk === true;
+                    let thoraxOk = data.tOk === true;
 
                     // Battery warning: show blinking overlay if any active sensor ≤ 20%
                     { const BATT_WARN = 20;
@@ -745,6 +776,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                       if (leftOk  && (data.lBatt??0) > 0 && data.lBatt <= BATT_WARN) warns.push('L ' + data.lBatt + '%');
                       if (rightOk && (data.rBatt??0) > 0 && data.rBatt <= BATT_WARN) warns.push('R ' + data.rBatt + '%');
                       if (pelvicOk&& (data.pBatt??0) > 0 && data.pBatt <= BATT_WARN) warns.push('Pelvis ' + data.pBatt + '%');
+                      if (thoraxOk&& (data.tBatt??0) > 0 && data.tBatt <= BATT_WARN) warns.push('Thorax ' + data.tBatt + '%');
                       if (data.hOk && (data.hBatt??0) > 0 && data.hBatt <= BATT_WARN) warns.push('Hand ' + data.hBatt + '%');
                       let wDiv = document.getElementById('battWarnDiv');
                       if (wDiv) { if (warns.length) { wDiv.innerText = '⚡ AKKU SCHWACH: ' + warns.join(' · '); wDiv.style.display = 'block'; } else { wDiv.style.display = 'none'; } }
@@ -760,6 +792,9 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     let aSagP    = data.pAy  ?? 0.0;   // accel_y = sagittal  (anterior-posterior)
                     let gYawP    = data.pYaw ?? 0;
                     let aLatP    = data.pAx  ?? 0.0;   // accel_x = lateral
+                    let aVertT   = data.tA   ?? 1.0;   // thorax vertical (+1.0g at rest)
+                    let aSagT    = data.tAy  ?? 0.0;   // thorax sagittal (anterior-posterior lean)
+                    let aLatT    = data.tAx  ?? 0.0;   // thorax lateral (side tilt)
 
                                         // 1. Live Pitch Curve Buffer — low-pass filtered (α=0.25) to suppress vibration noise
                     const LP_ALPHA = 0.25;
@@ -803,10 +838,19 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     if (aYL > 0.15) pushIntegralL += Math.max(0, -gPitchL) * dt;
                     if (aYR > 0.15) pushIntegralR += Math.max(0, -gPitchR) * dt;
 
-                    // --- PELVIS METRICS (per frame) ---
-                    if (pelvicOk) {
+                    // --- CORE CARD VISIBILITY (shown if pelvis and/or thorax is online) ---
+                    if (pelvicOk || thoraxOk) {
                         document.getElementById('pelvicCard').style.display = 'block';
                         document.getElementById('pelvicSpacer').style.display = 'none';
+                    } else {
+                        document.getElementById('pelvicCard').style.display = 'none';
+                        document.getElementById('pelvicSpacer').style.display = '';
+                    }
+                    { let pr = document.getElementById('pelvisRows'); if (pr) pr.style.display = pelvicOk ? '' : 'none';
+                      let tr = document.getElementById('torsoRows');  if (tr) tr.style.display = thoraxOk ? '' : 'none'; }
+
+                    // --- PELVIS METRICS (per frame) ---
+                    if (pelvicOk) {
 
                         // Hip Activation — rolling max of |gYawP| over 500ms, IIR-smoothed
                         gYawAbsHistory.shift(); gYawAbsHistory.push(Math.abs(gYawP));
@@ -867,9 +911,63 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                             anchorSettleSamples.gYawP.push(Math.abs(gYawP));
                             anchorSettleSamples.aLatP.push(aLatP);
                         }
-                    } else {
-                        document.getElementById('pelvicCard').style.display = 'none';
-                        document.getElementById('pelvicSpacer').style.display = '';
+                    }
+
+                    // --- THORAX / POISE METRICS (per frame) ---
+                    // Pitch & roll are gravity-referenced (drift-free); no yaw used here.
+                    // Thresholds are PROVISIONAL — calibrate against your own recordings.
+                    // NOTE: the sagittal sign (forward vs. back) may need flipping after the first
+                    // hardware test; the green ±zone and all magnitude/variance badges are sign-robust.
+                    if (thoraxOk) {
+                        lastThoraxSagT = aSagT; lastThoraxVertT = aVertT; lastThoraxLatT = aLatT;
+
+                        // Poise — sagittal chest lean, zeroed at ZERO press
+                        let thoraxPitchRaw = Math.atan2(aSagT, aVertT) * (180 / Math.PI) - thoraxPitchOffset;
+                        thoraxPitchSmoothed = thoraxPitchSmoothed * 0.92 + thoraxPitchRaw * 0.08;
+                        let poiseBadge = document.getElementById('thoraxPoiseBadge');
+                        if (poiseBadge) {
+                            let t = thoraxPitchSmoothed; // >0 = leaning/folding forward
+                            if      (Math.abs(t) <= 6)   { poiseBadge.className = 'badge badge-green';  poiseBadge.style.cssText = ''; poiseBadge.innerText = 'UPRIGHT ✓'; }
+                            else if (t > 6 && t <= 14)   { poiseBadge.className = 'badge badge-yellow'; poiseBadge.style.cssText = ''; poiseBadge.innerText = 'SLIGHT LEAN'; }
+                            else if (t > 14)             { poiseBadge.className = 'badge badge-red';    poiseBadge.style.cssText = ''; poiseBadge.innerText = 'SLOUCHING ⚠'; }
+                            else                         { poiseBadge.className = 'badge badge-yellow'; poiseBadge.style.cssText = ''; poiseBadge.innerText = 'LEANING BACK'; }
+                        }
+
+                        // Level — lateral tilt of the torso, zeroed at ZERO press
+                        let thoraxRollRaw = Math.atan2(aLatT, aVertT) * (180 / Math.PI) - thoraxRollOffset;
+                        thoraxRollSmoothed = thoraxRollSmoothed * 0.92 + thoraxRollRaw * 0.08;
+                        let rollBadge = document.getElementById('thoraxRollBadge');
+                        if (rollBadge) {
+                            let r = Math.abs(thoraxRollSmoothed);
+                            if      (r <= 6)  { rollBadge.className = 'badge badge-green';  rollBadge.style.cssText = ''; rollBadge.innerText = 'LEVEL ✓'; }
+                            else if (r <= 14) { rollBadge.className = 'badge badge-yellow'; rollBadge.style.cssText = ''; rollBadge.innerText = 'SLIGHT TILT'; }
+                            else              { rollBadge.className = 'badge badge-red';    rollBadge.style.cssText = ''; rollBadge.innerText = 'TILTED ⚠'; }
+                        }
+
+                        // Top-Line Quiet — variance of horizontal (dynamic) accel over 1s
+                        let horizMagT = Math.sqrt(aSagT * aSagT + aLatT * aLatT);
+                        aHorizTHistory.shift(); aHorizTHistory.push(horizMagT);
+                        let hMeanT = aHorizTHistory.reduce((a, b) => a + b, 0) / aHorizTHistory.length;
+                        let hVarT  = aHorizTHistory.reduce((a, b) => a + (b - hMeanT) ** 2, 0) / aHorizTHistory.length;
+                        let quietBadge = document.getElementById('thoraxQuietBadge');
+                        if (quietBadge) {
+                            if      (hVarT < 0.010) { quietBadge.className = 'badge badge-green';  quietBadge.style.cssText = ''; quietBadge.innerText = 'QUIET ✓'; }
+                            else if (hVarT < 0.035) { quietBadge.className = 'badge badge-yellow'; quietBadge.style.cssText = ''; quietBadge.innerText = 'SOME MOTION'; }
+                            else                    { quietBadge.className = 'badge badge-red';    quietBadge.style.cssText = ''; quietBadge.innerText = 'RESTLESS ⚠'; }
+                        }
+
+                        // Torso–Pelvis Stack — requires both sensors; separates whole-body lean from breaking at the waist
+                        let flexBadge = document.getElementById('thoraxFlexBadge');
+                        if (flexBadge) {
+                            if (pelvicOk) {
+                                let flex = thoraxPitchSmoothed - pelvicPitchSmoothed; // >0 = chest folds forward relative to pelvis (pike)
+                                if      (Math.abs(flex) <= 8) { flexBadge.className = 'badge badge-green';  flexBadge.style.cssText = ''; flexBadge.innerText = 'STACKED ✓'; }
+                                else if (flex > 8)            { flexBadge.className = 'badge badge-red';    flexBadge.style.cssText = ''; flexBadge.innerText = 'PIKING ⚠'; }
+                                else                          { flexBadge.className = 'badge badge-yellow'; flexBadge.style.cssText = ''; flexBadge.innerText = 'OPENING'; }
+                            } else {
+                                flexBadge.className = 'badge'; flexBadge.style.cssText = 'background:#1e272e;color:#8b949e;'; flexBadge.innerText = '— needs pelvis';
+                            }
+                        }
                     }
 
                     // Timer evaluation outside pelvicOk — survives brief sensor dropouts

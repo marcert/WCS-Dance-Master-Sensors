@@ -10,7 +10,7 @@ This system supports two use cases — pick the guide that matches yours:
 - 🧍 **Solo training** — the dancer uses the Solo Dashboard (`/solo`) alone, watching badge feedback between steps. → [Dancer's Guide — Solo](dancer_guide_solo.md)
 - 🤝 **Partner / coaching** — a coach or partner opens the Partner Dashboard (`/`) on a second device while the dancer trains. → [Dancer's Guide — Partner](dancer_guide_partner.md)
 
-Both dashboards work simultaneously on separate devices. The optional Pelvis Sensor adds five real-time hip metrics to whichever dashboard is open.
+Both dashboards work simultaneously on separate devices. The optional Pelvis Sensor adds real-time hip metrics; the optional Thorax Sensor adds upper-body poise metrics (upright carriage, top-line quiet, torso–pelvis stack) to the solo view.
 
 ---
 
