@@ -179,6 +179,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             <span id="p-angleVal"    style="font-size:min(3vw,13px);color:#ddd;">—</span>
             <span id="p-strikeBadge" class="p-badge" style="min-width:9em;text-align:center;">—</span>
             <span id="p-loadBadge"   class="p-badge">—</span>
+            <span id="p-frameBadge"  class="p-badge" style="min-width:9.5em;text-align:center;">— LINK</span>
         </div>
         <div id="pelvisInfoDiv" style="visibility:hidden;width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;">
             <span style="font-size:min(2.8vw,12px);color:#ba68c8;font-weight:bold;">PELVIS:</span>
@@ -380,6 +381,11 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
     let prevAx = 0, prevAy = 0, prevAz = 1;
     let prevWeight = 0;
 
+    // -- Frame/connection coupling (force impulse vs. pelvis motion response) --
+    let lastForceRate = 0;
+    let frRateBuf = new Array(15).fill(0);   // ~300ms of force-change rate (g/s)
+    let pHorizBuf = new Array(15).fill(0);   // ~300ms of pelvis horizontal accel magnitude (g)
+
     let isFrozen = false;
 
     // -- new fields from /data --
@@ -568,6 +574,7 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
             // Previously dWeight/50 mixed grams with g*15 — that was unit-incoherent.
             let dt_s = intervalMs / 1000;
             let forceRate  = dWeight / dt_s;                                         // g/s
+            lastForceRate  = forceRate;
             let motionRate = Math.sqrt(dAx*dAx + dAy*dAy + dAz*dAz) / dt_s;        // g/s
             // Normalise: 2000 g/s force rate and 10 g/s motion rate define full scale (equal weight)
             let jerkIndex = Math.min(1.0, forceRate / 2000.0 * 0.5 + motionRate / 10.0 * 0.5);
@@ -580,6 +587,37 @@ const char HTML_PAGE[] PROGMEM = R"rawliteral(
         } else {
             kraftPoints.shift(); kraftPoints.push(null);
             jerkPoints.shift();  jerkPoints.push({ y: null, isJerkPeak: false });
+            lastForceRate = 0;
+        }
+
+        // --- FRAME / CONNECTION COUPLING (no extra hardware) ---
+        // Compares the lead-force impulse (dF/dt) against the pelvis's horizontal motion
+        // response over a ~300 ms window. Strong force impulse + little body acceleration =
+        // the force is absorbed elastically instead of moving the body (SOFT LINK).
+        // Thresholds are PROVISIONAL — calibrate against your own recordings.
+        // LIMITATION: this cannot distinguish a *correct* counterbalance (holding ground
+        // against the connection, which is good) from a true frame collapse. Only a torso
+        // sensor (thorax pitch under load) can disambiguate those two.
+        {
+            let pHoriz = targetPOk ? Math.sqrt(targetPAy * targetPAy + targetPAx * targetPAx) : 0; // body horizontal accel (g)
+            frRateBuf.shift(); frRateBuf.push(lastForceRate);
+            pHorizBuf.shift(); pHorizBuf.push(pHoriz);
+            let frameEl = document.getElementById('p-frameBadge');
+            if (frameEl) {
+                if (targetPOk && targetHOk) {
+                    let peakFR = Math.max(...frRateBuf);   // g/s
+                    let peakPH = Math.max(...pHorizBuf);   // g
+                    if (Math.abs(currentW) < 1500 || peakFR < 800) {
+                        frameEl.className = 'p-badge'; frameEl.innerText = '— LINK';           // no active lead impulse
+                    } else if (peakPH >= 0.12) {
+                        frameEl.className = 'p-badge p-green';  frameEl.innerText = 'TRANSMITTED ✓';
+                    } else {
+                        frameEl.className = 'p-badge p-yellow'; frameEl.innerText = 'SOFT LINK ⚠';
+                    }
+                } else {
+                    frameEl.className = 'p-badge'; frameEl.innerText = '— LINK';
+                }
+            }
         }
 
         // --- LINKER FUSS ---

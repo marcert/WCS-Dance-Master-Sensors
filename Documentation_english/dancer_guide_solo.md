@@ -296,9 +296,9 @@ The bar below the score turns **green**, **yellow**, or **red** depending on you
 
 ---
 
-## 9. The Pelvis Card (Optional Sensor)
+## 9. The Pelvis & Torso Card (Optional Sensors)
 
-The pelvis card appears in the **top-left slot** of the dashboard whenever the pelvis sensor is powered on. When the sensor is offline, that slot remains empty and the camera shows through.
+The card in the **top-left slot** of the dashboard appears whenever the pelvis sensor **and/or** the torso sensor is powered on. When neither is online, that slot stays empty and the camera shows through. The pelvis rows and the torso rows appear independently, depending on which sensor is worn.
 
 ### Mounting the sensor
 
@@ -319,6 +319,10 @@ Once the pelvis sensor is online, the pelvis card appears at the top-left. If th
 | **Vertical Bounce** | INT+ | How much vertical movement the pelvis generates |
 | **Anchor Settle** | ADV | Quality of the pelvis settle shortly after each anchor step |
 | **Hip Settle** | ADV | Whether the pelvis shifts into the standing hip after each anchor step (lateral tilt) |
+| **Poise (upright)** | INT+ | Upper-body carriage — chest upright vs. leaning/slouching (needs the torso sensor) |
+| **Level (side)** | ADV | Sideways tilt of the torso (needs the torso sensor) |
+| **Top-Line Quiet** | ADV | How still the upper body stays during footwork (needs the torso sensor) |
+| **Torso–Pelvis Stack** | ADV | Whether you lean as one piece or fold/break at the waist (needs torso **and** pelvis) |
 
 > 📸 **[Screenshot: Pelvis card in the top-left slot showing all badge rows (Hip Activation through Anchor Settle) with sensor active]**
 
@@ -411,6 +415,29 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 > **Note:** "Settling into the hip" is a stylistic element — some teaching styles emphasise it strongly, others less so. In WCS, the lateral pelvic movement is intentionally subtler than in Latin dance: the goal is a "grounded arrival", not a visible swing. This badge provides information, not a verdict. If your teacher does not want a lateral settle, disregard this badge.
 >
 > **Thresholds note:** These values are based on biomechanical reference data and can be adjusted after a first test session with the pelvis sensor.
+
+---
+
+### Torso — Poise (optional torso sensor)
+
+A second optional sensor worn **high on the upper back** (base of the neck) reads how your upper body carries itself — something the foot and pelvis sensors cannot see. Clip it flat against a tight layer, display facing outward, top edge up. When you press `📐 ZERO` standing tall in your natural stance, the system learns your neutral posture, so afterwards it only shows how far you drift from *your own* upright.
+
+These rows appear in the same top-left card as the pelvis rows.
+
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `UPRIGHT ✓` | Chest stacked over the hips — good carriage | Maintain |
+| `SLIGHT LEAN` | Upper body starting to drop forward | Grow tall through the crown of the head; lift the sternum |
+| `SLOUCHING ⚠` | Chest collapsing forward — rounding the upper back | Reset your posture: ribs over hips, shoulders back and down |
+| `LEANING BACK` | Upper body tipped behind your base | Bring the chest back over your centre |
+
+- **`LEVEL` / `SLIGHT TILT` / `TILTED`** — how level your shoulders stay side to side. Persistent tilt usually means you drop one shoulder on turns or weight shifts.
+- **`QUIET` / `SOME MOTION` / `RESTLESS`** — how still the upper body stays while your feet work. `RESTLESS` means fast footwork is leaking up into the shoulders instead of being absorbed in the core. Aim for a quiet top line over busy feet.
+- **`STACKED` / `OPENING` / `PIKING`** (needs the pelvis sensor too) — separates leaning as one piece from breaking at the waist. `PIKING` means your chest folds forward while your hips stay back — a common way to *look* connected while actually collapsing. Keep the torso and pelvis moving as one column.
+
+> **Poise is a refinement, not a beginner cue.** `Poise` appears from Intermediate; the other three torso rows are Advanced. If you only wear the torso sensor (no pelvis), the poise, level and top-line rows still work — only the Torso–Pelvis Stack needs both.
+>
+> **Thresholds note:** All torso thresholds are provisional starting points, to be calibrated against your own recordings.
 
 ---
 

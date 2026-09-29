@@ -38,6 +38,7 @@ Das Solo-Training-System arbeitet als hochfrequenter biomechanischer Feedback-Kr
 
 * **Fußknoten (IDs 1 & 2):** M5Stick-S3-Einheiten mit 6-Achsen-IMUs (Inertial Measurement Units, BMI270 / MPU6886). Die Firmware arbeitet mit **200 Hz (5 ms Abtastintervall)**, um ultraschnelle transiente Impulsspitzen bei Fersenaufsatz und Zehenlandungen zu erfassen.
 * **Beckenknoten (ID 4, optional):** Gleiche Hardware, am Kreuzbein auf einem Gürtel getragen. Überträgt 3-Achsen-Beschleunigung (`pA`, `pAy`, `pAx`) und Gier-Gyro (`pYaw`, `pG`) bei 200 Hz. Ermöglicht Hüftaktivierung, seitliche Stabilität, Hüft-Fuß-Kopplung, vertikales Hüpfen, Beckenneigung, Anchor Settle und Hip Settle. Fehlt der Sensor, arbeitet das Dashboard normal ohne Beckenkarten.
+* **Thoraxknoten (ID 5, optional):** Gleiche Hardware, hoch am oberen Rücken (C7–T1) getragen, identisch montiert und achsen-gemappt wie der Beckenknoten. Überträgt `tA`/`tAy`/`tAx`-Beschleunigung und `tYaw`/`tG`-Gyro bei 200 Hz. Ermöglicht die Oberkörper-Poise-Metriken (§7). **Provisorisch — noch nicht WCS-validiert.** Fehlt der Sensor, sind die Torso-Zeilen ausgeblendet.
 * **Zentrale Master-Einheit:** Aggregiert ESP-NOW-Streams und liefert JSON-Datenpakete (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optional `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) über den `/data`-Endpunkt an den Browser.
 * **Web-Dashboard (`/solo`):** Clientseitiges JavaScript führt Zustandsmaschinen-Filterung, Richtungszuordnung, Neigungsintegration, Standphasen-Berechnungen und Web-Audio-API-Feedback aus.
 
@@ -680,4 +681,67 @@ Wird am Ende des Anchor-Settle-Fensters ausgewertet. Verwendet laterale Beckenbe
 | SLIGHT SETTLE | `earlyLatPeak > 0,05 g` | Gelb |
 | OVERSWING ⚠ | `earlyLatPeak > 0,30 g` UND `lateLatVar ≥ 0,015` | Gelb |
 | NO HIP SETTLE | `earlyLatPeak ≤ 0,05 g` | Rot |
+
+---
+
+## 7. Torso- / Poise-Metriken (Solo-Dashboard)
+
+> **⚠ Provisorisch.** Der Thorax-Sensor (ID 5) und sämtliche Schwellenwerte unten sind neu und **noch nicht WCS-validiert**. Alle Zahlen sind Kalibrier-Startwerte, die über den üblichen Validierungs-Prompt-Workflow an eigenen Aufnahmen justiert werden. Nur das qualitative Verhalten steht fest; die genauen Bänder verschieben sich noch.
+
+Ist der Thorax-Sensor online, erscheinen vier Zeilen in der oberen linken Karte (geteilt mit den Becken-Zeilen; die Karte erscheint, sobald Becken **oder** Thorax online ist). Getragen hoch am oberen Rücken (C7–T1), montiert wie der Beckenknoten, überträgt vertikal `tA`, sagittal `tAy`, lateral `tAx` (Beschleunigung) sowie `tYaw`/`tG` (Gyro) bei 200 Hz.
+
+**Designprinzip — nur driftfrei.** Poise nutzt **schwerkraftreferenziertes Pitch/Roll** (aus dem Beschleunigungssensor) und **Beschleunigungs-Varianz**; bewusst **kein integriertes Yaw** (das ohne Magnetometer driftet). Torso-Becken-Rotationsseparation / Counter-Body-Movement ist daher hier *nicht* implementiert — siehe §7.5.
+
+### Poise (sagittale Brustneigung)
+
+- Genullt bei `📐 ZERO` (aufrecht stehend): `thoraxPitchOffset = atan2(tAy, tA)·180/π`.
+- Pro Frame: `raw = atan2(tAy, tA)·180/π − thoraxPitchOffset`; IIR `s = s·0,92 + raw·0,08` (τ ≈ 0,9 s @ 50 Hz).
+
+| Zustand | Bedingung (° von deiner Neutrallage) | Farbe |
+| :--- | :--- | :--- |
+| `UPRIGHT ✓` | `|s| ≤ 6` | Grün |
+| `SLIGHT LEAN` | `6 < s ≤ 14` | Gelb |
+| `SLOUCHING ⚠` | `s > 14` | Rot |
+| `LEANING BACK` | `s < −6` | Gelb |
+
+> **Vorzeichen-Vorbehalt:** Ob Vorwärtslehnen positives `s` ergibt, hängt vom Vorzeichen der sagittalen Sensorachse ab — beim ersten Hardware-Test prüfen und ggf. umdrehen, falls `SLOUCHING` / `LEANING BACK` vertauscht sind. Die grüne ±Zone ist vorzeichenrobust.
+
+### Level (seitliche Neigung)
+
+`roll = atan2(tAx, tA)·180/π − thoraxRollOffset`, IIR 0,92/0,08.
+
+| Zustand | Bedingung | Farbe |
+| :--- | :--- | :--- |
+| `LEVEL ✓` | `|roll| ≤ 6°` | Grün |
+| `SLIGHT TILT` | `6° < |roll| ≤ 14°` | Gelb |
+| `TILTED ⚠` | `|roll| > 14°` | Rot |
+
+### Top-Line Quiet
+
+Horizontal-Magnitude `h = √(tAy² + tAx²)`, Varianz über `aHorizTHistory` (50 Samples ≈ 1 s).
+
+| Zustand | Bedingung | Farbe |
+| :--- | :--- | :--- |
+| `QUIET ✓` | `var(h) < 0,010` | Grün |
+| `SOME MOTION` | `0,010 ≤ var(h) < 0,035` | Gelb |
+| `RESTLESS ⚠` | `var(h) ≥ 0,035` | Rot |
+
+### Torso–Becken-Stack (braucht Beckensensor)
+
+`flex = thoraxPitchSmoothed − pelvicPitchSmoothed` (beide sind Abweichungen von ihrer eigenen ZERO-Neutrallage, `flex` ist also die relative sagittale Beugung).
+
+| Zustand | Bedingung | Bedeutung | Farbe |
+| :--- | :--- | :--- | :--- |
+| `STACKED ✓` | `|flex| ≤ 8°` | Torso und Becken bewegen sich als eine Säule | Grün |
+| `PIKING ⚠` | `flex > 8°` | Brust klappt gegenüber dem Becken nach vorn (Einknicken in der Hüfte) | Rot |
+| `OPENING` | `flex < −8°` | Brust öffnet sich gegenüber dem Becken nach hinten | Gelb |
+| `— needs pelvis` | Becken offline | Ohne beide Sensoren nicht berechenbar | Grau |
+
+### Level- & Sensor-Gating
+
+Zeilen erscheinen nur, wenn der Thorax-Sensor online ist (`tOk`) **und** das Level es erlaubt: `Poise` ab **INT**; `Level`, `Top-Line Quiet`, `Torso–Becken-Stack` ab **ADV** — dieselbe `.pelvis-int` / `.pelvis-adv`-CSS-Gatung wie bei den Becken-Zeilen.
+
+### §7.5 Designhinweis — warum hier kein Yaw / CBM
+
+Die Torso-Becken-Rotationsseparation (Counter-Body-Movement) wurde geprüft und bewusst **ausgeschlossen**: Ein absoluter Separationswinkel erfordert Yaw-Integration, die auf einem magnetometerfreien 6-Achsen-IMU in 20–40 s um ≈ 5–20° driftet. Eine ratenbasierte Dissoziations-Metrik (Δω-Peak, proximal-distaler Phasenvorlauf) ist der prinzipiell valide Weg und kann später ergänzt werden; sie ist nicht Teil dieses Poise-Releases.
 

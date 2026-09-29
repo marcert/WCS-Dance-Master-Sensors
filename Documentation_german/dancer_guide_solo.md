@@ -296,9 +296,9 @@ Der Balken unterhalb des Werts wird **grün**, **gelb** oder **rot**. Nutze ihn 
 
 ---
 
-## 9. Die Beckenkarte (Optionaler Sensor)
+## 9. Die Becken- & Torso-Karte (Optionale Sensoren)
 
-Die Beckenkarte erscheint im **oberen linken Slot** des Dashboards, sobald der Beckensensor eingeschaltet ist. Wenn der Sensor offline ist, bleibt dieser Slot leer und die Kamera ist sichtbar.
+Die Karte im **oberen linken Slot** des Dashboards erscheint, sobald der Beckensensor **und/oder** der Torso-Sensor eingeschaltet ist. Ist keiner online, bleibt der Slot leer und die Kamera ist sichtbar. Die Becken-Zeilen und die Torso-Zeilen erscheinen unabhängig voneinander — je nachdem, welcher Sensor getragen wird.
 
 ### Sensor befestigen
 
@@ -319,6 +319,10 @@ Sobald der Beckensensor aktiv ist, erscheint die Beckenkarte oben links. Wenn di
 | **Vertikales Auf-und-Ab** | INT+ | Wie viel vertikale Bewegung das Becken erzeugt |
 | **Anchor Settle** | ADV | Qualität der Beckensetzung kurz nach jedem Ankerschritt |
 | **Hip Settle** | ADV | Ob du dich nach dem Ankerschritt in die Hüfte setzt (laterale Beckenneigung) |
+| **Poise (Aufrichtung)** | INT+ | Oberkörper-Haltung — Brust aufrecht vs. nach vorn sacken (braucht den Torso-Sensor) |
+| **Level (seitlich)** | ADV | Seitliche Neigung des Oberkörpers (braucht den Torso-Sensor) |
+| **Top-Line-Ruhe** | ADV | Wie ruhig der Oberkörper während der Fußarbeit bleibt (braucht den Torso-Sensor) |
+| **Torso–Becken-Stack** | ADV | Ob du als eine Einheit lehnst oder in der Hüfte einknickst (braucht Torso **und** Becken) |
 
 > 📸 **[Screenshot: Beckenkarte oben links mit allen Badge-Reihen (Hüftaktivierung bis Anchor Settle) bei aktivem Sensor]**
 
@@ -413,6 +417,29 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 > **Hinweis:** Das „In-die-Hüfte-Setzen" ist ein stilistisches Merkmal — manche Lehrstile betonen es stark, andere weniger. Im WCS ist die laterale Beckenbewegung bewusst subtiler als z. B. im Latin-Tanz: es geht um ein „geerdetes Ankommen", nicht um eine sichtbare Schwingung. Der Badge gibt Information, keine Bewertung. Wenn dein Trainer keinen lateralen Settle möchte, ignoriere diesen Badge.
 >
 > **Hinweis zu den Schwellenwerten:** Diese Werte basieren auf biomechanischen Referenzdaten und können nach dem ersten Testlauf mit Beckensensor angepasst werden.
+
+---
+
+### Torso — Poise (optionaler Torso-Sensor)
+
+Ein zweiter optionaler Sensor **hoch am oberen Rücken** (Nackenansatz) erfasst, wie sich dein Oberkörper hält — etwas, das Fuß- und Beckensensoren nicht sehen. Flach an einer eng anliegenden Schicht befestigen, Display nach außen, Oberkante oben. Wenn du aufrecht in deiner natürlichen Haltung stehst und `📐 ZERO` drückst, lernt das System deine Neutralhaltung — danach zeigt es nur noch, wie weit du von *deiner eigenen* Aufrichtung abweichst.
+
+Diese Zeilen erscheinen in derselben oberen linken Karte wie die Becken-Zeilen.
+
+| Badge | Was es bedeutet | Wie man es verbessert |
+| :--- | :--- | :--- |
+| `UPRIGHT ✓` | Brust über der Hüfte gestapelt — gute Haltung | Beibehalten |
+| `SLIGHT LEAN` | Oberkörper beginnt nach vorn zu sacken | Groß werden über den Scheitel; das Brustbein anheben |
+| `SLOUCHING ⚠` | Brust sackt nach vorn — oberer Rücken rundet sich | Haltung zurücksetzen: Rippen über der Hüfte, Schultern zurück und nach unten |
+| `LEANING BACK` | Oberkörper hinter die Basis gekippt | Die Brust zurück über dein Zentrum bringen |
+
+- **`LEVEL` / `SLIGHT TILT` / `TILTED`** — wie waagerecht deine Schultern seitlich bleiben. Dauerhafte Neigung bedeutet meist, dass du bei Drehungen oder Gewichtsverlagerungen eine Schulter fallen lässt.
+- **`QUIET` / `SOME MOTION` / `RESTLESS`** — wie ruhig der Oberkörper bleibt, während die Füße arbeiten. `RESTLESS` heißt, schnelle Fußarbeit dringt bis in die Schultern durch, statt im Rumpf abgefangen zu werden. Ziel: eine ruhige Top-Line über arbeitenden Füßen.
+- **`STACKED` / `OPENING` / `PIKING`** (braucht auch den Beckensensor) — trennt „als eine Einheit lehnen" vom Einknicken in der Hüfte. `PIKING` bedeutet, die Brust klappt nach vorn, während die Hüfte zurückbleibt — eine häufige Art, verbunden *auszusehen* und dabei zu kollabieren. Torso und Becken als eine Säule bewegen.
+
+> **Poise ist eine Verfeinerung, kein Anfänger-Cue.** `Poise` erscheint ab Fortgeschritten; die drei anderen Torso-Zeilen sind Experte. Wenn du nur den Torso-Sensor trägst (kein Becken), funktionieren Poise, Level und Top-Line trotzdem — nur der Torso–Becken-Stack braucht beide.
+>
+> **Hinweis zu den Schwellenwerten:** Alle Torso-Schwellenwerte sind vorläufige Startwerte und werden anhand eigener Aufnahmen kalibriert.
 
 ---
 

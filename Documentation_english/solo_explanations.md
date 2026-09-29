@@ -38,6 +38,7 @@ The Solo Training System operates as a high-frequency biomechanical feedback loo
 
 * **Foot Nodes (IDs 1 & 2):** M5Stick S3 units equipped with 6-axis IMUs (BMI270 / MPU6886). Firmware operates at **200 Hz (5 ms sampling interval)** to capture ultra-fast transient impact peaks during heel-strikes and toe-landings.
 * **Pelvis Node (ID 4, optional):** Same hardware worn on a belt at the sacrum. Streams 3-axis accelerometer (`pA`, `pAy`, `pAx`) and yaw gyroscope (`pYaw`, `pG`) at 200 Hz. Enables hip activation, lateral stability, hip–foot coupling, vertical bounce, pelvic tilt, Anchor Settle, and Hip Settle analysis. When absent, the dashboard operates normally without pelvis cards.
+* **Thorax Node (ID 5, optional):** Same hardware worn high on the upper back (C7–T1), mounted and axis-mapped identically to the pelvis node. Streams `tA`/`tAy`/`tAx` accelerometer and `tYaw`/`tG` gyro at 200 Hz. Enables the upper-body poise metrics (§7). **Provisional — not yet WCS-validated.** When absent, the torso rows are hidden.
 * **Central Master Unit:** Aggregates ESP-NOW streams and delivers JSON data packets (`lG`, `lA`, `lAy`, `lGr`, `rG`, `rA`, `rAy`, `rGr`; optionally `pA`, `pAy`, `pAx`, `pYaw`, `pG`, `pOk`) to the browser via the `/data` endpoint.
 * **Web Dashboard (`/solo`):** Client-side JavaScript executes state machine filtering, direction mapping, pitch integration, stance timeline calculations, and Web Audio API feedback.
 
@@ -641,4 +642,67 @@ where each component score is normalised to 0–100 from its respective badge st
 | < 35 | Red | Poor shock dissipation — stiff kinetic chain or uncontrolled forefoot |
 
 **Note:** The Grounding Card is shown at ADV level whenever the layout permits, regardless of the pelvis sensor. If the pelvis sensor is absent, the SDR and SETTLE components stay grey (unmeasured) and are dropped from the weighted average — the GND Score is then computed from the ROLL component alone (foot sensors). The score reflects only the components that are currently live.
+
+---
+
+## 7. Torso / Poise Metrics (Solo Dashboard)
+
+> **⚠ Provisional.** The thorax sensor (ID 5) and every threshold below are new and **not yet WCS-validated**. Treat all numbers as calibration starting points, to be tuned against your own recordings via the usual validation-prompt workflow. Only the qualitative behaviour is settled; the exact bands will move.
+
+When the thorax sensor is online, four rows appear in the top-left card (shared with the pelvis rows; the card shows whenever the pelvis **or** thorax sensor is online). Worn high on the upper back (C7–T1), mounted like the pelvis node, streaming vertical `tA`, sagittal `tAy`, lateral `tAx` accel and `tYaw`/`tG` gyro at 200 Hz.
+
+**Design principle — drift-free only.** Poise uses **gravity-referenced pitch/roll** (from the accelerometer) and **acceleration variance**; it deliberately uses **no integrated yaw** (which drifts without a magnetometer). Torso–pelvis axial separation / counter-body-movement is therefore *not* implemented here — see §7.5.
+
+### Poise (sagittal chest lean)
+
+- Zeroed at `📐 ZERO` (standing tall): `thoraxPitchOffset = atan2(tAy, tA)·180/π`.
+- Per frame: `raw = atan2(tAy, tA)·180/π − thoraxPitchOffset`; IIR `s = s·0.92 + raw·0.08` (τ ≈ 0.9 s @ 50 Hz).
+
+| State | Condition (° from your neutral) | Colour |
+| :--- | :--- | :--- |
+| `UPRIGHT ✓` | `|s| ≤ 6` | Green |
+| `SLIGHT LEAN` | `6 < s ≤ 14` | Yellow |
+| `SLOUCHING ⚠` | `s > 14` | Red |
+| `LEANING BACK` | `s < −6` | Yellow |
+
+> **Sign caveat:** whether forward lean yields positive `s` depends on the sensor's sagittal-axis sign — confirm on first hardware test and flip if `SLOUCHING` / `LEANING BACK` are swapped. The green ±zone is sign-robust.
+
+### Level (lateral tilt)
+
+`roll = atan2(tAx, tA)·180/π − thoraxRollOffset`, IIR 0.92/0.08.
+
+| State | Condition | Colour |
+| :--- | :--- | :--- |
+| `LEVEL ✓` | `|roll| ≤ 6°` | Green |
+| `SLIGHT TILT` | `6° < |roll| ≤ 14°` | Yellow |
+| `TILTED ⚠` | `|roll| > 14°` | Red |
+
+### Top-Line Quiet
+
+Horizontal magnitude `h = √(tAy² + tAx²)`, variance over `aHorizTHistory` (50 samples ≈ 1 s).
+
+| State | Condition | Colour |
+| :--- | :--- | :--- |
+| `QUIET ✓` | `var(h) < 0.010` | Green |
+| `SOME MOTION` | `0.010 ≤ var(h) < 0.035` | Yellow |
+| `RESTLESS ⚠` | `var(h) ≥ 0.035` | Red |
+
+### Torso–Pelvis Stack (requires pelvis sensor)
+
+`flex = thoraxPitchSmoothed − pelvicPitchSmoothed` (both are deviations from their own ZERO neutral, so `flex` is the relative sagittal fold).
+
+| State | Condition | Meaning | Colour |
+| :--- | :--- | :--- | :--- |
+| `STACKED ✓` | `|flex| ≤ 8°` | Torso and pelvis move as one column | Green |
+| `PIKING ⚠` | `flex > 8°` | Chest folds forward vs. the pelvis (break at the waist) | Red |
+| `OPENING` | `flex < −8°` | Chest opens back relative to the pelvis | Yellow |
+| `— needs pelvis` | pelvis offline | Not computable without both sensors | Grey |
+
+### Level & sensor gating
+
+Rows appear only when the thorax sensor is online (`tOk`) **and** the level permits: `Poise` from **INT**; `Level`, `Top-Line Quiet`, `Torso–Pelvis Stack` from **ADV** — the same `.pelvis-int` / `.pelvis-adv` CSS gating used by the pelvis rows.
+
+### §7.5 Design note — why no yaw / CBM here
+
+Torso–pelvis axial separation (counter-body movement) was evaluated and deliberately **excluded** from this drift-free build: an absolute separation angle requires integrating yaw, which drifts ≈ 5–20° in 20–40 s on a magnetometer-free 6-axis IMU. A rate-based dissociation metric (Δω peak, proximal-distal phase lead) is the validated-in-principle path and can be added later; it is not part of this poise release.
 
