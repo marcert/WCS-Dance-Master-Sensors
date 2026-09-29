@@ -11,6 +11,8 @@
 Use this if you are the dancer training with foot / pelvis sensors.  
 Covers: setup, level selector (BEG / INT / ADV), all badge cards, training progressions, common problems.
 
+> ⚡ In a hurry? The **[Solo Quickstart](quickstart_solo.md)** gets a beginner dancing in 60 seconds.
+
 ---
 
 ## Partner Dashboard (coach / partner view)

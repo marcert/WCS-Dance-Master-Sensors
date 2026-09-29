@@ -3,6 +3,8 @@
 > Dieser Leitfaden richtet sich an Tänzer, nicht an Ingenieure. Die Mathematik dahinter muss nicht verstanden werden.  
 > Öffne das Dashboard auf deinem Smartphone oder Tablet, folge den Einrichtungsschritten und nutze die Badge-Farbe als Echtzeit-Coach.
 
+> ⚡ **Willst du einfach loslegen?** Überspring das hier und lies den **[Solo-Quickstart](quickstart_solo.md)** — in 60 Sekunden am Tanzen, der Rest kann warten.
+
 → Zur Partner-/Traineransicht siehe [dancer_guide_partner.md](dancer_guide_partner.md).
 
 ---

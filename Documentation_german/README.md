@@ -8,6 +8,8 @@ Die technischen Badge-Bezeichnungen (z. B. `HEEL STRIKE ✓`, `DELAYED ✓`) ers
 
 Das System unterstützt zwei Anwendungsfälle — wähle den passenden Guide:
 
+> ⚡ **Neu hier und willst einfach tanzen?** Starte mit dem **[Solo-Quickstart](quickstart_solo.md)** — in 60 Sekunden einsatzbereit.
+
 - 🧍 **Solo-Training** — der Tänzer nutzt das Solo-Dashboard (`/solo`) allein und liest die Badge-Rückmeldungen zwischen den Schritten ab. → [Tänzerguide — Solo](dancer_guide_solo.md)
 - 🤝 **Partner / Coaching** — Trainer oder Tanzpartner öffnet das Partner-Dashboard (`/`) auf einem zweiten Gerät, während der Tänzer trainiert. → [Tänzerguide — Partner](dancer_guide_partner.md)
 
@@ -19,6 +21,7 @@ Beide Dashboards können gleichzeitig auf getrennten Geräten laufen. Der option
 
 | Dokument | Zielgruppe | Inhalt |
 | :--- | :--- | :--- |
+| [**Solo-Quickstart**](quickstart_solo.md) | Anfänger | Der schnellstmögliche Einstieg: Einrichtung in 60 Sekunden, eine Karte zum Beobachten, wie man die häufigsten Fehler behebt. Danach ein kurzer „So geht's weiter"-Schritt |
 | [**Tänzerguide — Solo**](dancer_guide_solo.md) | Tänzer | Solo-Dashboard: Einrichtung, Level-Auswahl, alle Badge-Karten, Übungsempfehlungen, häufige Probleme |
 | [**Tänzerguide — Partner**](dancer_guide_partner.md) | Trainer / Tanzpartner | Partner-Dashboard: Kraftkurve, kombinierter Analyse-Graph, Pelvis-Badges, Coaching-Anwendungsfälle |
 | [**Solo-Dashboard — Technische Referenz**](solo_explanations.md) | Entwickler / Nerds | Architektur, Sensorik, Komplementärfilter, Schrittalgorithmus, alle Metriken und Schwellenwerte |

@@ -5,6 +5,8 @@
 
 This system supports two use cases — pick the guide that matches yours:
 
+> ⚡ **New here and just want to dance?** Start with the **[Solo Quickstart](quickstart_solo.md)** — up and running in 60 seconds.
+
 - 🧍 **Solo training** — the dancer uses the Solo Dashboard (`/solo`) alone, watching badge feedback between steps. → [Dancer's Guide — Solo](dancer_guide_solo.md)
 - 🤝 **Partner / coaching** — a coach or partner opens the Partner Dashboard (`/`) on a second device while the dancer trains. → [Dancer's Guide — Partner](dancer_guide_partner.md)
 
@@ -16,6 +18,7 @@ Both dashboards work simultaneously on separate devices. The optional Pelvis Sen
 
 | Document | Audience | Contents |
 | :--- | :--- | :--- |
+| [**Solo Quickstart**](quickstart_solo.md) | Beginners | The fastest possible start: setup in 60 seconds, one card to watch, how to fix the common mistakes. Then a short "what's next" step |
 | [**Dancer's Guide — Solo**](dancer_guide_solo.md) | Dancers | Solo Dashboard: setup, level selector (BEG / INT / ADV), all badge cards, training progressions, common problems |
 | [**Dancer's Guide — Partner**](dancer_guide_partner.md) | Coaches / Partners | Partner Dashboard: connection force graph, combined analysis graph, pelvis badges, coaching use cases |
 | [**Dancer's Guide — Index**](dancer_guide.md) | All | Short redirect to both guides above |

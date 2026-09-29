@@ -3,6 +3,8 @@
 > This guide is written for dancers, not engineers. You do not need to understand the math.  
 > Open the dashboard on your phone or tablet, follow the setup steps, and use the badge colour as your real-time coach.
 
+> ⚡ **Just want to start?** Skip this and read the **[Solo Quickstart](quickstart_solo.md)** — dancing in 60 seconds, come back here later.
+
 → For the partner/coach view, see [dancer_guide_partner.md](dancer_guide_partner.md).
 
 ---

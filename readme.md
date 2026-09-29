@@ -6,6 +6,7 @@ A real-time wireless sensor network and video-overlay feedback system built for 
 - 🧍 **[Solo Training](Documentation_english/dancer_guide_solo.md)** — detailed step-by-step badge feedback for drills and self-coaching. Open at `/solo` on the dancer's own phone.
 - 🤝 **[Partner / Coaching](Documentation_english/dancer_guide_partner.md)** — connection-force graph and combined foot + pelvis analysis. Open at `/` on a second device while the dancer trains.
 
+> ⚡ **First time on the floor?** The **[Solo Quickstart](Documentation_english/quickstart_solo.md)** gets you dancing in 60 seconds — no manual required.
 > 🇩🇪 **Deutsche Dokumentation:** [Documentation_german/README.md](Documentation_german/README.md)
 
 
@@ -57,6 +58,7 @@ When the optional **Pelvis Sensor** is attached, both dashboards display five ad
 
 | Document | Audience | Contents |
 | :--- | :--- | :--- |
+| [**Solo Quickstart**](Documentation_english/quickstart_solo.md) | Beginners | The fastest possible start — setup in 60 seconds, one card to watch, how to fix the common mistakes. Read this first if you just want to dance. |
 | [**Dancer's Guide — Solo**](Documentation_english/dancer_guide_solo.md) | Dancers | How to use the Solo Dashboard: setup, level selector, all badge cards, training progressions, common problems. Start here if you want to train — no technical knowledge required. |
 | [**Dancer's Guide — Partner**](Documentation_english/dancer_guide_partner.md) | Coaches / Partners | How to use the Partner Dashboard: connection force graph, combined analysis graph, pelvis badges, coaching use cases. Open on a second device while the dancer uses the solo view. |
 | [**Solo Dashboard — Technical Reference**](Documentation_english/solo_explanations.md) | Coaches / Developers | Architecture, sensor math, complementary filter, step detection algorithm, all metric formulas, threshold tables, firmware notes. |
