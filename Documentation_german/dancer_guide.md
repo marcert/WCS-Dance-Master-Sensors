@@ -11,6 +11,8 @@
 Für Tänzer, die mit Fuß- und Beckensensoren trainieren.  
 Inhalt: Einrichtung, Level-Auswahl (BEG / INT / ADV), alle Badge-Karten, Übungsempfehlungen, häufige Probleme.
 
+> ⚡ Eilig? Der **[Solo-Quickstart](quickstart_solo.md)** bringt Anfänger in 60 Sekunden ans Tanzen.
+
 ---
 
 ## Partner-Dashboard (Trainer- / Partneransicht)
