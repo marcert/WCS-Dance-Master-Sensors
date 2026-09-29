@@ -86,16 +86,13 @@ The **👤 LEADER** button (blue) in the top bar switches to **💃 FOLLOWER** m
 
 **When to use Follower mode:** Activate it when you are dancing the follower role. The system adjusts three metrics to account for the structural differences of reactive (follower) movement:
 
-| Metric | Leader threshold | Follower threshold | Why |
-|---|---|---|---|
-| DELAY RAMP forward | 12–38 % → DELAYED ✓ | 6–30 % → DELAYED ✓ | Followers react to the lead — weight transfer is faster by design |
-| DELAY RAMP backward | 18–50 % → DELAYED ✓ | 10–40 % → DELAYED ✓ | Same reason: reactive timing is more compact |
-| Push-Off (forward) | ≥ 200 °/s → POWER PUSH | ≥ 160 °/s → POWER PUSH | Follower push-off is more compact |
-| Push-Off (backward) | ≥ 160 °/s → POWER PUSH | ≥ 130 °/s → POWER PUSH | Same |
-| ASI Symmetric | ≤ 15 % | ≤ 25 % | Followers are structurally more asymmetric (connection side, reactive timing) |
-| ASI Minor Asym | ≤ 35 % | ≤ 40 % | Wider tolerance for structural asymmetry |
+| What is adjusted | What changes in Follower mode |
+|---|---|
+| **Weight transfer timing** (DELAY) | The expected window shifts earlier — followers react to the lead, so weight transfer is naturally faster |
+| **Push-Off** | A more compact push-off is expected than for the leader role |
+| **Side symmetry** (ASI, left vs. right) | More tolerance — the connection side makes followers structurally slightly more asymmetric |
 
-**Calibration display:** In Follower mode, the Direction badge shows the measured foot angle (e.g. `⬅ BWD −4°`) and the Push-Off badge shows the peak angular velocity (e.g. `↗ PUSH 148 °/s`). These values are hidden in Leader mode to keep the UI clean.
+**Calibration display:** In Follower mode, the Direction badge shows the measured foot angle (e.g. `⬅ BWD −4°`) and the Push-Off badge shows a strength value (e.g. `↗ PUSH 148`). These values are hidden in Leader mode to keep the UI clean.
 
 ---
 
@@ -129,30 +126,30 @@ When the foot angle is between −6° and +5°, the system cannot reliably deter
 
 ### HEEL zone badges (➡ FWD, +6° or more)
 
-| Badge | Jerk | What you did | Target |
+| Badge | Impact | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | ≤ 130 g/s | Clean heel strike — controlled contact | Target for all forward walks and breaks |
-| `HEEL SLAM ⚠` | > 130 g/s | Hard heel impact — excessive landing force | Bend the knee on contact and soften the ankle |
+| `HEEL STRIKE ✓` | light | Clean heel strike — controlled contact | Target for all forward walks and breaks |
+| `HEEL SLAM ⚠` | hard | Hard heel impact — excessive landing force | Bend the knee on contact and soften the ankle |
 
 ### Ambiguous zone (—, −6° to +5°)
 
 The foot is too flat to classify direction. The quality badge still fires:
 
-| Badge | Jerk | What it means |
+| Badge | Impact | What it means |
 | :--- | :--- | :--- |
-| `SOFT ✓` | ≤ 55 g/s | Light, controlled landing — good absorption in this zone |
-| `MODERATE` | 55–130 g/s | Moderate impact — acceptable, but worth reducing |
-| `HARD IMPACT ⚠` | > 130 g/s | Heavy flat-foot landing — stomping pattern |
-| `BRUSH+HEEL` | — | Ambiguous landing followed by heel-set within 200 ms — reclassified to ➡ FWD; correct technique confirmed |
+| `SOFT ✓` | very light | Light, controlled landing — good absorption in this zone |
+| `MODERATE` | moderate | Moderate impact — acceptable, but worth reducing |
+| `HARD IMPACT ⚠` | hard | Heavy flat-foot landing — stomping pattern |
+| `BRUSH+HEEL` | — | Ambiguous landing followed by heel-set shortly after — reclassified to ➡ FWD; correct technique confirmed |
 
 Use the camera view to check actual direction when the direction badge shows —.
 
 ### TOE zone badges (⬅ BWD, below −6°)
 
-| Badge | Jerk | What you did | Target |
+| Badge | Impact | What you did | Target |
 | :--- | :--- | :--- | :--- |
-| `TOE-FIRST ✓` | ≤ 130 g/s | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
-| `TOE JAM ⚠` | > 130 g/s | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
+| `TOE-FIRST ✓` | light | Clean toe-ball contact — controlled landing | Target for all backward walks, anchors, extensions |
+| `TOE JAM ⚠` | hard | Hard toe impact — excessive landing force | Moderate the extension; absorb through the ankle |
 
 > **Note on early heel drops:** A backward step where the heel contacts before the toe will land in the ambiguous zone (—) rather than ⬅ BWD. If you see consistent SOFT/MODERATE/HARD IMPACT on what you believe are backward steps, your heel is contacting too early. Focus on sending the toe out first and keeping the ankle relaxed until the foot settles.
 
@@ -194,15 +191,13 @@ These badges appear in the lower badge row of the Step Card and update after eac
 
 ### Delay badge (INT + ADV)
 
-Measures how quickly you committed your weight after foot contact, expressed as a **fraction of your current step interval** — so it adjusts automatically to the music tempo. The same physical movement reads identically at 90 BPM and 160 BPM.
+Measures how quickly you committed your weight after foot contact, relative to the music tempo — so the same physical movement reads identically at slow and fast tempos. In WCS, weight ideally "floats" briefly and arrives after the foot (the characteristic hover feeling).
 
-Thresholds differ by direction: a backward (toe-first) step naturally needs more settling time than a forward (heel-first) one.
-
-| Badge | Forward step | Backward step | What it means |
-| :--- | :--- | :--- | :--- |
-| `DELAYED ✓` ✅ | 12–38% of beat | 18–50% of beat | WCS-characteristic hover — weight arrives after the foot contacts |
-| `QUICK` ⚠️ | < 12% | < 18% | Weight dropped immediately at contact — mechanical, not musical |
-| `LATE` ⚠️ | > 38% | > 50% | Weight never fully committed — floating or incomplete transfer (ADV only) |
+| Badge | What it means |
+| :--- | :--- |
+| `DELAYED ✓` ✅ | WCS-characteristic hover — weight arrives after the foot contacts |
+| `QUICK` ⚠️ | Weight dropped immediately at contact — mechanical, not musical |
+| `LATE` ⚠️ | Weight never fully committed — floating or incomplete transfer (ADV only) |
 
 At **INT** level only `DELAYED ✓` / `QUICK` are shown — every delayed transfer is already progress. `LATE` is added at **ADV** level where over-hovering also becomes a problem.
 
@@ -225,11 +220,11 @@ At **INT** level only `DELAYED ✓` / `QUICK` are shown — every delayed transf
 
 Visible from **Intermediate** level. This card tells you how long both feet are on the floor simultaneously during each weight transfer.
 
-| Badge | Overlap ratio | What it means | Training implication |
-| :--- | :--- | :--- | :--- |
-| `OPTIMAL ROLL` ✅ | 15%–60% | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
-| `HECTIC` ⚠️ | < 15% | Rushed — one foot leaves before the other is secure | "Peel, don't lift" — roll through the foot before stepping |
-| `SLUGGISH` ⚠️ | > 60–72 % (tempo-adaptive) | Prolonged double contact — hesitation or heavy stance. Threshold rises with slower tempo: 60 % at 120 BPM, 67 % at 90 BPM, 72 % at 75 BPM | Commit to the COM shift earlier |
+| Badge | What it means | Training implication |
+| :--- | :--- | :--- |
+| `OPTIMAL ROLL` ✅ | Smooth, grounded weight transfer | The characteristic WCS rolling connection |
+| `HECTIC` ⚠️ | Rushed — one foot leaves before the other is secure | "Peel, don't lift" — roll through the foot before stepping |
+| `SLUGGISH` ⚠️ | Prolonged double contact — hesitation or heavy stance (threshold rises automatically with slower music) | Commit to the weight shift earlier |
 
 Watch this card during **triple steps and walks**. `HECTIC` on an anchor step often means you are rushing out of the anchor before building connection.
 
@@ -243,11 +238,11 @@ Visible at **Advanced** level only.
 
 | Display | What it tells you | Green target |
 | :--- | :--- | :--- |
-| **ASI %** | Difference between left and right foot roll-off | `SYMMETRIC` — below 15% |
-| **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` — 16 or above (`MODERATE` 10–15, `ROUGH` below 10) |
+| **Side Symmetry (ASI)** | Difference between left and right foot roll-off | `SYMMETRIC` — both sides even |
+| **Smoothness** | Fluidity of ankle articulation across both feet | `SMOOTH` ✓ |
 
-- High **ASI** (e.g. `ASYMMETRIC` > 35%) usually means one ankle is stiffer, or one side is compensating for an old injury.
-- Low **Smoothness** means your ankle movements are jerky. Slow the tempo and focus on rolling through the full foot rather than stepping flat.
+- `ASYMMETRIC` at the Side Symmetry display usually means one ankle is stiffer, or one side is compensating for an old injury.
+- `ROUGH` Smoothness means your ankle movements are jerky. Slow the tempo and focus on rolling through the full foot rather than stepping flat.
 
 ---
 
@@ -277,13 +272,13 @@ SDR (Shock-absorbing Dynamic Response) measures how much of the foot-impact forc
 
 ### SETTLE badge
 
-Measures the time from foot contact to the pelvis's **first downward response** (impact absorption latency). This reflects how actively the leg chain — knee and hip — cushions the landing impulse. The target window **scales automatically with the music tempo** — approximately 10–32 % of the step interval (≈ 50–160 ms at 120 BPM), with a hard cap of 220 ms to ensure only the initial impact response (Dip 1) is captured.
+Measures whether the pelvis **actively cushions** the landing — whether the knee and hip chain absorbs the impact or lets it transmit upward. The target window **scales automatically with the music tempo**, so the same quality reads identically at slow and fast tempos.
 
-| Badge | Timing | What it means | How to improve |
-| :--- | :--- | :--- | :--- |
-| `SETTLING ✓ Xms` ✅ | 10–32 % of step interval | Leg chain actively cushions the impact — compliant knee and hip response | Maintain |
-| `QUICK Xms` ⚠️ | < 10 % of step interval | Pelvis dips before proper loading — joints too stiff to produce a measurable cushioning phase | Soften the knee on landing; let the leg chain absorb before committing weight |
-| `SLOW Xms` ⚠️ | > 32 % of step interval (within 220 ms cap) | Pelvis response is delayed — sluggish joint activation, impact absorbed passively | Engage the knee and hip actively at the moment of contact, not after |
+| Badge | What it means | How to improve |
+| :--- | :--- | :--- |
+| `SETTLING ✓` ✅ | Leg chain actively cushions the impact — compliant knee and hip response | Maintain |
+| `QUICK` ⚠️ | Pelvis dips before proper loading — joints too stiff to produce a measurable cushioning phase | Soften the knee on landing; let the leg chain absorb before committing weight |
+| `SLOW` ⚠️ | Pelvis response is delayed — sluggish joint activation, impact absorbed passively | Engage the knee and hip actively at the moment of contact, not after |
 
 ### GND Score
 
@@ -293,7 +288,7 @@ A combined score from 0–100 blending all three grounding signals:
 - **SETTLE** — pelvis response timing (requires pelvis sensor)
 - **ROLL** — forefoot roll quality from the Step Card
 
-The bar below the score turns **green** (≥ 65), **yellow** (35–64), or **red** (< 35).
+The bar below the score turns **green**, **yellow**, or **red** depending on your score.
 
 > Use the GND Score as a single at-a-glance indicator during intensive drilling sessions. When it drops, check which component badge changed colour first.
 
@@ -320,7 +315,7 @@ Once the pelvis sensor is online, the pelvis card appears at the top-left. If th
 | **Pelvic Tilt** | INT+ | Forward/backward pelvis pitch — posture check (`ALIGNED` / `SLIGHT ARCH` / `LORDOSIS ⚠` / `TUCKED`) |
 | **Hip-Foot Coupling** | INT+ | Whether hips initiate each step or follow the feet |
 | **Vertical Bounce** | INT+ | How much vertical movement the pelvis generates |
-| **Anchor Settle** | ADV | Quality of the pelvis settle in the 280–400 ms after each anchor step |
+| **Anchor Settle** | ADV | Quality of the pelvis settle shortly after each anchor step |
 | **Hip Settle** | ADV | Whether the pelvis shifts into the standing hip after each anchor step (lateral tilt) |
 
 > 📸 **[Screenshot: Pelvis card in the top-left slot showing all badge rows (Hip Activation through Anchor Settle) with sensor active]**
@@ -359,8 +354,8 @@ Compares when peak hip rotation occurred relative to the moment of foot contact.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
-| `HIP LEADS` ✅ | Peak hip rotation occurred more than 100 ms before foot contact | Good initiation — hips are driving the step |
-| `IN SYNC` ⚠️ | Hip peak and foot contact within 40–100 ms of each other | Acceptable — try amplifying the pre-step hip "launch" |
+| `HIP LEADS` ✅ | Peak hip rotation occurred clearly before foot contact | Good initiation — hips are driving the step |
+| `IN SYNC` ⚠️ | Hip peak and foot contact almost at the same time | Acceptable — try amplifying the pre-step hip "launch" |
 | `HIP LAGS` ❌ | Hips rotating at or after foot contact | Legs are moving independently of the core. Slow down and practise initiating each walk from the hip, letting the foot follow |
 
 ---
@@ -379,7 +374,7 @@ Measures how much your hips bounce up and down over one second.
 
 ### Anchor Settle (ADV)
 
-After every backward (anchor) step, the system opens a **tempo-adaptive measurement window** (280–400 ms, automatically scaled to the current step tempo) and evaluates three signals:
+After every backward (anchor) step, the system opens a **tempo-adaptive measurement window** and evaluates three signals:
 
 1. **Slowing down** — did your hips brake their forward/backward motion?
 2. **Rotation settling** — did your hip rotation slow down after the step?
@@ -402,7 +397,7 @@ These three components are combined into a 0–100 score displayed in the badge.
 
 ### Hip Settle (ADV)
 
-Measures whether you "settle into the hip" after an anchor step — i.e. whether a brief sideways shift of the hips towards the standing leg happens and then holds. The system looks at your sideways hip movement within the same 280–400 ms window as Anchor Settle.
+Measures whether you "settle into the hip" after an anchor step — i.e. whether a brief sideways shift of the hips towards the standing leg happens and then holds. The system looks at your sideways hip movement within the same measurement window as Anchor Settle.
 
 | Badge | What it means | How to improve |
 | :--- | :--- | :--- |
@@ -413,7 +408,7 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 
 > **Note:** "Settling into the hip" is a stylistic element — some teaching styles emphasise it strongly, others less so. In WCS, the lateral pelvic movement is intentionally subtler than in Latin dance: the goal is a "grounded arrival", not a visible swing. This badge provides information, not a verdict. If your teacher does not want a lateral settle, disregard this badge.
 >
-> **Thresholds (0.05 / 0.10 / 0.30 g):** These values are based on biomechanical reference data and can be adjusted after a first test session with the pelvis sensor.
+> **Thresholds note:** These values are based on biomechanical reference data and can be adjusted after a first test session with the pelvis sensor.
 
 ---
 

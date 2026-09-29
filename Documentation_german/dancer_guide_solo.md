@@ -124,30 +124,30 @@ Liegt der Fußwinkel zwischen −6° und +5°, kann das System die Richtung nich
 
 ### HEEL-Zone-Badges (➡ FWD, +6° oder mehr)
 
-| Badge | Jerk | Was du getan hast | Ziel |
+| Badge | Aufprall | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `HEEL STRIKE ✓` | ≤ 130 g/s | Sauberer Fersenauftritt — kontrollierter Kontakt | Ziel für alle Vorwärtsgänge und Breaks |
-| `HEEL SLAM ⚠` | > 130 g/s | Harter Fersenaufprall — zu viel Landekraft | Knie beim Aufsetzen beugen und Sprunggelenk weicher machen |
+| `HEEL STRIKE ✓` | sanft | Sauberer Fersenauftritt — kontrollierter Kontakt | Ziel für alle Vorwärtsgänge und Breaks |
+| `HEEL SLAM ⚠` | hart | Harter Fersenaufprall — zu viel Landekraft | Knie beim Aufsetzen beugen und Sprunggelenk weicher machen |
 
 ### Unklare Zone (—, −6° bis +5°)
 
 Der Fuß ist zu flach, um die Richtung zu bestimmen. Der Qualitäts-Badge wird dennoch ausgelöst:
 
-| Badge | Jerk | Was es bedeutet |
+| Badge | Aufprall | Was es bedeutet |
 | :--- | :--- | :--- |
-| `SOFT ✓` | ≤ 55 g/s | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
-| `MODERATE` | 55–130 g/s | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
-| `HARD IMPACT ⚠` | > 130 g/s | Schwerer Flachfuß-Aufprall — Stampfmuster |
-| `BRUSH+HEEL` | — | Flache Landung gefolgt von Fersenauftritt innerhalb von 200 ms — automatisch zu ➡ FWD umklassifiziert; korrekte Technik bestätigt |
+| `SOFT ✓` | sehr sanft | Leichte, kontrollierte Landung — gute Technik in dieser Zone |
+| `MODERATE` | mittel | Mittlerer Aufprall — akzeptabel, aber verbesserungswürdig |
+| `HARD IMPACT ⚠` | hart | Schwerer Flachfuß-Aufprall — Stampfmuster |
+| `BRUSH+HEEL` | — | Flache Landung gefolgt von Fersenauftritt kurz danach — automatisch zu ➡ FWD umklassifiziert; korrekte Technik bestätigt |
 
 Wenn der Richtungs-Badge — zeigt, die Kameraansicht zur Richtungsprüfung nutzen.
 
 ### TOE-Zone-Badges (⬅ BWD, unter −6°)
 
-| Badge | Jerk | Was du getan hast | Ziel |
+| Badge | Aufprall | Was du getan hast | Ziel |
 | :--- | :--- | :--- | :--- |
-| `TOE-FIRST ✓` | ≤ 130 g/s | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
-| `TOE JAM ⚠` | > 130 g/s | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
+| `TOE-FIRST ✓` | sanft | Sauberer Ballenauftritt — kontrollierte Landung | Ziel für alle Rückwärtsgänge, Anker, Streckungen |
+| `TOE JAM ⚠` | hart | Harter Ballenaufprall — zu viel Landekraft | Streckung mäßigen; Landung durch das Sprunggelenk abfedern |
 
 > **Hinweis zu frühem Fersenabsatz:** Setzt die Ferse beim Rückwärtsschritt vor dem Ballen auf, landet der Schritt in der unklaren Zone (—) statt bei ⬅ BWD. Wenn bei Schritten, die als Rückwärtsschritte gemeint sind, konstant SOFT/MODERATE/HARD IMPACT erscheinen, setzt die Ferse zu früh auf. Darauf achten, zuerst den Ballen aufkommen zu lassen und das Sprunggelenk entspannt zu halten, bis der Fuß vollständig steht.
 
@@ -315,7 +315,7 @@ Sobald der Beckensensor aktiv ist, erscheint die Beckenkarte oben links. Wenn di
 | **Beckenkippung** | INT+ | Vor-/Rückwärts-Neigung des Beckens — Haltungsprüfung (`ALIGNED` / `SLIGHT ARCH` / `LORDOSIS ⚠` / `TUCKED`) |
 | **Hüft-Fuß-Kopplung** | INT+ | Ob die Hüften jeden Schritt initiieren oder den Füßen folgen |
 | **Vertikales Auf-und-Ab** | INT+ | Wie viel vertikale Bewegung das Becken erzeugt |
-| **Anchor Settle** | ADV | Qualität der Beckensetzung in den 280–400 ms nach jedem Ankerschritt |
+| **Anchor Settle** | ADV | Qualität der Beckensetzung kurz nach jedem Ankerschritt |
 | **Hip Settle** | ADV | Ob du dich nach dem Ankerschritt in die Hüfte setzt (laterale Beckenneigung) |
 
 > 📸 **[Screenshot: Beckenkarte oben links mit allen Badge-Reihen (Hüftaktivierung bis Anchor Settle) bei aktivem Sensor]**
@@ -374,7 +374,7 @@ Misst, wie stark sich das Becken beim Tanzen auf und ab bewegt. Der Sensor erken
 
 ### Anchor Settle (ADV)
 
-Nach jedem Rückwärts-(Anker-)Schritt öffnet das System ein **tempo-adaptives Messfenster** (280–400 ms, automatisch je nach Schritttempo berechnet) und wertet drei Signale aus:
+Nach jedem Rückwärts-(Anker-)Schritt öffnet das System ein **tempo-adaptives Messfenster** und wertet drei Signale aus:
 
 1. **Abbremsen** — haben deine Hüften ihre Vorwärts-/Rückwärtsbewegung abgestoppt?
 2. **Rotation lässt nach** — hat deine Hüftrotation nach dem Schritt nachgelassen?
@@ -399,7 +399,7 @@ Diese drei Komponenten werden zu einem Wert von 0–100 zusammengefasst, der im 
 
 ### Hip Settle (ADV)
 
-Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob eine kurze seitliche Hüftbewegung zur Standbeinseite hin stattfindet und dann stabil gehalten wird. Das System betrachtet deine seitliche Hüftbewegung in dem gleichen 280–400-ms-Fenster wie Anchor Settle.
+Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob eine kurze seitliche Hüftbewegung zur Standbeinseite hin stattfindet und dann stabil gehalten wird. Das System betrachtet deine seitliche Hüftbewegung im gleichen Messfenster wie Anchor Settle.
 
 | Badge | Was es bedeutet | Wie man es verbessert |
 | :--- | :--- | :--- |
@@ -410,7 +410,7 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 
 > **Hinweis:** Das „In-die-Hüfte-Setzen" ist ein stilistisches Merkmal — manche Lehrstile betonen es stark, andere weniger. Im WCS ist die laterale Beckenbewegung bewusst subtiler als z. B. im Latin-Tanz: es geht um ein „geerdetes Ankommen", nicht um eine sichtbare Schwingung. Der Badge gibt Information, keine Bewertung. Wenn dein Trainer keinen lateralen Settle möchte, ignoriere diesen Badge.
 >
-> **Schwellenwerte (0,05 / 0,10 / 0,30 g):** Diese Werte basieren auf biomechanischen Referenzdaten und können nach dem ersten Testlauf mit Beckensensor angepasst werden.
+> **Hinweis zu den Schwellenwerten:** Diese Werte basieren auf biomechanischen Referenzdaten und können nach dem ersten Testlauf mit Beckensensor angepasst werden.
 
 ---
 
