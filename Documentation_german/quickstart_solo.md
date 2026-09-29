@@ -9,10 +9,11 @@
 
 **Einmal einrichten:**
 
-1. Stell dein Smartphone im **Querformat** auf Augenhöhe auf, mit Blick auf dich.
+1. **Halte dein Smartphone in der Hand** vor dir (**Querformat**), sodass du die Badges zwischen den Schritten ablesen kannst.
 2. Öffne **`http://192.168.4.1/solo`** im Browser.
-3. Tippe auf **`📷 CAM`** (du erscheinst hinter den Karten), dann still in Tanzschuhen stehen — Füße flach, Gewicht gleichmäßig — und **`📐 ZERO`** tippen.
-4. Tippe auf **`🔊 Biofeedback: OFF`**, um die Pieptöne **einzuschalten**. Der Piep ist dein Coach.
+3. Still in Tanzschuhen stehen — Füße flach, Gewicht gleichmäßig — und **`📐 ZERO`** tippen.
+4. **Führst du oder folgst du?** Der Rollen-Button (obere Leiste) zeigt standardmäßig **`👤 LEADER`** — tippe ihn auf **`💃 FOLLOWER`**, wenn du die Follower-Rolle tanzt.
+5. Tippe auf **`🔊 Biofeedback: OFF`**, um die Pieptöne **einzuschalten**. Der Piep ist dein Coach — du musst nicht auf den Bildschirm starren.
 
 **Deine einzige Aufgabe:** weich landen — **vorwärts mit der Ferse zuerst, rückwärts mit dem Ballen zuerst.**
 
