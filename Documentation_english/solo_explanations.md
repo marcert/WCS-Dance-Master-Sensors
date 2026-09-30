@@ -655,17 +655,20 @@ When the thorax sensor is online, four rows appear in the top-left card (shared 
 
 ### Poise (sagittal chest lean)
 
-- Zeroed at `📐 ZERO` (standing tall): `thoraxPitchOffset = atan2(tAy, tA)·180/π`.
+- Zeroed at `📐 ZERO`, pressed in the **natural dance-ready stance** (one ZERO serves feet, pelvis & thorax): `thoraxPitchOffset = atan2(tAy, tA)·180/π`.
 - Per frame: `raw = atan2(tAy, tA)·180/π − thoraxPitchOffset`; IIR `s = s·0.92 + raw·0.08` (τ ≈ 0.9 s @ 50 Hz).
 
 | State | Condition (° from your neutral) | Colour |
 | :--- | :--- | :--- |
-| `UPRIGHT ✓` | `|s| ≤ 6` | Green |
-| `SLIGHT LEAN` | `6 < s ≤ 14` | Yellow |
-| `SLOUCHING ⚠` | `s > 14` | Red |
-| `LEANING BACK` | `s < −6` | Yellow |
+| `UPRIGHT ✓` | `|s| ≤ 7` | Green |
+| `SLIGHT LEAN` | `+7 < s ≤ +13` | Yellow |
+| `SLOUCHING ⚠` | `s > +13` | Red |
+| `LEANING BACK` | `−13 ≤ s < −7` | Yellow |
+| `LEANING BACK ⚠` | `s < −13` | Red |
 
-> **Sign caveat:** whether forward lean yields positive `s` depends on the sensor's sagittal-axis sign — confirm on first hardware test and flip if `SLOUCHING` / `LEANING BACK` are swapped. The green ±zone is sign-robust.
+> **Symmetric, and why the ZERO stance matters:** the band is symmetric because `0` is your **dance-ready working posture**, not true vertical — you press `ZERO` in the same natural stance used to calibrate the feet and pelvis (one button zeroes all three). Deviations either way (collapsing further forward, or leaning back) are then real faults. Do **not** ZERO bolt-upright and then lean into dance posture — that would push both the thorax Poise and the (symmetric) pelvic-tilt baselines off, since both measure segment pitch in space relative to the ZERO stance.
+
+> **Sign convention:** confirmed on hardware for **USB/connector-down** mounting — forward lean → positive `s` (the sagittal input `tAy` is negated in code). Re-check and flip if you change the mounting orientation. The green ±zone and all magnitude/variance badges are sign-robust regardless.
 
 ### Level (lateral tilt)
 
@@ -674,28 +677,30 @@ When the thorax sensor is online, four rows appear in the top-left card (shared 
 | State | Condition | Colour |
 | :--- | :--- | :--- |
 | `LEVEL ✓` | `|roll| ≤ 6°` | Green |
-| `SLIGHT TILT` | `6° < |roll| ≤ 14°` | Yellow |
-| `TILTED ⚠` | `|roll| > 14°` | Red |
+| `SLIGHT TILT` | `6° < |roll| ≤ 11°` | Yellow |
+| `TILTED ⚠` | `|roll| > 11°` | Red |
 
 ### Top-Line Quiet
 
-Horizontal magnitude `h = √(tAy² + tAx²)`, variance over `aHorizTHistory` (50 samples ≈ 1 s).
+Horizontal magnitude `h = √(tAy² + tAx²)`, variance over `aHorizTHistory` (50 samples ≈ 1 s). **Tempo-adaptive**: `tlScale = 500 / max(400, stepDurationMs)` (1.0 @120 BPM, up to 1.25 at fast tempo, < 1 when slow) — faster dancing tolerates more foot-impact micro-motion.
 
 | State | Condition | Colour |
 | :--- | :--- | :--- |
-| `QUIET ✓` | `var(h) < 0.010` | Green |
-| `SOME MOTION` | `0.010 ≤ var(h) < 0.035` | Yellow |
-| `RESTLESS ⚠` | `var(h) ≥ 0.035` | Red |
+| `QUIET ✓` | `var(h) < 0.010 × tlScale` | Green |
+| `SOME MOTION` | `0.010 × tlScale ≤ var(h) < 0.035 × tlScale` | Yellow |
+| `RESTLESS ⚠` | `var(h) ≥ 0.035 × tlScale` | Red |
 
 ### Torso–Pelvis Stack (requires pelvis sensor)
 
-`flex = thoraxPitchSmoothed − pelvicPitchSmoothed` (both are deviations from their own ZERO neutral, so `flex` is the relative sagittal fold).
+`flex = thoraxPitchSmoothed − pelvicPitchSmoothed` (both are deviations from their own ZERO neutral, so `flex` is the relative sagittal fold). Asymmetric: pike (forward fold) is caught slightly earlier than opening (extension).
 
 | State | Condition | Meaning | Colour |
 | :--- | :--- | :--- | :--- |
-| `STACKED ✓` | `|flex| ≤ 8°` | Torso and pelvis move as one column | Green |
-| `PIKING ⚠` | `flex > 8°` | Chest folds forward vs. the pelvis (break at the waist) | Red |
-| `OPENING` | `flex < −8°` | Chest opens back relative to the pelvis | Yellow |
+| `STACKED ✓` | `−5 ≤ flex ≤ +7` | Torso and pelvis move as one column | Green |
+| `PIKING` | `+7 < flex ≤ +12` | Chest starting to fold forward vs. the pelvis | Yellow |
+| `PIKING ⚠` | `flex > +12` | Clear break at the waist (chest folds forward) | Red |
+| `OPENING` | `−10 ≤ flex < −5` | Chest opening back relative to the pelvis | Yellow |
+| `OPENING ⚠` | `flex < −10` | Excessive extension / arching back | Red |
 | `— needs pelvis` | pelvis offline | Not computable without both sensors | Grey |
 
 ### Level & sensor gating

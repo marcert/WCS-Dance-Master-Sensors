@@ -420,7 +420,7 @@ Measures whether you "settle into the hip" after an anchor step — i.e. whether
 
 ### Torso — Poise (optional torso sensor)
 
-A second optional sensor worn **high on the upper back** (base of the neck) reads how your upper body carries itself — something the foot and pelvis sensors cannot see. Clip it flat against a tight layer, display facing outward, top edge up. When you press `📐 ZERO` standing tall in your natural stance, the system learns your neutral posture, so afterwards it only shows how far you drift from *your own* upright.
+A second optional sensor worn **high on the upper back** (base of the neck) reads how your upper body carries itself — something the foot and pelvis sensors cannot see. Clip it flat against a tight layer, display facing outward, top edge up. When you press `📐 ZERO` **in your natural dance-ready stance** (the same one that calibrates your feet and pelvis — one press zeroes all sensors), the system learns your working posture as neutral, so afterwards it only shows how far you drift from it — forward *or* back.
 
 These rows appear in the same top-left card as the pelvis rows.
 
