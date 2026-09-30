@@ -652,8 +652,10 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     // Also zero the pelvis sagittal tilt
                     pelvicPitchOffset   = Math.atan2(lastPelvicSagP, lastPelvicVertP) * (180 / Math.PI);
                     pelvicPitchSmoothed = 0;
-                    // Zero the thorax poise (sagittal lean + lateral tilt), standing tall/upright
-                    thoraxPitchOffset   = Math.atan2(lastThoraxSagT, lastThoraxVertT) * (180 / Math.PI);
+                    // Zero the thorax poise (sagittal lean + lateral tilt) — one ZERO serves feet,
+                    // pelvis & thorax, pressed in the natural dance-ready stance (NOT bolt-upright),
+                    // consistent with the foot/pelvis baseline. Sagittal term negated (USB/connector down).
+                    thoraxPitchOffset   = Math.atan2(-lastThoraxSagT, lastThoraxVertT) * (180 / Math.PI);
                     thoraxRollOffset    = Math.atan2(lastThoraxLatT, lastThoraxVertT) * (180 / Math.PI);
                     thoraxPitchSmoothed = 0;
                     thoraxRollSmoothed  = 0;
@@ -915,22 +917,27 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
                     // --- THORAX / POISE METRICS (per frame) ---
                     // Pitch & roll are gravity-referenced (drift-free); no yaw used here.
-                    // Thresholds are PROVISIONAL — calibrate against your own recordings.
-                    // NOTE: the sagittal sign (forward vs. back) may need flipping after the first
-                    // hardware test; the green ±zone and all magnitude/variance badges are sign-robust.
+                    // Thresholds are PROVISIONAL — video-derived priors from advanced/all-star
+                    // dancers, loosened slightly for non-expert users; to be sensor-validated later.
+                    // ZERO is pressed in the natural dance-ready stance (same as feet/pelvis), so
+                    // Poise is SYMMETRIC (0 = your working posture; forward/back are both deviations).
+                    // Stack stays asymmetric (pike caught earlier than extension).
+                    // Sagittal sign confirmed for USB/connector-down mounting (negated aSagT below).
                     if (thoraxOk) {
                         lastThoraxSagT = aSagT; lastThoraxVertT = aVertT; lastThoraxLatT = aLatT;
 
-                        // Poise — sagittal chest lean, zeroed at ZERO press
-                        let thoraxPitchRaw = Math.atan2(aSagT, aVertT) * (180 / Math.PI) - thoraxPitchOffset;
+                        // Poise — sagittal chest lean, zeroed at ZERO press (dance-ready neutral)
+                        // Sagittal term negated (mounting: USB/connector down) so forward lean → positive
+                        let thoraxPitchRaw = Math.atan2(-aSagT, aVertT) * (180 / Math.PI) - thoraxPitchOffset;
                         thoraxPitchSmoothed = thoraxPitchSmoothed * 0.92 + thoraxPitchRaw * 0.08;
                         let poiseBadge = document.getElementById('thoraxPoiseBadge');
                         if (poiseBadge) {
-                            let t = thoraxPitchSmoothed; // >0 = leaning/folding forward
-                            if      (Math.abs(t) <= 6)   { poiseBadge.className = 'badge badge-green';  poiseBadge.style.cssText = ''; poiseBadge.innerText = 'UPRIGHT ✓'; }
-                            else if (t > 6 && t <= 14)   { poiseBadge.className = 'badge badge-yellow'; poiseBadge.style.cssText = ''; poiseBadge.innerText = 'SLIGHT LEAN'; }
-                            else if (t > 14)             { poiseBadge.className = 'badge badge-red';    poiseBadge.style.cssText = ''; poiseBadge.innerText = 'SLOUCHING ⚠'; }
-                            else                         { poiseBadge.className = 'badge badge-yellow'; poiseBadge.style.cssText = ''; poiseBadge.innerText = 'LEANING BACK'; }
+                            let t = thoraxPitchSmoothed; // deviation from dance-ready neutral (+ forward)
+                            if      (Math.abs(t) <= 7)   { poiseBadge.className = 'badge badge-green';  poiseBadge.style.cssText = ''; poiseBadge.innerText = 'UPRIGHT ✓'; }
+                            else if (t > 7 && t <= 13)   { poiseBadge.className = 'badge badge-yellow'; poiseBadge.style.cssText = ''; poiseBadge.innerText = 'SLIGHT LEAN'; }
+                            else if (t > 13)             { poiseBadge.className = 'badge badge-red';    poiseBadge.style.cssText = ''; poiseBadge.innerText = 'SLOUCHING ⚠'; }
+                            else if (t >= -13)           { poiseBadge.className = 'badge badge-yellow'; poiseBadge.style.cssText = ''; poiseBadge.innerText = 'LEANING BACK'; }
+                            else                         { poiseBadge.className = 'badge badge-red';    poiseBadge.style.cssText = ''; poiseBadge.innerText = 'LEANING BACK ⚠'; }
                         }
 
                         // Level — lateral tilt of the torso, zeroed at ZERO press
@@ -940,20 +947,24 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         if (rollBadge) {
                             let r = Math.abs(thoraxRollSmoothed);
                             if      (r <= 6)  { rollBadge.className = 'badge badge-green';  rollBadge.style.cssText = ''; rollBadge.innerText = 'LEVEL ✓'; }
-                            else if (r <= 14) { rollBadge.className = 'badge badge-yellow'; rollBadge.style.cssText = ''; rollBadge.innerText = 'SLIGHT TILT'; }
+                            else if (r <= 11) { rollBadge.className = 'badge badge-yellow'; rollBadge.style.cssText = ''; rollBadge.innerText = 'SLIGHT TILT'; }
                             else              { rollBadge.className = 'badge badge-red';    rollBadge.style.cssText = ''; rollBadge.innerText = 'TILTED ⚠'; }
                         }
 
-                        // Top-Line Quiet — variance of horizontal (dynamic) accel over 1s
+                        // Top-Line Quiet — variance of horizontal (dynamic) accel over 1s, tempo-adaptive
+                        // (faster tempo → more foot-impact micro-motion tolerated, so the ceiling scales up)
                         let horizMagT = Math.sqrt(aSagT * aSagT + aLatT * aLatT);
                         aHorizTHistory.shift(); aHorizTHistory.push(horizMagT);
                         let hMeanT = aHorizTHistory.reduce((a, b) => a + b, 0) / aHorizTHistory.length;
                         let hVarT  = aHorizTHistory.reduce((a, b) => a + (b - hMeanT) ** 2, 0) / aHorizTHistory.length;
                         let quietBadge = document.getElementById('thoraxQuietBadge');
                         if (quietBadge) {
-                            if      (hVarT < 0.010) { quietBadge.className = 'badge badge-green';  quietBadge.style.cssText = ''; quietBadge.innerText = 'QUIET ✓'; }
-                            else if (hVarT < 0.035) { quietBadge.className = 'badge badge-yellow'; quietBadge.style.cssText = ''; quietBadge.innerText = 'SOME MOTION'; }
-                            else                    { quietBadge.className = 'badge badge-red';    quietBadge.style.cssText = ''; quietBadge.innerText = 'RESTLESS ⚠'; }
+                            let tlScale = 500 / Math.max(400, stepDurationMs); // 1.0 @120BPM, up to 1.25 fast, <1 slow
+                            let tlQuiet = 0.010 * tlScale;
+                            let tlSome  = 0.035 * tlScale;
+                            if      (hVarT < tlQuiet) { quietBadge.className = 'badge badge-green';  quietBadge.style.cssText = ''; quietBadge.innerText = 'QUIET ✓'; }
+                            else if (hVarT < tlSome)  { quietBadge.className = 'badge badge-yellow'; quietBadge.style.cssText = ''; quietBadge.innerText = 'SOME MOTION'; }
+                            else                      { quietBadge.className = 'badge badge-red';    quietBadge.style.cssText = ''; quietBadge.innerText = 'RESTLESS ⚠'; }
                         }
 
                         // Torso–Pelvis Stack — requires both sensors; separates whole-body lean from breaking at the waist
@@ -961,9 +972,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                         if (flexBadge) {
                             if (pelvicOk) {
                                 let flex = thoraxPitchSmoothed - pelvicPitchSmoothed; // >0 = chest folds forward relative to pelvis (pike)
-                                if      (Math.abs(flex) <= 8) { flexBadge.className = 'badge badge-green';  flexBadge.style.cssText = ''; flexBadge.innerText = 'STACKED ✓'; }
-                                else if (flex > 8)            { flexBadge.className = 'badge badge-red';    flexBadge.style.cssText = ''; flexBadge.innerText = 'PIKING ⚠'; }
-                                else                          { flexBadge.className = 'badge badge-yellow'; flexBadge.style.cssText = ''; flexBadge.innerText = 'OPENING'; }
+                                if      (flex >= -5 && flex <= 7) { flexBadge.className = 'badge badge-green';  flexBadge.style.cssText = ''; flexBadge.innerText = 'STACKED ✓'; }
+                                else if (flex > 7 && flex <= 12)  { flexBadge.className = 'badge badge-yellow'; flexBadge.style.cssText = ''; flexBadge.innerText = 'PIKING'; }
+                                else if (flex > 12)               { flexBadge.className = 'badge badge-red';    flexBadge.style.cssText = ''; flexBadge.innerText = 'PIKING ⚠'; }
+                                else if (flex >= -10)             { flexBadge.className = 'badge badge-yellow'; flexBadge.style.cssText = ''; flexBadge.innerText = 'OPENING'; }
+                                else                              { flexBadge.className = 'badge badge-red';    flexBadge.style.cssText = ''; flexBadge.innerText = 'OPENING ⚠'; }
                             } else {
                                 flexBadge.className = 'badge'; flexBadge.style.cssText = 'background:#1e272e;color:#8b949e;'; flexBadge.innerText = '— needs pelvis';
                             }

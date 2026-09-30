@@ -694,17 +694,20 @@ Ist der Thorax-Sensor online, erscheinen vier Zeilen in der oberen linken Karte 
 
 ### Poise (sagittale Brustneigung)
 
-- Genullt bei `📐 ZERO` (aufrecht stehend): `thoraxPitchOffset = atan2(tAy, tA)·180/π`.
+- Genullt bei `📐 ZERO`, gedrückt in der **natürlichen Tanz-Bereitschaftshaltung** (ein ZERO tariert Füße, Becken & Thorax): `thoraxPitchOffset = atan2(tAy, tA)·180/π`.
 - Pro Frame: `raw = atan2(tAy, tA)·180/π − thoraxPitchOffset`; IIR `s = s·0,92 + raw·0,08` (τ ≈ 0,9 s @ 50 Hz).
 
 | Zustand | Bedingung (° von deiner Neutrallage) | Farbe |
 | :--- | :--- | :--- |
-| `UPRIGHT ✓` | `|s| ≤ 6` | Grün |
-| `SLIGHT LEAN` | `6 < s ≤ 14` | Gelb |
-| `SLOUCHING ⚠` | `s > 14` | Rot |
-| `LEANING BACK` | `s < −6` | Gelb |
+| `UPRIGHT ✓` | `|s| ≤ 7` | Grün |
+| `SLIGHT LEAN` | `+7 < s ≤ +13` | Gelb |
+| `SLOUCHING ⚠` | `s > +13` | Rot |
+| `LEANING BACK` | `−13 ≤ s < −7` | Gelb |
+| `LEANING BACK ⚠` | `s < −13` | Rot |
 
-> **Vorzeichen-Vorbehalt:** Ob Vorwärtslehnen positives `s` ergibt, hängt vom Vorzeichen der sagittalen Sensorachse ab — beim ersten Hardware-Test prüfen und ggf. umdrehen, falls `SLOUCHING` / `LEANING BACK` vertauscht sind. Die grüne ±Zone ist vorzeichenrobust.
+> **Symmetrisch — und warum die ZERO-Haltung zählt:** Das Band ist symmetrisch, weil `0` deine **Tanz-Arbeitshaltung** ist, nicht die echte Senkrechte — du drückst `ZERO` in derselben natürlichen Haltung, in der auch Füße und Becken kalibriert werden (ein Knopf nullt alle drei). Abweichungen in beide Richtungen (weiteres Vorsacken oder Zurücklehnen) sind dann echte Fehler. **Nicht** aufrecht nullen und dann in die Tanzhaltung lehnen — das würde sowohl die Thorax-Poise- als auch die (symmetrische) Becken-Tilt-Basis verschieben, da beide die Segmentneigung im Raum relativ zur ZERO-Haltung messen.
+
+> **Vorzeichen-Konvention:** auf Hardware bestätigt für Montage mit **USB/Anschluss nach unten** — Vorwärtslehnen → positives `s` (der sagittale Eingang `tAy` ist im Code negiert). Bei geänderter Montageorientierung neu prüfen und ggf. umdrehen. Die grüne ±Zone und alle Betrags-/Varianz-Badges sind unabhängig davon vorzeichenrobust.
 
 ### Level (seitliche Neigung)
 
@@ -713,28 +716,30 @@ Ist der Thorax-Sensor online, erscheinen vier Zeilen in der oberen linken Karte 
 | Zustand | Bedingung | Farbe |
 | :--- | :--- | :--- |
 | `LEVEL ✓` | `|roll| ≤ 6°` | Grün |
-| `SLIGHT TILT` | `6° < |roll| ≤ 14°` | Gelb |
-| `TILTED ⚠` | `|roll| > 14°` | Rot |
+| `SLIGHT TILT` | `6° < |roll| ≤ 11°` | Gelb |
+| `TILTED ⚠` | `|roll| > 11°` | Rot |
 
 ### Top-Line Quiet
 
-Horizontal-Magnitude `h = √(tAy² + tAx²)`, Varianz über `aHorizTHistory` (50 Samples ≈ 1 s).
+Horizontal-Magnitude `h = √(tAy² + tAx²)`, Varianz über `aHorizTHistory` (50 Samples ≈ 1 s). **Tempo-adaptiv**: `tlScale = 500 / max(400, stepDurationMs)` (1,0 @120 BPM, bis 1,25 bei schnellem Tempo, < 1 bei langsam) — schnelleres Tanzen toleriert mehr Fuß-Impuls-Mikrobewegung.
 
 | Zustand | Bedingung | Farbe |
 | :--- | :--- | :--- |
-| `QUIET ✓` | `var(h) < 0,010` | Grün |
-| `SOME MOTION` | `0,010 ≤ var(h) < 0,035` | Gelb |
-| `RESTLESS ⚠` | `var(h) ≥ 0,035` | Rot |
+| `QUIET ✓` | `var(h) < 0,010 × tlScale` | Grün |
+| `SOME MOTION` | `0,010 × tlScale ≤ var(h) < 0,035 × tlScale` | Gelb |
+| `RESTLESS ⚠` | `var(h) ≥ 0,035 × tlScale` | Rot |
 
 ### Torso–Becken-Stack (braucht Beckensensor)
 
-`flex = thoraxPitchSmoothed − pelvicPitchSmoothed` (beide sind Abweichungen von ihrer eigenen ZERO-Neutrallage, `flex` ist also die relative sagittale Beugung).
+`flex = thoraxPitchSmoothed − pelvicPitchSmoothed` (beide sind Abweichungen von ihrer eigenen ZERO-Neutrallage, `flex` ist also die relative sagittale Beugung). Asymmetrisch: Pike (Vorbeugen) spricht etwas früher an als Öffnen (Überstrecken).
 
 | Zustand | Bedingung | Bedeutung | Farbe |
 | :--- | :--- | :--- | :--- |
-| `STACKED ✓` | `|flex| ≤ 8°` | Torso und Becken bewegen sich als eine Säule | Grün |
-| `PIKING ⚠` | `flex > 8°` | Brust klappt gegenüber dem Becken nach vorn (Einknicken in der Hüfte) | Rot |
-| `OPENING` | `flex < −8°` | Brust öffnet sich gegenüber dem Becken nach hinten | Gelb |
+| `STACKED ✓` | `−5 ≤ flex ≤ +7` | Torso und Becken bewegen sich als eine Säule | Grün |
+| `PIKING` | `+7 < flex ≤ +12` | Brust beginnt gegenüber dem Becken nach vorn zu klappen | Gelb |
+| `PIKING ⚠` | `flex > +12` | Klares Einknicken in der Taille (Brust klappt nach vorn) | Rot |
+| `OPENING` | `−10 ≤ flex < −5` | Brust öffnet sich gegenüber dem Becken nach hinten | Gelb |
+| `OPENING ⚠` | `flex < −10` | Übermäßiges Überstrecken / Hohlkreuz | Rot |
 | `— needs pelvis` | Becken offline | Ohne beide Sensoren nicht berechenbar | Grau |
 
 ### Level- & Sensor-Gating

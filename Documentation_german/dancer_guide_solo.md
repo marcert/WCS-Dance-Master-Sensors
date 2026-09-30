@@ -422,7 +422,7 @@ Misst, ob du dich nach dem Ankerschritt „in die Hüfte setzt" — d. h. ob ein
 
 ### Torso — Poise (optionaler Torso-Sensor)
 
-Ein zweiter optionaler Sensor **hoch am oberen Rücken** (Nackenansatz) erfasst, wie sich dein Oberkörper hält — etwas, das Fuß- und Beckensensoren nicht sehen. Flach an einer eng anliegenden Schicht befestigen, Display nach außen, Oberkante oben. Wenn du aufrecht in deiner natürlichen Haltung stehst und `📐 ZERO` drückst, lernt das System deine Neutralhaltung — danach zeigt es nur noch, wie weit du von *deiner eigenen* Aufrichtung abweichst.
+Ein zweiter optionaler Sensor **hoch am oberen Rücken** (Nackenansatz) erfasst, wie sich dein Oberkörper hält — etwas, das Fuß- und Beckensensoren nicht sehen. Flach an einer eng anliegenden Schicht befestigen, Display nach außen, Oberkante oben. Wenn du `📐 ZERO` **in deiner natürlichen Tanz-Bereitschaftshaltung** drückst (dieselbe, mit der Füße und Becken kalibriert werden — ein Druck nullt alle Sensoren), lernt das System diese Arbeitshaltung als Neutrallage — danach zeigt es nur noch, wie weit du davon abweichst, nach vorn *oder* hinten.
 
 Diese Zeilen erscheinen in derselben oberen linken Karte wie die Becken-Zeilen.
 
