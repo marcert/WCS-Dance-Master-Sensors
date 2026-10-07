@@ -228,7 +228,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
             .hud-spacer { display: block; }
 
-            .card { padding: 5px 8px; height: 100%; box-sizing: border-box; }
+            .card { padding: 5px 8px; height: 100%; box-sizing: border-box; min-height: 0; }
             .metric-value { font-size: 1.4rem; }
             .stance-timeline { height: 22px; margin-top: 4px; }
             .bar-container { margin-top: 2px; }
@@ -291,7 +291,44 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
 
         /* Lock pelvis card to top-left slot in landscape grid */
         @media (orientation: landscape) {
-            #pelvicCard { grid-column: 1; grid-row: 1; }
+            #pelvicCard { grid-column: 1; grid-row: 1; overflow: hidden; }
+
+            /* ADV + pelvis/thorax online = up to ~14 rows — too many for a half-height cell.
+               Layout: Core spans the left column over the top TWO rows; Double Stance + ASI
+               stack in the right column's top two rows; Last Step runs FULL WIDTH along the
+               bottom, so its 7 badges flow 4-up in two rows instead of clipping. Core badges
+               keep their normal, readable size. */
+            main.level-advanced.core-online .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, auto);
+            }
+            main.level-advanced.core-online #pelvicCard       { grid-column: 1; grid-row: 1 / 3; }
+            main.level-advanced.core-online #doubleStanceCard { grid-column: 2; grid-row: 1; }
+            main.level-advanced.core-online #asiCard          { grid-column: 2; grid-row: 2; }
+            main.level-advanced.core-online #stepCard         { grid-column: 1 / -1; grid-row: 3; overflow: hidden; }
+
+            /* Core: tighten vertical rhythm only (0 margin + line-height) — font stays default/readable */
+            main.level-advanced.core-online #pelvicCard .card-title { margin-bottom: 2px; }
+            main.level-advanced.core-online #pelvicCard #pelvisRows > div,
+            main.level-advanced.core-online #pelvicCard #torsoRows > div { margin-bottom: 0 !important; line-height: 1.15; }
+            main.level-advanced.core-online #pelvicCard .badge { padding: 1px 7px; }
+            main.level-advanced.core-online #pelvicCard #torsoRows > .pelvis-int:first-child { margin: 3px 0 1px !important; padding-top: 3px !important; }
+
+            /* Last Step is full-width at the bottom → badges flow 4 across in 2 rows */
+            main.level-advanced.core-online #stepCard .card-title { margin-bottom: 3px; }
+            main.level-advanced.core-online #stepCard .step-lower-badges { grid-template-columns: repeat(4, 1fr); gap: 3px; margin-top: 3px; }
+            main.level-advanced.core-online #stepCard #heelBallBadge { grid-column: auto; }
+
+            /* Double Stance + ASI: compact numbers/bar so content stays inside the card box
+               (big 1.4rem metrics + 22px bar otherwise bleed past the bottom border). */
+            main.level-advanced.core-online #doubleStanceCard,
+            main.level-advanced.core-online #asiCard { overflow: hidden; }
+            main.level-advanced.core-online #doubleStanceCard .card-title,
+            main.level-advanced.core-online #asiCard .card-title { margin-bottom: 2px; line-height: 1.1; }
+            main.level-advanced.core-online #doubleStanceCard .metric-value,
+            main.level-advanced.core-online #asiCard .metric-value { font-size: 1.1rem; }
+            main.level-advanced.core-online #doubleStanceCard #stanceRatioVal { font-size: 0.9rem; }
+            main.level-advanced.core-online #doubleStanceCard .stance-timeline { height: 14px; margin-top: 3px; }
         }
 
         /* Battery warning overlay */
@@ -383,7 +420,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     </div>
                     </div><!-- /pelvisRows -->
                     <div id="torsoRows">
-                        <div class="pelvis-int" style="font-size:0.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;margin:5px 0 2px;border-top:1px solid #2a2a3a;padding-top:4px;">Torso — Poise (needs thorax sensor)</div>
+                        <div class="pelvis-int" style="font-size:0.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;margin:5px 0 2px;border-top:1px solid #2a2a3a;padding-top:4px;">Torso</div>
                         <div class="pelvis-int" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
                             <span style="font-size:0.78rem;color:#8b949e;">Poise (upright)</span>
                             <span id="thoraxPoiseBadge" class="badge" style="background:#1e272e;color:#8b949e;">— POISE</span>
@@ -844,9 +881,11 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                     if (pelvicOk || thoraxOk) {
                         document.getElementById('pelvicCard').style.display = 'block';
                         document.getElementById('pelvicSpacer').style.display = 'none';
+                        document.getElementById('main-layout').classList.add('core-online');
                     } else {
                         document.getElementById('pelvicCard').style.display = 'none';
                         document.getElementById('pelvicSpacer').style.display = '';
+                        document.getElementById('main-layout').classList.remove('core-online');
                     }
                     { let pr = document.getElementById('pelvisRows'); if (pr) pr.style.display = pelvicOk ? '' : 'none';
                       let tr = document.getElementById('torsoRows');  if (tr) tr.style.display = thoraxOk ? '' : 'none'; }
@@ -978,7 +1017,7 @@ const char HTML_SOLO_PAGE[] PROGMEM = R"rawliteral(
                                 else if (flex >= -10)             { flexBadge.className = 'badge badge-yellow'; flexBadge.style.cssText = ''; flexBadge.innerText = 'OPENING'; }
                                 else                              { flexBadge.className = 'badge badge-red';    flexBadge.style.cssText = ''; flexBadge.innerText = 'OPENING ⚠'; }
                             } else {
-                                flexBadge.className = 'badge'; flexBadge.style.cssText = 'background:#1e272e;color:#8b949e;'; flexBadge.innerText = '— needs pelvis';
+                                flexBadge.className = 'badge'; flexBadge.style.cssText = 'background:#1e272e;color:#8b949e;'; flexBadge.innerText = '—';
                             }
                         }
                     }
