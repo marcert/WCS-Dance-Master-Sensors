@@ -167,6 +167,8 @@ The ROLL badge measures how smoothly the front of your foot lowers after your he
 
 > **SLAPPING explained:** After your heel touches the floor, the front of your foot needs to be *lowered* actively, not allowed to fall. If you let it drop, it slaps down — you can usually hear it. This creates a hard impact, absorbs less shock, and softens your connection. The fix is a conscious heel → outside edge → ball sequence, keeping your ankle gently engaged the whole time.
 
+> **Rolling through the feet — mental cues:** Don't over-reach the strike; if the step is too big, the foot can no longer roll through. Let your leg muscles brake the landing instead of crashing onto the foot, settle your balance over the landing foot before you commit your weight, and guide the foot to its place rather than planting it. Together these turn `SLAPPING` and `HARD IMPACT` into `CLEAN ROLL ✓` and `SMOOTH LOAD`.
+
 > 📸 **[Screenshot: Step Badge card showing CLEAN ROLL ✓ badge in the lower badge row]**
 
 ---

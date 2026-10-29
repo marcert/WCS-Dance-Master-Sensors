@@ -165,6 +165,8 @@ Das ROLL-Badge misst, wie gleichmäßig sich der vordere Teil deines Fußes nach
 
 > **SLAPPING erklärt:** Nach dem Fersenkontakt muss der vordere Teil des Fußes *aktiv abgesenkt* werden — er darf nicht einfach fallen gelassen werden. Lässt du ihn fallen, klatscht er auf den Boden — meist hörbar. Das erzeugt einen harten Aufprall, dämpft weniger Stoß und schwächt deine Verbindung. Die Lösung: bewusste Sequenz Ferse → Außenkante → Ballen, mit durchgehend leicht aktivem Sprunggelenk.
 
+> **Abrollen — mentale Cues:** Übertreibe die Schrittweite nicht — ist der Schritt zu groß, kann der Fuß nicht mehr abrollen. Lass die Beinmuskulatur die Landung abbremsen, statt auf den Fuß zu krachen, bring deine Balance über dem Landefuß zur Ruhe, bevor du dein Gewicht gibst, und führe den Fuß gleitend an seine Position, statt ihn hinzustellen. Zusammen machen diese Cues aus `SLAPPING` und `HARD IMPACT` ein `CLEAN ROLL ✓` und `SMOOTH LOAD`.
+
 > 📸 **[Screenshot: Schritt-Badge-Karte mit CLEAN ROLL ✓ Badge in der unteren Badge-Reihe]**
 
 ---

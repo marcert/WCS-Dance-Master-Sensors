@@ -174,6 +174,8 @@ Dieser Badge braucht **keinen Zusatzsensor** — er vergleicht den Führungs-Kra
 | `SOFT LINK ⚠` | Ein klarer Kraftimpuls erzeugte kaum Körperbewegung — die Kraft wurde elastisch absorbiert, statt den Tänzer zu bewegen |
 
 > **Wichtige Einschränkung — vor dem Coaching lesen.** Ein `SOFT LINK` bedeutet **nicht** immer einen Fehler. Im WCS zeigt sich das Halten gegen die Verbindung (eine gute Counterbalance am Anchor) *ebenfalls* als „Kraft eingeleitet, Körper bewegt sich nicht" — was genau richtig ist, kein Kollaps. Dieser Badge kann eine korrekte Counterbalance nicht von einem echten Frame-Kollaps unterscheiden; nur ein Oberkörper-/Torso-Sensor (Brust-Haltung unter Last) kann das. Behandle `SOFT LINK` als **Hinweis, das Paar anzusehen**, nicht als Urteil. Benötigt Hand- und Beckensensor gleichzeitig online.
+
+> **Frame halten — mentale Cues:** Halte die Schulter in ihrer neutralen Position, statt sie unter Last nach vorn rollen zu lassen, und halte den oberen Rücken aktiv, als ob du einen Punkt zwischen den Schulterblättern leicht zusammenhältst. Bewege deine Mitte und die Verbindung als eine Einheit — nicht den Arm allein — und bewahre deine Achse. Ein so gehaltener Frame macht aus einem Führungsimpuls ein `TRANSMITTED ✓`; gibt er nach, dann als *kontrolliertes Nachgeben* mit aktiver Mitte — kein Kollaps in den Arm.
 >
 > **Hinweis zu den Schwellenwerten:** Vorläufige Startwerte — anhand eigener Aufnahmen kalibrieren.
 

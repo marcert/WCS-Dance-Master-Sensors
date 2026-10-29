@@ -174,6 +174,8 @@ This badge uses **no extra sensor** — it compares the lead-force impulse (how 
 | `SOFT LINK ⚠` | A clear force impulse produced little body movement — the force was absorbed elastically instead of moving the dancer |
 
 > **Important limitation — read this before coaching from it.** A `SOFT LINK` does **not** always mean a fault. In WCS, holding ground against the connection (a good counterbalance at the anchor) *also* shows up as "force applied, body doesn't move" — which is exactly right, not a collapse. This badge cannot tell a correct counterbalance apart from a genuine frame collapse; only an upper-body/torso sensor (chest posture under load) can. Treat `SOFT LINK` as a **flag to look at the pair**, not a verdict. Requires both the hand sensor and the pelvis sensor to be online.
+
+> **Holding the frame — mental cues:** Keep the shoulder in its home position rather than letting it roll forward under load, and keep the upper back engaged, as if lightly holding a point between the shoulder blades. Move your centre and the connection as one unit — not the arm alone — and keep your axis. A frame held this way turns a lead impulse into `TRANSMITTED ✓`; when it gives, it should give as a *controlled release* with the centre still engaged — not a collapse into the arm.
 >
 > **Thresholds note:** Provisional starting points — calibrate against your own recordings.
 
