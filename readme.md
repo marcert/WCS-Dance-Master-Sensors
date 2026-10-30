@@ -185,3 +185,6 @@ Install the following libraries in **Arduino IDE** or **PlatformIO**:
 - Improve the physical grip/handle on the hand scale unit.
 
 Suggestions and ideas welcome.
+
+<!-- -->
+
